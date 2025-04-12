@@ -1,20 +1,20 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import NavBar from './component/NavBar.tsx'
+import Home from './component/Home.tsx'
+import ListPosts from './component/ListPosts.tsx'
 import './App.css'
 
-const Home = () => <h2>Home Page</h2>
-const About = () => <h2>About Page</h2>
-const Posts = () => <h2>Posts Page</h2>
 
 const App = () => {
   return (
     <Router>
       <NavBar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/posts" element={<Posts />} />
-      </Routes>
+      <main className='px-7 py-10'>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/posts" element={<ListPosts />} />
+        </Routes> 
+      </main>
     </Router>
   )
 }
