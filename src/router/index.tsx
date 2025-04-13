@@ -17,7 +17,7 @@ const routes = Object.keys(modules)
       .replace(/\.(mdx|tsx)$/, '')
       .replace('Index', '')
     if(isProd) {
-      filename = filename.replace (/\..\/\..\/(pages)/, '')
+      filename = filename.replace (/\..\/\..\/(pp)/, '')
     }
     console.log(filename)
     const Component = lazy( ()=> import(/* @vite-ignore */ `${filename.replace(/\.tsx$/, '')}`))
