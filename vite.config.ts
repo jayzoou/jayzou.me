@@ -6,10 +6,12 @@ import mdx from '@mdx-js/rollup'
 // https://vite.dev/config/
 export default defineConfig({
   base: '/',
-  publicDir: 'assets',
+  publicDir: 'pages',
   plugins: [
     react(),
     tailwindcss(),
-    mdx({/* jsxImportSource: …, otherOptions… */})
+    mdx({
+      jsxImportSource: 'react',
+    })
   ],
 })
