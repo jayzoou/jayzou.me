@@ -7,7 +7,6 @@ import {babel} from '@rollup/plugin-babel'
 // https://vite.dev/config/
 export default defineConfig({
   base: '/',
-  publicDir: 'pages',
   build: {
   },
   plugins: [
@@ -18,7 +17,10 @@ export default defineConfig({
     }),
     babel({
       // Also run on what used to be `.mdx` (but is now JS):
-      extensions: ['.js', '.jsx', '.cjs', '.mjs', '.md', '.mdx']
+      // extensions: ['.js', '.jsx', '.cjs', '.mjs', '.md', '.mdx'],
+      presets: [
+        ['@babel/preset-react', { runtime: 'automatic' }], // React 17+ 自动运行时
+      ],
       // Other options…
     })
   ],
