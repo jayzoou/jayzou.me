@@ -7,6 +7,8 @@ import mdx from '@mdx-js/rollup'
 export default defineConfig({
   base: '/',
   publicDir: 'pages',
+  build: {
+  },
   plugins: [
     react(),
     tailwindcss(),
