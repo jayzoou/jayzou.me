@@ -20,7 +20,7 @@ const routes = Object.keys(modules)
       filename = filename.replace (/\..\/\..\/(pp)/, '')
     }
     console.log(filename)
-    const Component = lazy( ()=> import(/* @vite-ignore */ `${filename.replace(/\.tsx$/, '')}`))
+    const Component = lazy( ()=> import(/* @vite-ignore */ `${filename}`))
     return { path: `/${path}`, element: <Component /> }
   })
 
