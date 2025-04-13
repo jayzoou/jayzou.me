@@ -6,13 +6,13 @@ import Layout from '../component/Layout.tsx'
 
 const modules = import.meta.glob(
   [
-    '../../pages/**/*.mdx',
+    '../../pp/**/*.tsx',
   ], 
   { eager: true })
 const routes = Object.keys(modules)
   .map((filename: string) => {
     const path = filename
-      .replace (/\..\/\..\/(pages)/, '')
+      .replace (/\..\/\..\/(pp)/, '')
       .replace(/\//g,'')
       .replace(/\.(mdx|tsx)$/, '')
       .replace('Index', '')
