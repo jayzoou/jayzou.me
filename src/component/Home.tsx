@@ -1,9 +1,11 @@
 const Home = () => {
   return (
     <div className="prose m-auto">
-      <h1>Welcome to my blog</h1>
-      <p>sssssss</p>
-      <p>This is a simple blog built with React and TypeScript.This is a simple blog built with React and TypeScript.This is a simple blog built with React and TypeScript.This is a simple blog built with React and TypeScript.This is a simple blog built with React and TypeScript.</p>
+      <h1>Jay Zou</h1>
+      <p>Hey, I am Jay, the kid from 深圳, a web developer.</p>
+      <p>I code. I play. I live.</p>
+      <p>Welcome! You can find what you want.</p>
+      <p>Much ❤️</p>
     </div>
   )
 }
