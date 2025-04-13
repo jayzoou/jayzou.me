@@ -1,8 +1,8 @@
 import { createBrowserRouter } from 'react-router-dom'
-import { lazy } from 'react'
+import React, { lazy } from 'react'
 import Layout from '../component/Layout.tsx'
 
-const isProd = import.meta.env.MODE === 'production'
+// const isProd = import.meta.env.MODE === 'production'
 
 const modules = import.meta.glob(
   [
@@ -11,17 +11,17 @@ const modules = import.meta.glob(
   { eager: true })
 const routes = Object.keys(modules)
   .map((filename: string) => {
-    const path = filename
-      .replace (/\..\/\..\/(pp)/, '')
-      .replace(/\//g,'')
-      .replace(/\.(mdx|tsx)$/, '')
-      .replace('Index', '')
-    if(isProd) {
-      filename = filename.replace (/\..\/\..\/(pp)/, '')
-    }
-    console.log(filename)
-    const Component = lazy( ()=> import(/* @vite-ignore */ `${filename}`))
-    return { path: `/${path}`, element: <Component /> }
+  const path = filename
+    .replace (/\..\/\..\/(pp)/, '')
+    .replace(/\//g,'')
+    .replace(/\.(mdx|tsx)$/, '')
+    .replace('Index', '')
+  // if(isProd) {
+  //   filename = filename.replace (/\..\/\..\/(pages)/, '')
+  // }
+  console.log(filename)
+  const Component = lazy( ()=> import(/* @vite-ignore */ `${filename.replace(/\.tsx$/, '')}`))
+  return { path: `/${path}`, element: <React.Suspense><Component /></React.Suspense> }
   })
 
 const router = createBrowserRouter([
