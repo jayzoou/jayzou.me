@@ -19,6 +19,7 @@ export default defineConfig({
       // Also run on what used to be `.mdx` (but is now JS):
       // extensions: ['.js', '.jsx', '.cjs', '.mjs', '.md', '.mdx'],
       presets: [
+        ['@babel/preset-env', { targets: { node: 'current' } }],
         ['@babel/preset-react', { runtime: 'automatic' }], // React 17+ 自动运行时
       ],
       // Other options…
