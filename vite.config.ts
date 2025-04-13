@@ -7,6 +7,7 @@ import {babel} from '@rollup/plugin-babel'
 // https://vite.dev/config/
 export default defineConfig({
   base: '/',
+  publicDir: 'pp',
   build: {
   },
   plugins: [

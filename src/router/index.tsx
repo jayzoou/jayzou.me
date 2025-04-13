@@ -2,7 +2,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import { lazy } from 'react'
 import Layout from '../component/Layout.tsx'
 
-// const isProd = import.meta.env.MODE === 'production'
+const isProd = import.meta.env.MODE === 'production'
 
 const modules = import.meta.glob(
   [
@@ -16,10 +16,11 @@ const routes = Object.keys(modules)
       .replace(/\//g,'')
       .replace(/\.(mdx|tsx)$/, '')
       .replace('Index', '')
-    // if(isProd) {
-    //   filename = filename.replace (/\..\/\..\/(pages)/, '')
-    // }
-    const Component = lazy( ()=> import(/* @vite-ignore */ `${filename}`))
+    if(isProd) {
+      filename = filename.replace (/\..\/\..\/(pages)/, '')
+    }
+    console.log(filename)
+    const Component = lazy( ()=> import(/* @vite-ignore */ `${filename.replace(/\.tsx$/, '')}`))
     return { path: `/${path}`, element: <Component /> }
   })
 
