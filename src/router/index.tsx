@@ -1,8 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom'
-import { MDXProvider } from '@mdx-js/react';
 import { Suspense } from 'react'
 import Layout from '../component/Layout.tsx'
-
 
 const modules = import.meta.glob(
   [
@@ -19,7 +17,7 @@ const routes = Object.keys(modules)
       .replace('Index', '')
     //@ts-ignore
     const Component = modules[filename].default
-    return { path: `/${path}`, element: <MDXProvider><Suspense><Component /></Suspense></MDXProvider> }
+    return { path: `/${path}`, element: <Suspense><Component /></Suspense> }
   })
 
 const router = createBrowserRouter([
