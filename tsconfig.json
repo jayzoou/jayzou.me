@@ -4,9 +4,4 @@
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
   ],
-  "compilerOptions": {
-    "jsx": "react-jsx",       // 或 "react-jsxdev"
-    "jsxImportSource": "react", // 指定运行时库路径
-    "types": ["react"]
-  }
 }

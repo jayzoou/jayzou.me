@@ -1,28 +1,28 @@
 import { createBrowserRouter } from 'react-router-dom'
-import React, { lazy } from 'react'
+import { MDXProvider } from '@mdx-js/react';
+import { lazy, Suspense } from 'react'
 import Layout from '../component/Layout.tsx'
 
 // const isProd = import.meta.env.MODE === 'production'
 
 const modules = import.meta.glob(
   [
-    '../../pp/**/*.tsx',
+    '../../pages/**/*.mdx',
   ], 
   { eager: true })
 const routes = Object.keys(modules)
-  .map((filename: string) => {
-  const path = filename
-    .replace (/\..\/\..\/(pp)/, '')
-    .replace(/\//g,'')
-    .replace(/\.(mdx|tsx)$/, '')
-    .replace('Index', '')
-  // if(isProd) {
-  //   filename = filename.replace (/\..\/\..\/(pages)/, '')
-  // }
-  console.log(filename)
-  const Component = lazy( ()=> import(/* @vite-ignore */ `${filename.replace(/\.tsx$/, '')}`))
-  return { path: `/${path}`, element: <React.Suspense><Component /></React.Suspense> }
-  })
+.map((filename: string) => {
+const path = filename
+  .replace (/\..\/\..\/(pages)/, '')
+  .replace(/\//g,'')
+  .replace(/\.(mdx|tsx)$/, '')
+  .replace('Index', '')
+// if(isProd) {
+//   filename = filename.replace (/\..\/\..\/(pages)/, '')
+// }
+const Component = lazy( ()=> import(/* @vite-ignore */ `${filename}`))
+return { path: `/${path}`, element: <MDXProvider><Suspense><Component /></Suspense></MDXProvider> }
+})
 
 const router = createBrowserRouter([
   {
