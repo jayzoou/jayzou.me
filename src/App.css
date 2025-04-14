@@ -4,10 +4,13 @@
 }
 
 .nav {
+  width: 100%;
   padding: 2rem;
   display: grid;
   grid-gap: 1.2rem;
   grid-auto-flow: column;
+  grid-template-columns: auto max-content;
+  box-sizing: border-box;
 }
 
 .prose {
