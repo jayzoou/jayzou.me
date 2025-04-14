@@ -1,14 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
 import mdx from '@mdx-js/rollup'
+import UnoCSS from 'unocss/vite'
  
 // https://vite.dev/config/
 export default defineConfig({
   base: '/',
   plugins: [
     react(),
-    tailwindcss(),
+    UnoCSS(),
     mdx({
       jsxImportSource: 'react',
     }),
