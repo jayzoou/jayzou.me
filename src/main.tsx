@@ -1,17 +1,16 @@
-// import { StrictMode } from 'react'
 import { viteReactStatic } from 'vite-react-static'
 import Layout from './component/Layout.tsx'
-// import { createRoot } from 'react-dom/client'
 import 'virtual:uno.css'
 import './index.css'
 import './App.css'
-// import App from './App.tsx'
 
 const modules = import.meta.glob(
   [
     '../pages/**/*.mdx',
   ], 
-  { eager: true })
+  { eager: true }
+)
+
 const routes = Object.keys(modules)
   .map((filename: string) => {
     const path = filename
@@ -33,9 +32,3 @@ export const createRoot = viteReactStatic({
     },
   ] 
 })
-
-// createRoot(document.getElementById('root')!).render(
-//   <StrictMode>
-//     <App />
-//   </StrictMode>,
-// )
