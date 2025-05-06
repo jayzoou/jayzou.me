@@ -13,4 +13,8 @@ export default defineConfig({
       jsxImportSource: 'react',
     }),
   ],
+  // @ts-ignore
+  staticOptions: {
+    script: 'defer',
+  }
 })
