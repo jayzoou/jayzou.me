@@ -3,7 +3,7 @@ import NavBar from './NavBar.tsx'
 
 const Layout = () => {
   let mainClass = 'px-7 py-10'
-  if (location && location.pathname.startsWith('/posts')) {
+  if (typeof location === 'object' && location.pathname.startsWith('/posts')) {
     mainClass = 'prose max-w-3xl m-auto'
   }
   return (
