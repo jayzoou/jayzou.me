@@ -13,6 +13,26 @@
   box-sizing: border-box;
 }
 
+.nav-sub {
+  width: 100%;
+  padding: 0.8rem 0;
+  display: flex;
+  grid-gap: 1.2rem;
+  grid-auto-flow: column;
+  grid-template-columns: auto max-content;
+  box-sizing: border-box;
+}
+
+.nav-small {
+  width: 100%;
+  padding: 0.4rem 0;
+  display: grid;
+  grid-gap: 0.6rem;
+  grid-auto-flow: column;
+  grid-template-columns: auto max-content;
+  box-sizing: border-box;
+}
+
 .prose {
   max-width: 65ch;
   font-size: 1rem;
