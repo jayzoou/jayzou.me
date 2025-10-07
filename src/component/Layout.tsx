@@ -10,6 +10,7 @@ const Layout = () => {
     <div>
       <NavBar />
       <main className={mainClass}>
+        <div>{typeof location === 'object' && location.pathname}</div>
         <Outlet />
       </main>
     </div>
