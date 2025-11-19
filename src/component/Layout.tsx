@@ -1,7 +1,10 @@
 import { Outlet } from 'react-router-dom'
 import NavBar from './NavBar.tsx'
 
-console.log(1234, window)
+if (typeof window !== 'undefined'){
+  console.log(1234, window)
+  console.log(1234, location)  
+}
 
 const Layout = () => {
   let mainClass = 'px-7 py-10'
