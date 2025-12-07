@@ -30,6 +30,6 @@
     "typescript-eslint": "^8.24.1",
     "unocss": "^66.1.0-beta.11",
     "vite": "^6.2.0",
-    "vite-react-static": "^0.1.0"
+    "vite-react-static": "0.1.2"
   }
 }
