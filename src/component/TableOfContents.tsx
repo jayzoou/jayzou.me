@@ -81,6 +81,8 @@ const TableOfContents = () => {
     }
   }
 
+  console.log('headings', headings)
+
   if (headings.length === 0) return null
 
   return (
