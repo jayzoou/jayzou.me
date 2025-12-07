@@ -13,8 +13,6 @@ const TableOfContents = () => {
   const location = useLocation()
   const obsRef = useRef<MutationObserver | null>(null)
 
-  console.log('location in toc', location.pathname)
-
   useEffect(() => {
     const extractHeadings = () => {
       const article = document.querySelector('main')
@@ -86,7 +84,9 @@ const TableOfContents = () => {
 
   console.log('headings', headings)
 
-  if (headings.length === 0) return null
+  if (headings.length === 0) return (
+    <div>{headings.length}</div>
+  )
 
   return (
     <nav className="toc">
