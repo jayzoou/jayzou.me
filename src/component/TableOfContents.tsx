@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 
 interface Heading {
@@ -11,6 +11,7 @@ const TableOfContents = () => {
   const [headings, setHeadings] = useState<Heading[]>([])
   const [activeId, setActiveId] = useState<string>('')
   const location = useLocation()
+  const obsRef = useRef<MutationObserver | null>(null)
 
   useEffect(() => {
     const extractHeadings = () => {
@@ -33,25 +34,23 @@ const TableOfContents = () => {
 
       setHeadings(items)
     }
-
-    const main = document.querySelector('main')
-    if (!main) return
-
     // Try extracting immediately
     extractHeadings()
 
-    // Observe DOM changes inside <main> so we capture headings rendered later (MDX/async)
+    // Observe the whole document body so we catch cases where <main> or its
+    // children are inserted asynchronously (SSR hydration, MDX loaders, etc.).
     const mutationObserver = new MutationObserver(() => {
       extractHeadings()
     })
-    mutationObserver.observe(main, { childList: true, subtree: true })
+    obsRef.current = mutationObserver
+    mutationObserver.observe(document.body, { childList: true, subtree: true })
 
     // Fallback timer in case mutations don't fire quickly
-    const timer = setTimeout(extractHeadings, 300)
+    const timer = setTimeout(extractHeadings, 800)
 
     return () => {
       clearTimeout(timer)
-      mutationObserver.disconnect()
+      if (obsRef.current) obsRef.current.disconnect()
     }
   }, [location.pathname])
 
