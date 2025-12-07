@@ -16,7 +16,6 @@ const TableOfContents = () => {
   useEffect(() => {
     const extractHeadings = () => {
       const article = document.querySelector('main')
-      console.log('article', article)
       if (!article) return
 
       const elements = article.querySelectorAll('h1, h2, h3')
@@ -82,11 +81,7 @@ const TableOfContents = () => {
     }
   }
 
-  console.log('headings', headings)
-
-  if (headings.length === 0) return (
-    <div>{headings.length}</div>
-  )
+  if (headings.length === 0) return null
 
   return (
     <nav className="toc">
