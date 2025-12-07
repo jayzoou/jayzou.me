@@ -13,9 +13,12 @@ const TableOfContents = () => {
   const location = useLocation()
   const obsRef = useRef<MutationObserver | null>(null)
 
+  console.log('location in toc', location.pathname)
+
   useEffect(() => {
     const extractHeadings = () => {
       const article = document.querySelector('main')
+      console.log('article', article)
       if (!article) return
 
       const elements = article.querySelectorAll('h1, h2, h3')
