@@ -13,6 +13,8 @@ const Layout = () => {
   
   const showToc = isPostPage && !isIndexPage
 
+  console.log('Layout render - location:', location.pathname, 'showToc:', showToc)
+
   return (
     <div className="layout-container">
       <NavBar />
