@@ -34,8 +34,25 @@ const TableOfContents = () => {
       setHeadings(items)
     }
 
-    const timer = setTimeout(extractHeadings, 100)
-    return () => clearTimeout(timer)
+    const main = document.querySelector('main')
+    if (!main) return
+
+    // Try extracting immediately
+    extractHeadings()
+
+    // Observe DOM changes inside <main> so we capture headings rendered later (MDX/async)
+    const mutationObserver = new MutationObserver(() => {
+      extractHeadings()
+    })
+    mutationObserver.observe(main, { childList: true, subtree: true })
+
+    // Fallback timer in case mutations don't fire quickly
+    const timer = setTimeout(extractHeadings, 300)
+
+    return () => {
+      clearTimeout(timer)
+      mutationObserver.disconnect()
+    }
   }, [location.pathname])
 
   useEffect(() => {
