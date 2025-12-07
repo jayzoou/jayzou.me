@@ -18,7 +18,7 @@ const Layout = () => {
       <NavBar />
       <div className={showToc ? 'content-with-toc' : ''}>
         {showToc && <TableOfContents />}
-        <main className={isPostPage ? 'prose max-w-3xl m-auto' : 'px-7 py-10'}>
+        <main className={isPostPage ? showToc ? 'prose max-w-3xl ml-10' : 'prose max-w-3xl m-auto' : 'px-7 py-10'}>
           <Outlet />
         </main>
       </div>
