@@ -1,18 +1,27 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import NavBar from './NavBar.tsx'
+import TableOfContents from './TableOfContents.tsx'
 
 const Layout = () => {
   const location = useLocation()
-  let mainClass = 'px-7 py-10'
-  if (location.pathname.startsWith('/posts')) {
-    mainClass = 'prose max-w-3xl m-auto'
-  }
+  const isPostPage = location.pathname.startsWith('/posts')
+  const isIndexPage = location.pathname.endsWith('/') || 
+    location.pathname === '/posts' || 
+    location.pathname === '/posts/english' ||
+    location.pathname === '/posts/english/grammar' ||
+    location.pathname === '/posts/english/document'
+  
+  const showToc = isPostPage && !isIndexPage
+
   return (
-    <div>
+    <div className="layout-container">
       <NavBar />
-      <main className={mainClass}>
-        <Outlet />
-      </main>
+      <div className={showToc ? 'content-with-toc' : ''}>
+        {showToc && <TableOfContents />}
+        <main className={isPostPage ? 'prose max-w-3xl m-auto' : 'px-7 py-10'}>
+          <Outlet />
+        </main>
+      </div>
     </div>
   )
 }
