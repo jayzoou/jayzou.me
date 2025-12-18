@@ -7,11 +7,13 @@ type Result = {
 	confidence: number
 }
 
+
 const ImageClassification = () => {
 	const imgRef = useRef<HTMLImageElement | null>(null)
 	const [preview, setPreview] = useState<string | null>(defaultImg)
 	const [results, setResults] = useState<Result[] | null>(null)
 	const [loadingModel, setLoadingModel] = useState(false)
+	const [modelReady, setModelReady] = useState(false)
 	const classifierRef = useRef<any>(null)
 
 	useEffect(() => {
@@ -25,6 +27,7 @@ const ImageClassification = () => {
 				const classifier = await ml5.imageClassifier('MobileNet')
 				if (!mounted) return
 				classifierRef.current = classifier
+				setModelReady(true)
 			} catch (err) {
 				// ignore: user will see no classification
 				console.error('ml5 load error', err)
@@ -38,20 +41,29 @@ const ImageClassification = () => {
 	}, [])
 
 	useEffect(() => {
-		if (!preview || !classifierRef.current || !imgRef.current) return
-		const img = imgRef.current || preview
-		classifierRef.current.classify(img, (res: any, err: any) => {
-			if (err) {
-				console.error(err)
-				setResults(null)
-				return
-			}
-			const parsed: Result[] = (res || []).map((r: any) => ({
-				label: r.label,
-				confidence: r.confidence,
-			}))
-			setResults(parsed)
-		})
+		if (!preview || !modelReady || !imgRef.current) return
+		const img = imgRef.current
+		const runClassify = () => {
+			classifierRef.current.classify(img, (err: any, res: any) => {
+				if (err) {
+					console.error(err)
+					setResults(null)
+					return
+				}
+				const parsed: Result[] = (res || []).map((r: any) => ({
+					label: r.label,
+					confidence: r.confidence,
+				}))
+				setResults(parsed)
+			})
+		}
+
+		// ensure image is loaded before classifying
+		if (img.complete && img.naturalWidth > 0) {
+			runClassify()
+		} else {
+			img.onload = () => runClassify()
+		}
 	}, [preview])
 
 	const handleFiles = (file?: File) => {
