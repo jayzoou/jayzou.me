@@ -1,5 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react'
+import defaultImg from './img/cat.jpg'
 
 type Result = {
 	label: string
@@ -8,7 +9,7 @@ type Result = {
 
 const ImageClassification = () => {
 	const imgRef = useRef<HTMLImageElement | null>(null)
-	const [preview, setPreview] = useState<string | null>(null)
+	const [preview, setPreview] = useState<string | null>(defaultImg)
 	const [results, setResults] = useState<Result[] | null>(null)
 	const [loadingModel, setLoadingModel] = useState(false)
 	const classifierRef = useRef<any>(null)
@@ -40,7 +41,6 @@ const ImageClassification = () => {
 		if (!preview || !classifierRef.current || !imgRef.current) return
 		const img = imgRef.current
 		classifierRef.current.classify(img, (res: any, err: any) => {
-      console.log('classify result', err, res);
 			if (err) {
 				console.error(err)
 				setResults(null)
@@ -58,7 +58,7 @@ const ImageClassification = () => {
 		if (!file) return
 		const url = URL.createObjectURL(file)
 		setPreview((prev) => {
-			if (prev) URL.revokeObjectURL(prev)
+			if (prev && prev.startsWith && prev.startsWith('blob:')) URL.revokeObjectURL(prev)
 			return url
 		})
 		setResults(null)
@@ -105,7 +105,7 @@ const ImageClassification = () => {
 						ref={imgRef}
 						src={preview}
 						alt="preview"
-						style={{ maxWidth: '100%', display: 'block' }}
+						style={{ width: '50%', maxWidth: '100%', display: 'block', margin: '0 auto' }}
 					/>
 					<div className="mt-2">
 						{results === null ? (
