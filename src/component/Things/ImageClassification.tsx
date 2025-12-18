@@ -41,33 +41,51 @@ const ImageClassification = () => {
 	}, [])
 
 	useEffect(() => {
-		if (!preview || !modelReady || !imgRef.current) return
-		const img = imgRef.current
-		const runClassify = () => {
-			classifierRef.current.classify(img, (err: any, res: any) => {
-				if (err) {
-					console.error(err)
-					setResults(null)
-					return
-				}
-				const parsed: Result[] = (res || []).map((r: any) => ({
-					label: r.label,
-					confidence: r.confidence,
-				}))
-				setResults(parsed)
-			})
-		}
-
-		// ensure image is loaded before classifying
-		if (img.complete && img.naturalWidth > 0) {
-			runClassify()
-		} else {
-			img.onload = () => {
-				runClassify()
-				img.onload = null
-			}
-		}
+		// handled by separate effects and onLoad handler
+		return
 	}, [preview, modelReady])
+
+	// reusable classify function
+	const classifyImage = async (img: HTMLImageElement) => {
+		if (!classifierRef.current) {
+			console.warn('classifier not ready')
+			return
+		}
+		setResults(null)
+		try {
+			console.log('classify: running on', img.src)
+			const res = await classifierRef.current.classify(img)
+			console.log('classify: result', res)
+			const parsed: Result[] = (res || []).map((r: any) => ({
+				label: r.label,
+				confidence: r.confidence,
+			}))
+			setResults(parsed)
+		} catch (err) {
+			console.error('classify error', err)
+			setResults(null)
+		}
+	}
+
+	// when preview changes: if image already loaded + model ready, classify; otherwise rely on img onLoad
+	useEffect(() => {
+		if (!preview) return
+		const img = imgRef.current
+		if (!img) return
+		if (modelReady && img.complete && img.naturalWidth > 0) {
+			classifyImage(img)
+		}
+	}, [preview])
+
+	// when model becomes ready, if preview image already loaded classify it
+	useEffect(() => {
+		if (!modelReady) return
+		const img = imgRef.current
+		if (!img) return
+		if (preview && img.complete && img.naturalWidth > 0) {
+			classifyImage(img)
+		}
+	}, [modelReady])
 
 	const handleFiles = (file?: File) => {
 		if (!file) return
@@ -121,6 +139,7 @@ const ImageClassification = () => {
 						src={preview}
 						alt="preview"
 						style={{ width: '50%', maxWidth: '100%', display: 'block', margin: '0 auto' }}
+						onLoad={() => imgRef.current && classifyImage(imgRef.current)}
 					/>
 					<div className="mt-2">
 						{results === null ? (
