@@ -62,9 +62,12 @@ const ImageClassification = () => {
 		if (img.complete && img.naturalWidth > 0) {
 			runClassify()
 		} else {
-			img.onload = () => runClassify()
+			img.onload = () => {
+				runClassify()
+				img.onload = null
+			}
 		}
-	}, [preview])
+	}, [preview, modelReady])
 
 	const handleFiles = (file?: File) => {
 		if (!file) return
