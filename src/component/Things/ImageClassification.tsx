@@ -39,7 +39,7 @@ const ImageClassification = () => {
 
 	useEffect(() => {
 		if (!preview || !classifierRef.current || !imgRef.current) return
-		const img = imgRef.current
+		const img = imgRef.current || preview
 		classifierRef.current.classify(img, (res: any, err: any) => {
 			if (err) {
 				console.error(err)
