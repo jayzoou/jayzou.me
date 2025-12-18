@@ -1,10 +1,10 @@
-import Infinite from './Things/Infinite'
+// import ImageClassification from './Things/ImageClassification'
 
 const Home = () => {
   return (
     <div className="prose m-auto">
       <h1>Jay Zou</h1>
-      <Infinite></Infinite>
+      {/* <ImageClassification></ImageClassification> */}
     </div>
   )
 }
