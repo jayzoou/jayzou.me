@@ -6,7 +6,7 @@ const PostNav = () => {
     { to: '/posts/english', label: 'English' },
   ]
 
-  const smallLinks = [{ to: '/posts/js_core', label: 'JavaScript core' }]
+  const smallLinks = [{ to: '/posts/js_core', label: 'JavaScript Core' }]
 
   return <SectionNav mainLinks={mainLinks} smallLinks={smallLinks} />
 }
