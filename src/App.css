@@ -12,6 +12,13 @@
   grid-template-columns: auto max-content;
   box-sizing: border-box;
 }
+/* Active navigation link highlight */
+.nav a.active,
+.nav-sub a.active,
+.nav-small a.active {
+  color: rgba(255,255,255,0.9);
+  text-decoration: none;
+}
 
 .nav-sub {
   width: 100%;
@@ -25,7 +32,7 @@
 
 .nav-small {
   width: 100%;
-  padding: 0.4rem 0;
+  padding: 1rem 0;
   display: grid;
   grid-gap: 0.6rem;
   grid-auto-flow: column;
@@ -58,4 +65,42 @@
 
 .text-3xl {
   font-size: 1.875rem;
+}
+
+/* Reduce nav paddings on small screens and ensure root has horizontal padding */
+@media (max-width: 640px) {
+  #root {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    box-sizing: border-box;
+  }
+
+  .nav {
+    padding: 0.6rem;
+    grid-gap: 0.6rem;
+  }
+
+  .nav-sub {
+    padding: 0.5rem 0;
+  }
+
+  .nav-small {
+    padding: 0.4rem 0;
+  }
+
+  /* Make navigation text smaller on mobile for better fit */
+  .nav,
+  .nav a,
+  .nav-sub,
+  .nav-sub a,
+  .nav-small,
+  .nav-small a,
+  .text-3xl,
+  .text-2xl {
+    font-size: 1.25rem;
+  }
+
+  .nav-small a{
+    font-size: 1.1rem;
+  }
 }

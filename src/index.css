@@ -106,3 +106,42 @@ body {
     display: block;
   }
 }
+
+/* Mobile spacing: reserve comfortable left/right margins for nav and content */
+@media (max-width: 640px) {
+  header {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    box-sizing: border-box;
+  }
+
+  /* Remove large left margin on the logo/icon for small screens */
+  header a:first-child {
+    margin-left: 0 !important;
+  }
+
+  /* Make the main container respect horizontal padding */
+  .content-with-toc {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Ensure main content has internal horizontal padding and fits the viewport */
+  main {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    box-sizing: border-box;
+  }
+
+  /* When prose was centered with margin auto, keep it full-width with padding */
+  .prose.m-auto {
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* Keep the TOC hidden on small devices (already hidden at 1024px but reaffirm) */
+  .toc {
+    display: none;
+  }
+}

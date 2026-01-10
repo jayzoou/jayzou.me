@@ -7,6 +7,7 @@ const Layout = () => {
   const isPostPage = location.pathname.startsWith('/posts')
   const isIndexPage = location.pathname.endsWith('/') || 
     location.pathname === '/posts' || 
+    location.pathname === '/posts/js_core' || 
     location.pathname === '/posts/english' ||
     location.pathname === '/posts/english/grammar' ||
     location.pathname === '/posts/english/document'
