@@ -1,6 +1,7 @@
 import e_l_code from './assets/img/e_l_code.png'
 import e_l_flow from './assets/img/e_l_flow.svg'
 import e_l_code_01 from './assets/img/e_l_code_01.png'
+import e_l_code_03 from './assets/img/e_l_code_03.png'
 import { MermaidInit } from '../../../src/lib/mermaid'
 
 # 彻底搞懂 JavaScript 事件循环：从银行排队说起
@@ -30,8 +31,8 @@ import { MermaidInit } from '../../../src/lib/mermaid'
 为了理解事件循环，我们把 JS 引擎想象成一位**银行柜员**。
 
 ### 场景：
-1.  **宏任务（Macrotask）**：大厅里排队拿号的**客户**。每个客户代表一个独立的大任务（比如：存钱、取钱）。
-2.  **微任务（Microtask）**：客户站在柜台前，办完主业务后，突然对柜员说：“**顺便**帮我改个密码”或者“**顺便**查个余额”。
+1.  **宏任务（Macrotask）**：由宿主环境（浏览器或 Node.js）发起的任务。它代表一段离散的、独立的工作单元。就像大厅里排队拿号的**客户**。每个客户代表一个独立的大任务（比如：存钱、取钱）。
+2.  **微任务（Microtask）**：由 JavaScript 引擎本身发起的任务。它通常用于处理需要在当前脚本执行完后立即执行的小型任务。想象下客户站在柜台前，办完主业务后，突然对柜员说：“**顺便**帮我改个密码”或者“**顺便**查个余额”。
 
 ### 规则：
 *   柜员每次只能接待**一位**排队的客户（执行一个宏任务）。
@@ -42,7 +43,7 @@ import { MermaidInit } from '../../../src/lib/mermaid'
 ## 3. 深入解析：执行机制与优先级
 
 <div style={{margin: '1rem 0'}}>
-  <img src={e_l_flow} alt="事件循环流程图" style={{maxWidth: '100%'}} />
+  <img src={e_l_flow} alt="事件循环流程图" style={{maxWidth: '90%'}} />
 </div>
 
 ### 任务分类表
@@ -91,7 +92,7 @@ import { MermaidInit } from '../../../src/lib/mermaid'
 
 看看下面这段代码，试着按照“银行办业务”的逻辑推导一下：
 
-<img src={e_l_code} alt="事件循环示例代码" style={{maxWidth: '100%'}} />
+<img src={e_l_code} alt="事件循环示例代码" style={{maxWidth: '80%'}} />
 
 **执行结果：**
 1.  `1. 柜员上班`
@@ -112,7 +113,7 @@ import { MermaidInit } from '../../../src/lib/mermaid'
 **解决方案**：利用 `setTimeout` 把大任务拆分成很多个小宏任务，给浏览器留出时间去渲染 UI。
 
 <div style={{margin: '1rem 0'}}>
-  <img src={e_l_code_01} alt="事件循环示例代码片段" style={{maxWidth: '100%'}} />
+  <img src={e_l_code_01} alt="事件循环示例代码片段" style={{maxWidth: '90%'}} />
 </div>
 
 ### B. Vue 的 nextTick 原理
@@ -127,7 +128,17 @@ Vue 会把更新 DOM 的操作放进一个**微任务**队列里。
 
 **后果**：浏览器会完全失去响应，因为事件循环被困在了微任务阶段，永远无法到达“UI 渲染”和“处理点击事件”的步骤。
 
+### D. 错误的定时器预期
+
+<div style={{margin: '1rem 0'}}>
+  <img src={e_l_code_03} alt="事件循环示例代码片段" style={{maxWidth: '80%'}} />
+</div>
 ---
+
+
+**后果**：你会发现输出远大于 100ms（通常是 500ms+）。
+
+**原因**：定时器到期后只是将回调放入宏任务队列，它必须等待当前的同步代码和微任务队列全部执行完。
 
 ## 总结
 
