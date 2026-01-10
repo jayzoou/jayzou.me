@@ -125,7 +125,7 @@ const ImageClassification = () => {
 				className="border-dashed border-2 border-slate-300 rounded p-4 text-center"
 				style={{ cursor: 'pointer' }}
 			>
-				<p>Drag the image here, or click to select the image for recognition.</p>
+				<p>Drag the picture here, or click to select the picture for recognition.</p>
 						<div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
 							<label htmlFor="image-input" className="inline-block px-4 py-2 rounded bg-gray-700 text-white cursor-pointer">Select the picture</label>
 							<input id="image-input" type="file" accept="image/*" onChange={onFileChange} style={{ display: 'none' }} />
