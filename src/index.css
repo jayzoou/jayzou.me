@@ -145,3 +145,51 @@ body {
     display: none;
   }
 }
+
+/* Global table styles for prose and general tables (responsive + dark theme friendly) */
+table,
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+}
+
+.prose table th,
+.prose table td {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: left;
+  vertical-align: top;
+  font-size: 0.95rem;
+}
+
+.prose table thead th {
+  background: rgba(255, 255, 255, 0.04);
+  font-weight: 700;
+}
+
+.prose table tbody tr:nth-child(odd) td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.prose table code {
+  background: rgba(0, 0, 0, 0.25);
+  padding: 0.08rem 0.28rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+/* Make tables horizontally scrollable on small screens */
+@media (max-width: 640px) {
+  .prose table,
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .prose table th,
+  .prose table td {
+    padding: 0.5rem 0.6rem;
+  }
+}
