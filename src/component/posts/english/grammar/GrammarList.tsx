@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import PageList from '../../../PageList'
 
 const grammarPages = [
   { path: '/posts/english/grammar/element', title: '成分', desc: '主语、谓语、宾语、定语、状语、补语' },
@@ -11,20 +11,7 @@ const grammarPages = [
 ]
 
 const GrammarList = () => {
-  return (
-    <div className="grammar-list">
-      <ul className="list-none p-0">
-        {grammarPages.map((page) => (
-          <li key={page.path} className="my-4 border border-gray-200 rounded-lg hover:border-gray-400 transition-colors">
-            <Link to={page.path} className="no-underline">
-              <h3 className="m-0 text-lg font-semibold">{page.title}</h3>
-              <p className="m-0 mt-1 text-gray-500 text-sm">{page.desc}</p>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
+  return <PageList pages={grammarPages} className="grammar-list" />
 }
 
 export default GrammarList
