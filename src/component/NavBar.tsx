@@ -17,7 +17,7 @@ const NavBar = () => {
       <nav className='nav'>
         <div className='spacer'></div>
         <div className='flex gap-4 mr-4'>
-          <NavLink to="/posts" className={() => matchLen('/posts') === maxMatch && maxMatch > 0 ? 'active' : ''}>Blog</NavLink>
+          <NavLink to="/posts/js_core" className={() => matchLen('/posts/js_core') === maxMatch && maxMatch > 0 ? 'active' : ''}>Blog</NavLink>
           <NavLink to="/projects" className={() => matchLen('/projects') === maxMatch && maxMatch > 0 ? 'active' : ''}>Projects</NavLink>
           <a href="https://ai.jayzou.me/" target='_blank' rel='noopener noreferrer'>AI Assistant</a>
           <a href="https://github.com/jayzoou" target='_blank'>GitHub</a> 
