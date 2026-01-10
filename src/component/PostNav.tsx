@@ -1,14 +1,8 @@
 import SectionNav from './SectionNav'
+import { mainLinks, postSmallLinks } from '../lib/navLinks'
 
 const PostNav = () => {
-  const mainLinks = [
-    { to: '/posts/js_core', label: 'Blog' },
-    { to: '/posts/english', label: 'English' },
-  ]
-
-  const smallLinks = [{ to: '/posts/js_core', label: 'JavaScript Core' }]
-
-  return <SectionNav mainLinks={mainLinks} smallLinks={smallLinks} />
+  return <SectionNav mainLinks={mainLinks} smallLinks={postSmallLinks} />
 }
 
 export default PostNav

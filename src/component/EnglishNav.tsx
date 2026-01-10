@@ -1,14 +1,8 @@
 import SectionNav from './SectionNav'
+import { mainLinks, englishSmallLinks } from '../lib/navLinks'
 
 const EnglishNav = () => {
-  const mainLinks = [
-    { to: '/posts/js_core', label: 'Blog' },
-    { to: '/posts/english', label: 'English' },
-  ]
-
-  const smallLinks = [{ to: '/posts/english/grammar', label: '语法' }]
-
-  return <SectionNav mainLinks={mainLinks} smallLinks={smallLinks} />
+  return <SectionNav mainLinks={mainLinks} smallLinks={englishSmallLinks} />
 }
 
 export default EnglishNav
