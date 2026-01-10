@@ -109,8 +109,13 @@ const ImageClassification = () => {
 
 	const onFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
 		const file = e.target.files && e.target.files[0]
-		if (file) handleFiles(file)
+		if (file) {
+			handleFiles(file)
+			setSelectedFileName(file.name)
+		}
 	}
+
+	const [selectedFileName, setSelectedFileName] = useState<string | null>(null)
 
 	return (
 		<div>
@@ -120,15 +125,14 @@ const ImageClassification = () => {
 				className="border-dashed border-2 border-slate-300 rounded p-4 text-center"
 				style={{ cursor: 'pointer' }}
 			>
-				<p>拖拽图片到此处，或点击选择图片进行识别</p>
-				<input
-					type="file"
-					accept="image/*"
-					onChange={onFileChange}
-					style={{ marginTop: 8 }}
-				/>
+				<p>Drag the image here, or click to select the image for recognition.</p>
+						<div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+							<label htmlFor="image-input" className="inline-block px-4 py-2 rounded bg-gray-700 text-white cursor-pointer">Select the picture</label>
+							<input id="image-input" type="file" accept="image/*" onChange={onFileChange} style={{ display: 'none' }} />
+							<span className="text-sm text-gray-400">{selectedFileName ? selectedFileName : 'No picture selected'}</span>
+						</div>
 				<div style={{ marginTop: 12 }}>
-					{loadingModel ? <small>模型加载中…</small> : <small>模型已就绪</small>}
+					{loadingModel ? <small>Loading model…</small> : <small>Model ready</small>}
 				</div>
 			</div>
 
@@ -143,9 +147,9 @@ const ImageClassification = () => {
 					/>
 					<div className="mt-2">
 						{results === null ? (
-							<div>识别中…</div>
+							<div>Recognizing…</div>
 						) : results.length === 0 ? (
-							<div>未检测到结果</div>
+							<div>No results detected</div>
 						) : (
 							<ul>
 								{results.map((r, i) => (
