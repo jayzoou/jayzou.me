@@ -15,6 +15,12 @@ const Projects = () => {
             <div className="text-3 mt-3">A minimal scaffold that runs Lighthouse to produce performance reports.</div>
           </a>
         </div>
+        <div className="w-full sm:w-1/3 md:w-1/4 pl-4 pr-4 rounded-lg my-4 bg-black:08 hover:bg-black:20 text-white">
+          <a className="block pt-4 pb-4" href="https://github.com/jayzoou/MCP-Icon" target="_blank" rel="noopener noreferrer">
+            <div className="text-6">MCP Icon</div>
+            <div className="text-3 mt-3">Search and generate icons</div>
+          </a>
+        </div>
       </div>
     </div>
   )
