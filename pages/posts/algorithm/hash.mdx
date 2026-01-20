@@ -1,0 +1,1967 @@
+
+# 前端算法系列(四):哈希表 - Map与Set的原理与实战
+
+## 一、问题引入
+
+作为前端开发工程师,你每天都在使用哈希表,只是可能没有意识到:
+
+### 场景1: 数组去重
+```javascript
+// 需求:去除数组中的重复元素
+const arr = [1, 2, 2, 3, 3, 3, 4, 5, 5];
+
+// ❌ 双重循环: O(n²)
+const unique1 = arr.filter((item, index) => arr.indexOf(item) === index);
+
+// ✅ 使用 Set: O(n)
+const unique2 = [...new Set(arr)];
+
+// 性能差距:
+// 10000 个元素: 500ms vs 5ms (快 100 倍!)
+```
+
+### 场景2: 快速查找
+```javascript
+// 需求:判断用户是否已登录
+const loggedInUsers = ['user1', 'user2', 'user3', /* ...10000 个用户 */];
+
+// ❌ 数组查找: O(n)
+const isLoggedIn1 = loggedInUsers.includes('user5000'); // 需要遍历 5000 次
+
+// ✅ 使用 Set: O(1)
+const userSet = new Set(loggedInUsers);
+const isLoggedIn2 = userSet.has('user5000'); // 立即返回!
+```
+
+### 场景3: 统计词频
+```javascript
+// 需求:统计文章中每个单词出现的次数
+const words = ['hello', 'world', 'hello', 'javascript', 'world'];
+
+// ❌ 数组遍历: O(n²)
+const count1 = {};
+words.forEach(word => {
+  count1[word] = (count1[word] || 0) + 1;
+});
+
+// ✅ 使用 Map: O(n)
+const count2 = new Map();
+words.forEach(word => {
+  count2.set(word, (count2.get(word) || 0) + 1);
+});
+```
+
+### 场景4: 状态管理
+```javascript
+// React 组件状态缓存
+const componentCache = new Map();
+
+function getComponent(id) {
+  if (!componentCache.has(id)) {
+    componentCache.set(id, createComponent(id));
+  }
+  return componentCache.get(id);
+}
+
+// Vue 响应式系统的依赖收集
+const targetMap = new WeakMap(); // 存储依赖关系
+```
+
+今天我们将深入学习**哈希表 (Hash Table)**,掌握 Map 和 Set 的原理与应用。
+
+---
+
+## 二、算法原理
+
+### 什么是哈希表?
+
+哈希表是一种通过**哈希函数**将键映射到数组索引的数据结构:
+
+```
+哈希表的工作原理:
+
+1. 哈希函数: key → hash code → index
+    "apple"  → hash("apple") → 3
+    "banana" → hash("banana") → 7
+
+2. 数组存储:
+    [0] → null
+    [1] → null
+    [2] → null
+    [3] → "apple": 5
+    [4] → null
+    [5] → null
+    [6] → null
+    [7] → "banana": 3
+
+3. 快速访问: O(1)
+    查找 "apple" → hash("apple") → 3 → 直接访问!
+```
+
+### 哈希函数
+
+一个好的哈希函数应该:
+- **确定性**: 相同输入总是产生相同输出
+- **均匀分布**: 减少冲突
+- **高效计算**: 快速得到哈希值
+
+```javascript
+/**
+  * 简单的字符串哈希函数
+  */
+function simpleHash(str: string, size: number): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) % size;
+  }
+  return hash;
+}
+
+// 示例
+simpleHash("apple", 10);  // 3
+simpleHash("banana", 10); // 7
+```
+
+### 哈希冲突
+
+不同的键可能产生相同的哈希值:
+
+```
+冲突示例:
+hash("apple")  = 3
+hash("orange") = 3  ← 冲突!
+
+解决方法:
+
+1. 链地址法 (Chaining):
+    [3] → ["apple": 5] → ["orange": 8]
+
+2. 开放寻址法 (Open Addressing):
+    [3] → "apple": 5
+    [4] → "orange": 8  ← 放到下一个空位
+```
+
+### Map vs Object
+
+<table>
+  <thead>
+    <tr>
+      <th>特性</th>
+      <th>Map</th>
+      <th>Object</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>键类型</td>
+      <td>任意类型</td>
+      <td>字符串/Symbol</td>
+    </tr>
+    <tr>
+      <td>键顺序</td>
+      <td>插入顺序</td>
+      <td>无序(ES2015+有序)</td>
+    </tr>
+    <tr>
+      <td>大小</td>
+      <td><code>map.size</code></td>
+      <td><code>Object.keys(obj).length</code></td>
+    </tr>
+    <tr>
+      <td>迭代</td>
+      <td>直接迭代</td>
+      <td>需要 <code>Object.keys()</code></td>
+    </tr>
+    <tr>
+      <td>性能</td>
+      <td>频繁增删更快</td>
+      <td>小数据量更快</td>
+    </tr>
+    <tr>
+      <td>原型链</td>
+      <td>无</td>
+      <td>有</td>
+    </tr>
+  </tbody>
+</table>
+
+### Set vs Array
+
+<table>
+  <thead>
+    <tr>
+      <th>特性</th>
+      <th>Set</th>
+      <th>Array</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>重复元素</td>
+      <td>不允许</td>
+      <td>允许</td>
+    </tr>
+    <tr>
+      <td>查找</td>
+      <td>O(1)</td>
+      <td>O(n)</td>
+    </tr>
+    <tr>
+      <td>插入</td>
+      <td>O(1)</td>
+      <td>O(1) 或 O(n)</td>
+    </tr>
+    <tr>
+      <td>删除</td>
+      <td>O(1)</td>
+      <td>O(n)</td>
+    </tr>
+    <tr>
+      <td>顺序</td>
+      <td>插入顺序</td>
+      <td>索引顺序</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## 三、代码实现
+
+### 1. 简单哈希表实现
+
+```typescript
+/**
+  * 哈希表节点(链地址法)
+  */
+class HashNode<K, V> {
+  key: K;
+  value: V;
+  next: HashNode<K, V> | null = null;
+  
+  constructor(key: K, value: V) {
+    this.key = key;
+    this.value = value;
+  }
+}
+
+/**
+  * 哈希表实现
+  */
+class HashMap<K, V> {
+  private buckets: Array<HashNode<K, V> | null>;
+  private size: number = 0;
+  private capacity: number;
+  private loadFactor: number = 0.75;
+  
+  constructor(capacity: number = 16) {
+    this.capacity = capacity;
+    this.buckets = new Array(capacity).fill(null);
+  }
+  
+  /**
+    * 哈希函数
+    */
+  private hash(key: K): number {
+    const str = String(key);
+    let hash = 0;
+    
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash * 31 + str.charCodeAt(i)) % this.capacity;
+    }
+    
+    return Math.abs(hash);
+  }
+  
+  /**
+    * 设置键值对
+    */
+  set(key: K, value: V): void {
+    const index = this.hash(key);
+    let node = this.buckets[index];
+    
+    // 如果桶为空,直接插入
+    if (!node) {
+      this.buckets[index] = new HashNode(key, value);
+      this.size++;
+      this.checkResize();
+      return;
+    }
+    
+    // 遍历链表
+    let prev = null;
+    while (node) {
+      // 如果键已存在,更新值
+      if (node.key === key) {
+        node.value = value;
+        return;
+      }
+      prev = node;
+      node = node.next;
+    }
+    
+    // 添加到链表末尾
+    prev!.next = new HashNode(key, value);
+    this.size++;
+    this.checkResize();
+  }
+  
+  /**
+    * 获取值
+    */
+  get(key: K): V | undefined {
+    const index = this.hash(key);
+    let node = this.buckets[index];
+    
+    while (node) {
+      if (node.key === key) {
+        return node.value;
+      }
+      node = node.next;
+    }
+    
+    return undefined;
+  }
+  
+  /**
+    * 删除键值对
+    */
+  delete(key: K): boolean {
+    const index = this.hash(key);
+    let node = this.buckets[index];
+    let prev: HashNode<K, V> | null = null;
+    
+    while (node) {
+      if (node.key === key) {
+        if (prev) {
+          prev.next = node.next;
+        } else {
+          this.buckets[index] = node.next;
+        }
+        this.size--;
+        return true;
+      }
+      prev = node;
+      node = node.next;
+    }
+    
+    return false;
+  }
+  
+  /**
+    * 检查是否存在
+    */
+  has(key: K): boolean {
+    return this.get(key) !== undefined;
+  }
+  
+  /**
+    * 检查是否需要扩容
+    */
+  private checkResize(): void {
+    if (this.size / this.capacity > this.loadFactor) {
+      this.resize();
+    }
+  }
+  
+  /**
+    * 扩容
+    */
+  private resize(): void {
+    const oldBuckets = this.buckets;
+    this.capacity *= 2;
+    this.buckets = new Array(this.capacity).fill(null);
+    this.size = 0;
+    
+    // 重新插入所有元素
+    for (const bucket of oldBuckets) {
+      let node = bucket;
+      while (node) {
+        this.set(node.key, node.value);
+        node = node.next;
+      }
+    }
+  }
+  
+  /**
+    * 获取大小
+    */
+  getSize(): number {
+    return this.size;
+  }
+  
+  /**
+    * 清空
+    */
+  clear(): void {
+    this.buckets = new Array(this.capacity).fill(null);
+    this.size = 0;
+  }
+  
+  /**
+    * 获取所有键
+    */
+  keys(): K[] {
+    const keys: K[] = [];
+    
+    for (const bucket of this.buckets) {
+      let node = bucket;
+      while (node) {
+        keys.push(node.key);
+        node = node.next;
+      }
+    }
+    
+    return keys;
+  }
+  
+  /**
+    * 获取所有值
+    */
+  values(): V[] {
+    const values: V[] = [];
+    
+    for (const bucket of this.buckets) {
+      let node = bucket;
+      while (node) {
+        values.push(node.value);
+        node = node.next;
+      }
+    }
+    
+    return values;
+  }
+  
+  /**
+    * 遍历
+    */
+  forEach(callback: (value: V, key: K) => void): void {
+    for (const bucket of this.buckets) {
+      let node = bucket;
+      while (node) {
+        callback(node.value, node.key);
+        node = node.next;
+      }
+    }
+  }
+  
+  /**
+    * 打印哈希表结构
+    */
+  print(): void {
+    console.log('\n📊 哈希表结构:');
+    console.log(`容量: ${this.capacity}, 大小: ${this.size}, 负载因子: ${(this.size / this.capacity).toFixed(2)}`);
+    console.log('─'.repeat(50));
+    
+    this.buckets.forEach((bucket, index) => {
+      if (bucket) {
+        const chain: string[] = [];
+        let node = bucket;
+        while (node) {
+          chain.push(`${node.key}:${node.value}`);
+          node = node.next;
+        }
+        console.log(`[${index}] → ${chain.join(' → ')}`);
+      }
+    });
+    
+    console.log('─'.repeat(50));
+  }
+}
+
+// 测试
+const map = new HashMap<string, number>();
+
+map.set('apple', 5);
+map.set('banana', 3);
+map.set('orange', 8);
+map.set('grape', 2);
+
+map.print();
+
+console.log('apple:', map.get('apple'));   // 5
+console.log('has banana:', map.has('banana')); // true
+
+map.delete('banana');
+console.log('has banana:', map.has('banana')); // false
+
+console.log('keys:', map.keys());
+console.log('values:', map.values());
+```
+
+---
+
+### 2. Set 的实现
+
+```typescript
+/**
+  * Set 实现(基于 HashMap)
+  */
+class HashSet<T> {
+  private map: HashMap<T, boolean>;
+  
+  constructor() {
+    this.map = new HashMap<T, boolean>();
+  }
+  
+  /**
+    * 添加元素
+    */
+  add(value: T): void {
+    this.map.set(value, true);
+  }
+  
+  /**
+    * 删除元素
+    */
+  delete(value: T): boolean {
+    return this.map.delete(value);
+  }
+  
+  /**
+    * 检查是否存在
+    */
+  has(value: T): boolean {
+    return this.map.has(value);
+  }
+  
+  /**
+    * 获取大小
+    */
+  size(): number {
+    return this.map.getSize();
+  }
+  
+  /**
+    * 清空
+    */
+  clear(): void {
+    this.map.clear();
+  }
+  
+  /**
+    * 转换为数组
+    */
+  toArray(): T[] {
+    return this.map.keys();
+  }
+  
+  /**
+    * 遍历
+    */
+  forEach(callback: (value: T) => void): void {
+    this.map.forEach((_, key) => callback(key));
+  }
+  
+  /**
+    * 并集
+    */
+  union(other: HashSet<T>): HashSet<T> {
+    const result = new HashSet<T>();
+    
+    this.forEach(value => result.add(value));
+    other.forEach(value => result.add(value));
+    
+    return result;
+  }
+  
+  /**
+    * 交集
+    */
+  intersection(other: HashSet<T>): HashSet<T> {
+    const result = new HashSet<T>();
+    
+    this.forEach(value => {
+      if (other.has(value)) {
+        result.add(value);
+      }
+    });
+    
+    return result;
+  }
+  
+  /**
+    * 差集
+    */
+  difference(other: HashSet<T>): HashSet<T> {
+    const result = new HashSet<T>();
+    
+    this.forEach(value => {
+      if (!other.has(value)) {
+        result.add(value);
+      }
+    });
+    
+    return result;
+  }
+  
+  /**
+    * 是否为子集
+    */
+  isSubsetOf(other: HashSet<T>): boolean {
+    let isSubset = true;
+    
+    this.forEach(value => {
+      if (!other.has(value)) {
+        isSubset = false;
+      }
+    });
+    
+    return isSubset;
+  }
+}
+
+// 测试
+const set1 = new HashSet<number>();
+set1.add(1);
+set1.add(2);
+set1.add(3);
+
+const set2 = new HashSet<number>();
+set2.add(2);
+set2.add(3);
+set2.add(4);
+
+console.log('set1:', set1.toArray()); // [1, 2, 3]
+console.log('set2:', set2.toArray()); // [2, 3, 4]
+
+console.log('并集:', set1.union(set2).toArray());        // [1, 2, 3, 4]
+console.log('交集:', set1.intersection(set2).toArray()); // [2, 3]
+console.log('差集:', set1.difference(set2).toArray());   // [1]
+```
+
+---
+
+### 3. 经典问题:两数之和
+
+```typescript
+/**
+  * 两数之和 - 使用哈希表 O(n)
+  */
+function twoSum(nums: number[], target: number): number[] {
+  const map = new Map<number, number>();
+  
+  for (let i = 0; i < nums.length; i++) {
+    const complement = target - nums[i];
+    
+    if (map.has(complement)) {
+      return [map.get(complement)!, i];
+    }
+    
+    map.set(nums[i], i);
+  }
+  
+  return [];
+}
+
+// 测试
+console.log(twoSum([2, 7, 11, 15], 9));  // [0, 1]
+console.log(twoSum([3, 2, 4], 6));       // [1, 2]
+
+/**
+  * 可视化过程:
+  * 
+  * nums = [2, 7, 11, 15], target = 9
+  * 
+  * i=0, num=2:
+  *   complement = 9 - 2 = 7
+  *   map 中没有 7
+  *   map.set(2, 0) → map = {2: 0}
+  * 
+  * i=1, num=7:
+  *   complement = 9 - 7 = 2
+  *   map 中有 2! 索引为 0
+  *   返回 [0, 1]
+  */
+```
+
+---
+
+### 4. 经典问题:字母异位词分组
+
+```typescript
+/**
+  * 字母异位词分组
+  * 例: ["eat","tea","tan","ate","nat","bat"]
+  * 输出: [["bat"],["nat","tan"],["ate","eat","tea"]]
+  */
+function groupAnagrams(strs: string[]): string[][] {
+  const map = new Map<string, string[]>();
+  
+  for (const str of strs) {
+    // 排序后的字符串作为键
+    const key = str.split('').sort().join('');
+    
+    if (!map.has(key)) {
+      map.set(key, []);
+    }
+    
+    map.get(key)!.push(str);
+  }
+  
+  return Array.from(map.values());
+}
+
+// 测试
+console.log(groupAnagrams(["eat","tea","tan","ate","nat","bat"]));
+// [["eat","tea","ate"], ["tan","nat"], ["bat"]]
+
+/**
+  * 可视化过程:
+  * 
+  * "eat" → sort → "aet" → map = {"aet": ["eat"]}
+  * "tea" → sort → "aet" → map = {"aet": ["eat", "tea"]}
+  * "tan" → sort → "ant" → map = {"aet": ["eat", "tea"], "ant": ["tan"]}
+  * "ate" → sort → "aet" → map = {"aet": ["eat", "tea", "ate"], "ant": ["tan"]}
+  * "nat" → sort → "ant" → map = {"aet": ["eat", "tea", "ate"], "ant": ["tan", "nat"]}
+  * "bat" → sort → "abt" → map = {"aet": ["eat", "tea", "ate"], "ant": ["tan", "nat"], "abt": ["bat"]}
+  */
+```
+
+---
+
+### 5. 经典问题:最长连续序列
+
+```typescript
+/**
+  * 最长连续序列
+  * 例: [100, 4, 200, 1, 3, 2] → 4 (序列 [1, 2, 3, 4])
+  */
+function longestConsecutive(nums: number[]): number {
+  const set = new Set(nums);
+  let maxLength = 0;
+  
+  for (const num of set) {
+    // 只从序列的起点开始计算
+    if (!set.has(num - 1)) {
+      let currentNum = num;
+      let currentLength = 1;
+      
+      // 计算连续序列长度
+      while (set.has(currentNum + 1)) {
+        currentNum++;
+        currentLength++;
+      }
+      
+      maxLength = Math.max(maxLength, currentLength);
+    }
+  }
+  
+  return maxLength;
+}
+
+// 测试
+console.log(longestConsecutive([100, 4, 200, 1, 3, 2])); // 4
+console.log(longestConsecutive([0, 3, 7, 2, 5, 8, 4, 6, 0, 1])); // 9
+
+/**
+  * 可视化过程:
+  * 
+  * nums = [100, 4, 200, 1, 3, 2]
+  * set = {100, 4, 200, 1, 3, 2}
+  * 
+  * num = 100:
+  *   没有 99,是起点
+  *   100 → 没有 101
+  *   长度 = 1
+  * 
+  * num = 4:
+  *   有 3,不是起点,跳过
+  * 
+  * num = 200:
+  *   没有 199,是起点
+  *   200 → 没有 201
+  *   长度 = 1
+  * 
+  * num = 1:
+  *   没有 0,是起点
+  *   1 → 2 → 3 → 4 → 没有 5
+  *   长度 = 4 ✓
+  * 
+  * 最长连续序列: [1, 2, 3, 4]
+  */
+```
+
+---
+
+## 四、复杂度分析
+
+### 时间复杂度
+
+| 操作 | 哈希表(平均) | 哈希表(最坏) | 数组 | 链表 |
+|------|------------|------------|------|------|
+| 查找 | O(1) | O(n) | O(n) | O(n) |
+| 插入 | O(1) | O(n) | O(1) | O(1) |
+| 删除 | O(1) | O(n) | O(n) | O(n) |
+
+### 空间复杂度
+
+- **哈希表**: O(n) - 存储 n 个元素
+- **负载因子**: 通常设置为 0.75
+  - 太小:浪费空间
+  - 太大:冲突增多,性能下降
+
+### 哈希表 vs 其他数据结构
+
+<table>
+  <thead>
+    <tr>
+      <th>场景</th>
+      <th>最佳选择</th>
+      <th>原因</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>快速查找</td>
+      <td>哈希表</td>
+      <td>O(1) 查找</td>
+    </tr>
+    <tr>
+      <td>有序遍历</td>
+      <td>BST/数组</td>
+      <td>哈希表无序</td>
+    </tr>
+    <tr>
+      <td>范围查询</td>
+      <td>BST</td>
+      <td>支持范围查询</td>
+    </tr>
+    <tr>
+      <td>去重</td>
+      <td>Set</td>
+      <td>自动去重</td>
+    </tr>
+    <tr>
+      <td>计数</td>
+      <td>Map</td>
+      <td>键值对存储</td>
+    </tr>
+    <tr>
+      <td>内存受限</td>
+      <td>数组</td>
+      <td>无额外开销</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## 五、实战应用
+
+### 案例1: LRU 缓存(Map + 双向链表)
+
+```typescript
+/**
+  * LRU 缓存
+  * 使用 Map 保持插入顺序
+  */
+class LRUCache<K, V> {
+  private cache: Map<K, V>;
+  private capacity: number;
+  
+  constructor(capacity: number) {
+    this.capacity = capacity;
+    this.cache = new Map();
+  }
+  
+  /**
+    * 获取值
+    */
+  get(key: K): V | undefined {
+    if (!this.cache.has(key)) {
+      return undefined;
+    }
+    
+    // 更新访问顺序(删除后重新插入)
+    const value = this.cache.get(key)!;
+    this.cache.delete(key);
+    this.cache.set(key, value);
+    
+    return value;
+  }
+  
+  /**
+    * 设置值
+    */
+  put(key: K, value: V): void {
+    // 如果键已存在,先删除
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    }
+    
+    // 插入新值
+    this.cache.set(key, value);
+    
+    // 如果超出容量,删除最久未使用的(Map 的第一个元素)
+    if (this.cache.size > this.capacity) {
+      const firstKey = this.cache.keys().next().value;
+      this.cache.delete(firstKey);
+      console.log(`🗑️  淘汰: ${firstKey}`);
+    }
+  }
+  
+  /**
+    * 获取缓存状态
+    */
+  getStatus(): { size: number; keys: K[] } {
+    return {
+      size: this.cache.size,
+      keys: Array.from(this.cache.keys())
+    };
+  }
+  
+  /**
+    * 打印缓存
+    */
+  print(): void {
+    console.log('\n💾 LRU 缓存:');
+    console.log(`容量: ${this.capacity}, 当前: ${this.cache.size}`);
+    console.log('顺序(最近 → 最久):');
+    
+    const entries = Array.from(this.cache.entries()).reverse();
+    entries.forEach(([key, value], index) => {
+      console.log(`  ${index + 1}. ${key}: ${value}`);
+    });
+  }
+}
+
+// 测试
+const lru = new LRUCache<string, number>(3);
+
+lru.put('a', 1);
+lru.put('b', 2);
+lru.put('c', 3);
+lru.print();
+// 顺序: c, b, a
+
+lru.get('a'); // 访问 a
+lru.print();
+// 顺序: a, c, b (a 移到最前)
+
+lru.put('d', 4); // 淘汰 b
+lru.print();
+// 顺序: d, a, c
+```
+
+---
+
+### 案例2: 请求去重与防抖
+
+```typescript
+/**
+  * 请求去重管理器
+  * 防止相同请求重复发送
+  */
+class RequestDeduplicator {
+  private pendingRequests: Map<string, Promise<any>>;
+  private cache: Map<string, { data: any; timestamp: number }>;
+  private cacheTTL: number;
+  
+  constructor(cacheTTL: number = 60000) { // 默认缓存 60 秒
+    this.pendingRequests = new Map();
+    this.cache = new Map();
+    this.cacheTTL = cacheTTL;
+  }
+  
+  /**
+    * 生成请求键
+    */
+  private generateKey(url: string, options?: RequestInit): string {
+    return `${url}:${JSON.stringify(options || {})}`;
+  }
+  
+  /**
+    * 发起请求(自动去重)
+    */
+  async fetch(url: string, options?: RequestInit): Promise<any> {
+    const key = this.generateKey(url, options);
+    
+    // 1. 检查缓存
+    const cached = this.cache.get(key);
+    if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
+      console.log(`✅ 命中缓存: ${url}`);
+      return cached.data;
+    }
+    
+    // 2. 检查是否有相同的请求正在进行
+    if (this.pendingRequests.has(key)) {
+      console.log(`⏳ 等待进行中的请求: ${url}`);
+      return this.pendingRequests.get(key);
+    }
+    
+    // 3. 发起新请求
+    console.log(`🌐 发起新请求: ${url}`);
+    const promise = fetch(url, options)
+      .then(response => response.json())
+      .then(data => {
+        // 缓存结果
+        this.cache.set(key, {
+          data,
+          timestamp: Date.now()
+        });
+        
+        // 移除待处理请求
+        this.pendingRequests.delete(key);
+        
+        return data;
+      })
+      .catch(error => {
+        // 移除待处理请求
+        this.pendingRequests.delete(key);
+        throw error;
+      });
+    
+    this.pendingRequests.set(key, promise);
+    return promise;
+  }
+  
+  /**
+    * 清除缓存
+    */
+  clearCache(): void {
+    this.cache.clear();
+    console.log('🗑️  缓存已清除');
+  }
+  
+  /**
+    * 清除过期缓存
+    */
+  cleanExpiredCache(): void {
+    const now = Date.now();
+    let cleaned = 0;
+    
+    for (const [key, value] of this.cache.entries()) {
+      if (now - value.timestamp >= this.cacheTTL) {
+        this.cache.delete(key);
+        cleaned++;
+      }
+    }
+    
+    if (cleaned > 0) {
+      console.log(`🧹 清理了 ${cleaned} 个过期缓存`);
+    }
+  }
+  
+  /**
+    * 获取统计信息
+    */
+  getStats(): {
+    cacheSize: number;
+    pendingCount: number;
+    cacheKeys: string[];
+  } {
+    return {
+      cacheSize: this.cache.size,
+      pendingCount: this.pendingRequests.size,
+      cacheKeys: Array.from(this.cache.keys())
+    };
+  }
+}
+
+// 使用示例
+const deduplicator = new RequestDeduplicator(5000); // 5秒缓存
+
+// 模拟多个组件同时请求相同数据
+async function simulateRequests() {
+  const url = 'https://api.example.com/users';
+  
+  // 同时发起 3 个相同请求
+  const promises = [
+    deduplicator.fetch(url),
+    deduplicator.fetch(url),
+    deduplicator.fetch(url)
+  ];
+  
+  // 只会发起 1 个实际请求,其他 2 个会等待
+  const results = await Promise.all(promises);
+  
+  console.log('所有请求完成,结果相同:', 
+    results[0] === results[1] && results[1] === results[2]
+  );
+}
+
+// 定期清理过期缓存
+setInterval(() => {
+  deduplicator.cleanExpiredCache();
+}, 60000);
+```
+
+---
+
+### 案例3: 状态管理优化
+
+```typescript
+/**
+  * 高性能状态管理器
+  * 使用 Map 和 Set 优化状态查找和订阅
+  */
+class StateManager<T = any> {
+  private state: Map<string, T>;
+  private subscribers: Map<string, Set<(value: T) => void>>;
+  private computedCache: Map<string, { value: any; deps: string[] }>;
+  
+  constructor() {
+    this.state = new Map();
+    this.subscribers = new Map();
+    this.computedCache = new Map();
+  }
+  
+  /**
+    * 设置状态
+    */
+  setState(key: string, value: T): void {
+    const oldValue = this.state.get(key);
+    
+    // 值未改变,不触发更新
+    if (oldValue === value) {
+      return;
+    }
+    
+    this.state.set(key, value);
+    
+    // 清除相关的计算属性缓存
+    this.invalidateComputedCache(key);
+    
+    // 通知订阅者
+    this.notify(key, value);
+    
+    console.log(`📝 状态更新: ${key} = ${value}`);
+  }
+  
+  /**
+    * 获取状态
+    */
+  getState(key: string): T | undefined {
+    return this.state.get(key);
+  }
+  
+  /**
+    * 订阅状态变化
+    */
+  subscribe(key: string, callback: (value: T) => void): () => void {
+    if (!this.subscribers.has(key)) {
+      this.subscribers.set(key, new Set());
+    }
+    
+    this.subscribers.get(key)!.add(callback);
+    
+    // 返回取消订阅函数
+    return () => {
+      this.subscribers.get(key)?.delete(callback);
+    };
+  }
+  
+  /**
+    * 通知订阅者
+    */
+  private notify(key: string, value: T): void {
+    const callbacks = this.subscribers.get(key);
+    
+    if (callbacks) {
+      callbacks.forEach(callback => callback(value));
+    }
+  }
+  
+  /**
+    * 定义计算属性
+    */
+  defineComputed(
+    key: string,
+    deps: string[],
+    compute: (...values: any[]) => any
+  ): void {
+    this.computedCache.set(key, {
+      value: undefined,
+      deps
+    });
+    
+    // 订阅依赖变化
+    deps.forEach(dep => {
+      this.subscribe(dep, () => {
+        this.invalidateComputedCache(key);
+      });
+    });
+  }
+  
+  /**
+    * 获取计算属性
+    */
+  getComputed(key: string, compute: (...values: any[]) => any): any {
+    const cached = this.computedCache.get(key);
+    
+    if (!cached) {
+      return undefined;
+    }
+    
+    // 如果缓存有效,直接返回
+    if (cached.value !== undefined) {
+      console.log(`✅ 命中计算属性缓存: ${key}`);
+      return cached.value;
+    }
+    
+    // 重新计算
+    const depValues = cached.deps.map(dep => this.state.get(dep));
+    cached.value = compute(...depValues);
+    
+    console.log(`🔄 重新计算: ${key} = ${cached.value}`);
+    return cached.value;
+  }
+  
+  /**
+    * 清除计算属性缓存
+    */
+  private invalidateComputedCache(changedKey: string): void {
+    for (const [key, cached] of this.computedCache.entries()) {
+      if (cached.deps.includes(changedKey)) {
+        cached.value = undefined;
+        console.log(`🗑️  清除缓存: ${key}`);
+      }
+    }
+  }
+  
+  /**
+    * 批量更新(减少通知次数)
+    */
+  batchUpdate(updates: Record<string, T>): void {
+    const changedKeys = new Set<string>();
+    
+    // 收集所有变化
+    for (const [key, value] of Object.entries(updates)) {
+      const oldValue = this.state.get(key);
+      if (oldValue !== value) {
+        this.state.set(key, value);
+        changedKeys.add(key);
+      }
+    }
+    
+    // 批量通知
+    changedKeys.forEach(key => {
+      this.notify(key, this.state.get(key)!);
+    });
+    
+    console.log(`📦 批量更新: ${changedKeys.size} 个状态`);
+  }
+  
+  /**
+    * 获取统计信息
+    */
+  getStats(): {
+    stateCount: number;
+    subscriberCount: number;
+    computedCount: number;
+  } {
+    let subscriberCount = 0;
+    this.subscribers.forEach(set => {
+      subscriberCount += set.size;
+    });
+    
+    return {
+      stateCount: this.state.size,
+      subscriberCount,
+      computedCount: this.computedCache.size
+    };
+  }
+}
+
+// 使用示例
+const store = new StateManager<number>();
+
+// 设置状态
+store.setState('count', 0);
+store.setState('multiplier', 2);
+
+// 订阅状态
+const unsubscribe = store.subscribe('count', (value) => {
+  console.log(`👀 count 变化: ${value}`);
+});
+
+// 定义计算属性
+store.defineComputed('doubleCount', ['count', 'multiplier'], 
+  (count, multiplier) => count * multiplier
+);
+
+// 更新状态
+store.setState('count', 5);
+// 📝 状态更新: count = 5
+// 👀 count 变化: 5
+// 🗑️  清除缓存: doubleCount
+
+// 获取计算属性
+const double = store.getComputed('doubleCount', 
+  (count, multiplier) => count * multiplier
+);
+console.log('doubleCount:', double); // 10
+
+// 再次获取(命中缓存)
+const double2 = store.getComputed('doubleCount', 
+  (count, multiplier) => count * multiplier
+);
+// ✅ 命中计算属性缓存: doubleCount
+
+// 批量更新
+store.batchUpdate({
+  count: 10,
+  multiplier: 3
+});
+// 📦 批量更新: 2 个状态
+
+console.log('统计:', store.getStats());
+```
+
+---
+
+### 案例4: 词频统计与热词分析
+
+```typescript
+/**
+  * 词频统计器
+  * 用于文本分析、热词提取
+  */
+class WordFrequencyAnalyzer {
+  private wordCount: Map<string, number>;
+  private stopWords: Set<string>;
+  
+  constructor() {
+    this.wordCount = new Map();
+    
+    // 停用词(常见但无意义的词)
+    this.stopWords = new Set([
+      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at',
+      'to', 'for', 'of', 'with', 'by', 'from', 'is', 'was',
+      'are', 'were', 'be', 'been', 'being', 'have', 'has', 'had'
+    ]);
+  }
+  
+  /**
+    * 添加停用词
+    */
+  addStopWords(words: string[]): void {
+    words.forEach(word => this.stopWords.add(word.toLowerCase()));
+  }
+  
+  /**
+    * 分析文本
+    */
+  analyze(text: string): void {
+    // 分词(简单实现,实际可用更复杂的分词算法)
+    const words = text
+      .toLowerCase()
+      .replace(/[^\w\s]/g, ' ') // 移除标点
+      .split(/\s+/)
+      .filter(word => word.length > 0 && !this.stopWords.has(word));
+    
+    // 统计词频
+    words.forEach(word => {
+      this.wordCount.set(word, (this.wordCount.get(word) || 0) + 1);
+    });
+  }
+  
+  /**
+    * 获取词频
+    */
+  getFrequency(word: string): number {
+    return this.wordCount.get(word.toLowerCase()) || 0;
+  }
+  
+  /**
+    * 获取前 K 个高频词
+    */
+  getTopK(k: number): Array<{ word: string; count: number }> {
+    const entries = Array.from(this.wordCount.entries());
+    
+    // 按频率降序排序
+    entries.sort((a, b) => b[1] - a[1]);
+    
+    return entries.slice(0, k).map(([word, count]) => ({ word, count }));
+  }
+  
+  /**
+    * 获取所有词频(按频率排序)
+    */
+  getAllWords(): Array<{ word: string; count: number }> {
+    const entries = Array.from(this.wordCount.entries());
+    entries.sort((a, b) => b[1] - a[1]);
+    return entries.map(([word, count]) => ({ word, count }));
+  }
+  
+  /**
+    * 查找包含指定前缀的词
+    */
+  findWordsWithPrefix(prefix: string): Array<{ word: string; count: number }> {
+    const result: Array<{ word: string; count: number }> = [];
+    prefix = prefix.toLowerCase();
+    
+    for (const [word, count] of this.wordCount.entries()) {
+      if (word.startsWith(prefix)) {
+        result.push({ word, count });
+      }
+    }
+    
+    result.sort((a, b) => b.count - a.count);
+    return result;
+  }
+  
+  /**
+    * 生成词云数据
+    */
+  generateWordCloud(maxWords: number = 50): Array<{
+    text: string;
+    size: number;
+  }> {
+    const topWords = this.getTopK(maxWords);
+    const maxCount = topWords[0]?.count || 1;
+    
+    return topWords.map(({ word, count }) => ({
+      text: word,
+      size: Math.floor((count / maxCount) * 100) + 20 // 20-120 的字体大小
+    }));
+  }
+  
+  /**
+    * 统计信息
+    */
+  getStats(): {
+    totalWords: number;
+    uniqueWords: number;
+    avgFrequency: number;
+  } {
+    const totalWords = Array.from(this.wordCount.values())
+      .reduce((sum, count) => sum + count, 0);
+    
+    return {
+      totalWords,
+      uniqueWords: this.wordCount.size,
+      avgFrequency: totalWords / this.wordCount.size
+    };
+  }
+  
+  /**
+    * 清空统计
+    */
+  clear(): void {
+    this.wordCount.clear();
+  }
+  
+  /**
+    * 打印词频统计
+    */
+  print(limit: number = 20): void {
+    const topWords = this.getTopK(limit);
+    const stats = this.getStats();
+    
+    console.log('\n📊 词频统计');
+    console.log('─'.repeat(50));
+    console.log(`总词数: ${stats.totalWords}`);
+    console.log(`不重复词数: ${stats.uniqueWords}`);
+    console.log(`平均频率: ${stats.avgFrequency.toFixed(2)}`);
+    console.log('\n🔥 高频词 Top', limit);
+    console.log('─'.repeat(50));
+    
+    topWords.forEach(({ word, count }, index) => {
+      const bar = '█'.repeat(Math.floor(count / topWords[0].count * 20));
+      console.log(`${(index + 1).toString().padStart(2)}. ${word.padEnd(15)} ${bar} ${count}`);
+    });
+    
+    console.log('─'.repeat(50));
+  }
+}
+
+// 测试
+const analyzer = new WordFrequencyAnalyzer();
+
+const text = `
+  JavaScript is a programming language that is one of the core technologies
+  of the World Wide Web. JavaScript enables interactive web pages and is an
+  essential part of web applications. The vast majority of websites use
+  JavaScript, and all major web browsers have a dedicated JavaScript engine
+  to execute it. JavaScript is a high-level, often just-in-time compiled
+  language that conforms to the ECMAScript standard.
+`;
+
+analyzer.analyze(text);
+analyzer.print(10);
+
+// 查找以 "java" 开头的词
+console.log('\n以 "java" 开头的词:');
+const javaWords = analyzer.findWordsWithPrefix('java');
+javaWords.forEach(({ word, count }) => {
+  console.log(`  ${word}: ${count}`);
+});
+
+// 生成词云数据
+const wordCloudData = analyzer.generateWordCloud(10);
+console.log('\n☁️  词云数据:');
+console.log(wordCloudData);
+```
+
+---
+
+### 案例5: 数据去重与合并
+
+```typescript
+/**
+  * 数据去重合并器
+  * 用于处理重复数据、合并数据源
+  */
+class DataDeduplicator<T> {
+  private seen: Set<string>;
+  private keyExtractor: (item: T) => string;
+  
+  constructor(keyExtractor: (item: T) => string) {
+    this.seen = new Set();
+    this.keyExtractor = keyExtractor;
+  }
+  
+  /**
+    * 去重数组
+    */
+  deduplicate(items: T[]): T[] {
+    this.seen.clear();
+    const result: T[] = [];
+    
+    for (const item of items) {
+      const key = this.keyExtractor(item);
+      
+      if (!this.seen.has(key)) {
+        this.seen.add(key);
+        result.push(item);
+      }
+    }
+    
+    return result;
+  }
+  
+  /**
+    * 合并多个数据源(去重)
+    */
+  merge(...sources: T[][]): T[] {
+    this.seen.clear();
+    const result: T[] = [];
+    
+    for (const source of sources) {
+      for (const item of source) {
+        const key = this.keyExtractor(item);
+        
+        if (!this.seen.has(key)) {
+          this.seen.add(key);
+          result.push(item);
+        }
+      }
+    }
+    
+    return result;
+  }
+  
+  /**
+    * 找出重复项
+    */
+  findDuplicates(items: T[]): T[] {
+    const seen = new Set<string>();
+    const duplicates = new Set<string>();
+    const result: T[] = [];
+    
+    for (const item of items) {
+      const key = this.keyExtractor(item);
+      
+      if (seen.has(key)) {
+        if (!duplicates.has(key)) {
+          duplicates.add(key);
+          result.push(item);
+        }
+      } else {
+        seen.add(key);
+      }
+    }
+    
+    return result;
+  }
+  
+  /**
+    * 统计重复次数
+    */
+  countDuplicates(items: T[]): Map<string, number> {
+    const counts = new Map<string, number>();
+    
+    for (const item of items) {
+      const key = this.keyExtractor(item);
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    
+    return counts;
+  }
+}
+
+// 使用示例
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+const deduplicator = new DataDeduplicator<User>(user => user.email);
+
+const users1 = [
+  { id: 1, name: 'Alice', email: 'alice@example.com' },
+  { id: 2, name: 'Bob', email: 'bob@example.com' },
+  { id: 3, name: 'Alice', email: 'alice@example.com' } // 重复
+];
+
+const users2 = [
+  { id: 4, name: 'Charlie', email: 'charlie@example.com' },
+  { id: 5, name: 'Bob', email: 'bob@example.com' } // 重复
+];
+
+// 去重
+const unique = deduplicator.deduplicate(users1);
+console.log('去重后:', unique.length); // 2
+
+// 合并多个数据源
+const merged = deduplicator.merge(users1, users2);
+console.log('合并后:', merged.length); // 3
+
+// 找出重复项
+const duplicates = deduplicator.findDuplicates(users1);
+console.log('重复项:', duplicates);
+
+// 统计重复次数
+const counts = deduplicator.countDuplicates(users1);
+console.log('重复统计:', counts);
+```
+
+---
+
+## 六、性能优化技巧
+
+### 1. 选择合适的数据结构
+
+```typescript
+/**
+  * 性能对比测试
+  */
+function performanceTest() {
+  const size = 100000;
+  const data = Array.from({ length: size }, (_, i) => i);
+  
+  // 测试 1: 数组查找 vs Set 查找
+  console.time('数组查找');
+  for (let i = 0; i < 1000; i++) {
+    data.includes(Math.floor(Math.random() * size));
+  }
+  console.timeEnd('数组查找');
+  // 约 500ms
+  
+  const dataSet = new Set(data);
+  console.time('Set 查找');
+  for (let i = 0; i < 1000; i++) {
+    dataSet.has(Math.floor(Math.random() * size));
+  }
+  console.timeEnd('Set 查找');
+  // 约 0.5ms (快 1000 倍!)
+  
+  // 测试 2: Object vs Map
+  const obj: Record<string, number> = {};
+  const map = new Map<string, number>();
+  
+  console.time('Object 插入');
+  for (let i = 0; i < size; i++) {
+    obj[`key${i}`] = i;
+  }
+  console.timeEnd('Object 插入');
+  
+  console.time('Map 插入');
+  for (let i = 0; i < size; i++) {
+    map.set(`key${i}`, i);
+  }
+  console.timeEnd('Map 插入');
+  // Map 通常更快
+}
+```
+
+### 2. 避免不必要的哈希计算
+
+```typescript
+// ❌ 每次都计算哈希
+function badExample(items: string[]) {
+  const set = new Set<string>();
+  
+  for (const item of items) {
+    if (!set.has(item.toLowerCase())) { // 计算哈希
+      set.add(item.toLowerCase());      // 再次计算哈希
+    }
+  }
+}
+
+// ✅ 缓存哈希结果
+function goodExample(items: string[]) {
+  const set = new Set<string>();
+  
+  for (const item of items) {
+    const key = item.toLowerCase(); // 只计算一次
+    if (!set.has(key)) {
+      set.add(key);
+    }
+  }
+}
+```
+
+### 3. 使用 WeakMap/WeakSet 避免内存泄漏
+
+```typescript
+/**
+  * 使用 WeakMap 缓存 DOM 元素相关数据
+  */
+class DOMCache {
+  private cache = new WeakMap<HTMLElement, any>();
+  
+  set(element: HTMLElement, data: any): void {
+    this.cache.set(element, data);
+  }
+  
+  get(element: HTMLElement): any {
+    return this.cache.get(element);
+  }
+}
+
+// 当 DOM 元素被移除时,缓存会自动清理
+// 不会造成内存泄漏!
+```
+
+---
+
+## 七、练习题
+
+### 题目1: 有效的字母异位词 (LeetCode 242)
+
+**难度**: 简单
+
+```typescript
+/**
+  * 判断两个字符串是否为字母异位词
+  */
+function isAnagram(s: string, t: string): boolean {
+  // 在这里实现你的代码
+}
+
+// 测试用例
+console.log(isAnagram("anagram", "nagaram")); // true
+console.log(isAnagram("rat", "car"));         // false
+```
+
+**提示**: 使用 Map 统计字符频率
+
+<details>
+<summary>点击查看答案</summary>
+
+```typescript
+function isAnagram(s: string, t: string): boolean {
+  if (s.length !== t.length) return false;
+  
+  const count = new Map<string, number>();
+  
+  // 统计 s 中的字符
+  for (const char of s) {
+    count.set(char, (count.get(char) || 0) + 1);
+  }
+  
+  // 减去 t 中的字符
+  for (const char of t) {
+    const freq = count.get(char);
+    if (!freq) return false;
+    
+    if (freq === 1) {
+      count.delete(char);
+    } else {
+      count.set(char, freq - 1);
+    }
+  }
+  
+  return count.size === 0;
+}
+```
+
+**时间复杂度**: O(n)  
+**空间复杂度**: O(1) - 最多 26 个字母
+</details>
+
+---
+
+### 题目2: 第一个只出现一次的字符 (LeetCode 387)
+
+**难度**: 简单
+
+```typescript
+/**
+  * 找到字符串中第一个不重复的字符
+  */
+function firstUniqChar(s: string): number {
+  // 在这里实现你的代码
+}
+
+// 测试用例
+console.log(firstUniqChar("leetcode"));     // 0 ('l')
+console.log(firstUniqChar("loveleetcode")); // 2 ('v')
+console.log(firstUniqChar("aabb"));         // -1
+```
+
+---
+
+### 题目3: 前 K 个高频元素 (LeetCode 347)
+
+**难度**: 中等
+
+```typescript
+/**
+  * 返回数组中出现频率前 k 高的元素
+  */
+function topKFrequent(nums: number[], k: number): number[] {
+  // 在这里实现你的代码
+}
+
+// 测试用例
+console.log(topKFrequent([1,1,1,2,2,3], 2)); // [1, 2]
+console.log(topKFrequent([1], 1));            // [1]
+```
+
+**提示**: Map 统计频率 + 排序
+
+---
+
+## 八、总结与扩展
+
+### 核心要点
+
+1. **哈希表原理**:
+    - 哈希函数: key → index
+    - 冲突解决: 链地址法、开放寻址
+    - 负载因子: 控制扩容时机
+
+2. **Map vs Object**:
+    - Map: 任意类型键、有序、性能好
+    - Object: 字符串键、原型链、小数据快
+
+3. **Set vs Array**:
+    - Set: 自动去重、O(1) 查找
+    - Array: 允许重复、O(n) 查找
+
+4. **实战应用**:
+    - LRU 缓存
+    - 请求去重
+    - 状态管理
+    - 词频统计
+    - 数据去重
+
+### 使用场景选择
+
+<table>
+  <thead>
+    <tr>
+      <th>场景</th>
+      <th>推荐数据结构</th>
+      <th>原因</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>快速查找</td>
+      <td>Map/Set</td>
+      <td>O(1) 查找</td>
+    </tr>
+    <tr>
+      <td>去重</td>
+      <td>Set</td>
+      <td>自动去重</td>
+    </tr>
+    <tr>
+      <td>计数</td>
+      <td>Map</td>
+      <td>键值对存储</td>
+    </tr>
+    <tr>
+      <td>缓存</td>
+      <td>Map</td>
+      <td>保持顺序</td>
+    </tr>
+    <tr>
+      <td>DOM 缓存</td>
+      <td>WeakMap</td>
+      <td>自动 GC</td>
+    </tr>
+    <tr>
+      <td>有序遍历</td>
+      <td>Map</td>
+      <td>插入顺序</td>
+    </tr>
+    <tr>
+      <td>小数据量</td>
+      <td>Object/Array</td>
+      <td>更简单</td>
+    </tr>
+  </tbody>
+</table>
+
+### 常见陷阱
+
+1. **对象键的类型**:
+```typescript
+// ❌ Object 只能用字符串键
+const obj: any = {};
+obj[{ id: 1 }] = 'value';
+console.log(obj); // { '[object Object]': 'value' }
+
+// ✅ Map 可以用任意类型
+const map = new Map();
+map.set({ id: 1 }, 'value');
+```
+
+2. **Set 的相等判断**:
+```typescript
+const set = new Set();
+set.add({ id: 1 });
+set.add({ id: 1 });
+console.log(set.size); // 2 (对象引用不同!)
+
+// 解决方案:使用字符串键
+const set2 = new Set();
+set2.add(JSON.stringify({ id: 1 }));
+set2.add(JSON.stringify({ id: 1 }));
+console.log(set2.size); // 1
+```
+
+3. **WeakMap 的键必须是对象**:
+```typescript
+const weak = new WeakMap();
+weak.set('key', 'value'); // ❌ TypeError
+weak.set({}, 'value');    // ✅ 正确
+```
+
+### 性能优化建议
+
+- ✅ 大量查找操作用 Set/Map
+- ✅ 避免频繁的哈希计算
+- ✅ 使用 WeakMap/WeakSet 避免内存泄漏
+- ✅ 小数据量 可以用 Array/Object
+- ✅ 定期清理过期缓存
+
+### 进阶学习
+
+1. **布隆过滤器**: 空间高效的概率型数据结构
+2. **一致性哈希**: 分布式系统中的负载均衡
+3. **完美哈希**: 无冲突的哈希函数
+4. **Cuckoo Hashing**: 多个哈希函数减少冲突
+
+---
+
+## 下期预告
+
+下一篇我们将学习**堆与优先队列**,探讨:
+- 最小堆/最大堆的实现
+- 优先队列的应用
+- Top K 问题
+- 任务调度系统
+
+---
+
+**相关资源**:
+- [MDN: Map](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Map)
+- [MDN: Set](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Set)

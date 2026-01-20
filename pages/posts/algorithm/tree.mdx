@@ -1,0 +1,1617 @@
+
+# 前端算法系列(五):树结构基础 - 二叉树遍历与应用
+
+## 一、问题引入
+
+作为前端开发工程师,你每天都在和树结构打交道:
+
+### 场景1: DOM 树操作
+```html
+<div id="root">
+  <header>
+    <nav>
+      <ul>
+        <li>首页</li>
+        <li>关于</li>
+      </ul>
+    </nav>
+  </header>
+  <main>
+    <article>内容</article>
+  </main>
+</div>
+```
+
+```javascript
+// 如何遍历所有节点?
+// 如何查找特定节点?
+// 如何计算树的深度?
+```
+
+### 场景2: React/Vue 组件树
+```jsx
+<App>
+  <Header>
+    <Nav />
+    <Logo />
+  </Header>
+  <Main>
+    <Sidebar />
+    <Content />
+  </Main>
+  <Footer />
+</App>
+```
+
+```javascript
+// React Fiber 如何遍历组件树?
+// 虚拟 DOM diff 算法如何工作?
+// 如何实现组件树的深度优先/广度优先遍历?
+```
+
+### 场景3: 文件系统树
+```
+src/
+├── components/
+│   ├── Header.tsx
+│   └── Footer.tsx
+├── utils/
+│   └── helpers.ts
+└── App.tsx
+```
+
+```javascript
+// 如何递归读取所有文件?
+// 如何计算目录大小?
+// 如何实现文件搜索?
+```
+
+### 场景4: 路由配置树
+```javascript
+const routes = [
+  {
+    path: '/',
+    children: [
+      { path: 'home', component: Home },
+      { 
+        path: 'user',
+        children: [
+          { path: 'profile', component: Profile },
+          { path: 'settings', component: Settings }
+        ]
+      }
+    ]
+  }
+];
+
+// 如何匹配路由?
+// 如何生成面包屑导航?
+```
+
+今天我们将深入学习树结构,掌握前端开发中最重要的数据结构之一。
+
+---
+
+## 二、算法原理
+
+### 什么是树?
+
+树是一种**层次化**的数据结构,由节点组成:
+
+```
+树的基本概念:
+
+        1          ← 根节点 (root)
+      / \
+      2   3        ← 第2层
+    / \   \
+    4   5   6      ← 第3层 (叶子节点)
+
+- 根节点: 最顶层的节点 (1)
+- 父节点: 有子节点的节点 (1, 2, 3)
+- 子节点: 某节点的直接下级 (2和3是1的子节点)
+- 叶子节点: 没有子节点的节点 (4, 5, 6)
+- 兄弟节点: 同一父节点的子节点 (2和3)
+- 深度: 从根到该节点的边数 (4的深度是2)
+- 高度: 从该节点到叶子的最长路径 (1的高度是2)
+- 层数: 深度 + 1
+```
+
+### 二叉树
+
+每个节点最多有**两个子节点**的树:
+
+```
+二叉树:
+        1
+      / \
+      2   3
+    / \
+    4   5
+
+- 左子树: 2, 4, 5
+- 右子树: 3
+```
+
+### 特殊的二叉树
+
+#### 1. 满二叉树
+```
+每层都是满的:
+        1
+      / \
+      2   3
+    / \ / \
+    4  5 6  7
+```
+
+#### 2. 完全二叉树
+```
+除最后一层外都是满的,最后一层从左到右连续:
+        1
+      / \
+      2   3
+    / \ /
+    4  5 6
+```
+
+#### 3. 二叉搜索树 (BST)
+```
+左子树 < 根节点 < 右子树:
+        5
+      / \
+      3   7
+    / \ / \
+    2  4 6  8
+```
+
+---
+
+## 三、二叉树遍历
+
+### 1. 深度优先遍历 (DFS)
+
+#### 前序遍历 (Pre-order): 根 → 左 → 右
+
+```
+访问顺序:
+        1          1. 访问根节点 1
+      / \         2. 遍历左子树 (2, 4, 5)
+      2   3        3. 遍历右子树 (3, 6, 7)
+    / \ / \
+    4  5 6  7      结果: 1, 2, 4, 5, 3, 6, 7
+```
+
+**应用场景**:
+- 复制树
+- 前缀表达式求值
+- 目录树的先序遍历
+
+#### 中序遍历 (In-order): 左 → 根 → 右
+
+```
+访问顺序:
+        1          1. 遍历左子树 (4, 2, 5)
+      / \         2. 访问根节点 1
+      2   3        3. 遍历右子树 (6, 3, 7)
+    / \ / \
+    4  5 6  7      结果: 4, 2, 5, 1, 6, 3, 7
+```
+
+**应用场景**:
+- 二叉搜索树排序(升序)
+- 表达式树求值
+
+#### 后序遍历 (Post-order): 左 → 右 → 根
+
+```
+访问顺序:
+        1          1. 遍历左子树 (4, 5, 2)
+      / \         2. 遍历右子树 (6, 7, 3)
+      2   3        3. 访问根节点 1
+    / \ / \
+    4  5 6  7      结果: 4, 5, 2, 6, 7, 3, 1
+```
+
+**应用场景**:
+- 删除树
+- 后缀表达式求值
+- 计算目录大小
+
+### 2. 广度优先遍历 (BFS)
+
+#### 层序遍历 (Level-order): 逐层访问
+
+```
+访问顺序:
+        1          第1层: 1
+      / \         第2层: 2, 3
+      2   3        第3层: 4, 5, 6, 7
+    / \ / \
+    4  5 6  7      结果: 1, 2, 3, 4, 5, 6, 7
+```
+
+**应用场景**:
+- 查找最短路径
+- 层级关系处理
+- 组件树渲染
+
+---
+
+## 四、代码实现
+
+### 1. 二叉树节点定义
+
+```typescript
+/**
+  * 二叉树节点
+  */
+class TreeNode<T> {
+  value: T;
+  left: TreeNode<T> | null = null;
+  right: TreeNode<T> | null = null;
+  
+  constructor(value: T) {
+    this.value = value;
+  }
+}
+
+/**
+  * 二叉树
+  */
+class BinaryTree<T> {
+  root: TreeNode<T> | null = null;
+  
+  constructor(value?: T) {
+    if (value !== undefined) {
+      this.root = new TreeNode(value);
+    }
+  }
+}
+```
+
+---
+
+### 2. 前序遍历
+
+```typescript
+/**
+  * 前序遍历 - 递归版本
+  */
+function preorderTraversal<T>(root: TreeNode<T> | null): T[] {
+  const result: T[] = [];
+  
+  function traverse(node: TreeNode<T> | null) {
+    if (!node) return;
+    
+    result.push(node.value);      // 根
+    traverse(node.left);           // 左
+    traverse(node.right);          // 右
+  }
+  
+  traverse(root);
+  return result;
+}
+
+/**
+  * 前序遍历 - 迭代版本(使用栈)
+  */
+function preorderTraversalIterative<T>(root: TreeNode<T> | null): T[] {
+  if (!root) return [];
+  
+  const result: T[] = [];
+  const stack: TreeNode<T>[] = [root];
+  
+  while (stack.length > 0) {
+    const node = stack.pop()!;
+    result.push(node.value);
+    
+    // 先压右子树,再压左子树(栈是后进先出)
+    if (node.right) stack.push(node.right);
+    if (node.left) stack.push(node.left);
+  }
+  
+  return result;
+}
+
+// 测试
+const tree = new BinaryTree(1);
+tree.root!.left = new TreeNode(2);
+tree.root!.right = new TreeNode(3);
+tree.root!.left.left = new TreeNode(4);
+tree.root!.left.right = new TreeNode(5);
+
+console.log(preorderTraversal(tree.root));
+// [1, 2, 4, 5, 3]
+
+console.log(preorderTraversalIterative(tree.root));
+// [1, 2, 4, 5, 3]
+```
+
+**可视化栈的过程**:
+```
+树:     1
+        / \
+      2   3
+      / \
+    4   5
+
+迭代过程:
+1. stack=[1], result=[]
+2. pop 1, stack=[3,2], result=[1]
+3. pop 2, stack=[3,5,4], result=[1,2]
+4. pop 4, stack=[3,5], result=[1,2,4]
+5. pop 5, stack=[3], result=[1,2,4,5]
+6. pop 3, stack=[], result=[1,2,4,5,3]
+```
+
+---
+
+### 3. 中序遍历
+
+```typescript
+/**
+  * 中序遍历 - 递归版本
+  */
+function inorderTraversal<T>(root: TreeNode<T> | null): T[] {
+  const result: T[] = [];
+  
+  function traverse(node: TreeNode<T> | null) {
+    if (!node) return;
+    
+    traverse(node.left);           // 左
+    result.push(node.value);       // 根
+    traverse(node.right);          // 右
+  }
+  
+  traverse(root);
+  return result;
+}
+
+/**
+  * 中序遍历 - 迭代版本
+  */
+function inorderTraversalIterative<T>(root: TreeNode<T> | null): T[] {
+  const result: T[] = [];
+  const stack: TreeNode<T>[] = [];
+  let current = root;
+  
+  while (current || stack.length > 0) {
+    // 一直向左走到底
+    while (current) {
+      stack.push(current);
+      current = current.left;
+    }
+    
+    // 弹出栈顶(最左节点)
+    current = stack.pop()!;
+    result.push(current.value);
+    
+    // 转向右子树
+    current = current.right;
+  }
+  
+  return result;
+}
+
+// 测试
+console.log(inorderTraversal(tree.root));
+// [4, 2, 5, 1, 3]
+```
+
+**可视化过程**:
+```
+树:     1
+        / \
+      2   3
+      / \
+    4   5
+
+迭代过程:
+1. current=1, stack=[], result=[]
+2. 向左: current=2, stack=[1], result=[]
+3. 向左: current=4, stack=[1,2], result=[]
+4. 向左: current=null, stack=[1,2,4], result=[]
+5. pop 4: current=4, stack=[1,2], result=[4]
+6. 右子树: current=null
+7. pop 2: current=2, stack=[1], result=[4,2]
+8. 右子树: current=5, stack=[1]
+9. 向左: current=null, stack=[1,5]
+10. pop 5: current=5, stack=[1], result=[4,2,5]
+11. 右子树: current=null
+12. pop 1: current=1, stack=[], result=[4,2,5,1]
+13. 右子树: current=3, stack=[]
+14. 向左: current=null, stack=[3]
+15. pop 3: current=3, stack=[], result=[4,2,5,1,3]
+```
+
+---
+
+### 4. 后序遍历
+
+```typescript
+/**
+  * 后序遍历 - 递归版本
+  */
+function postorderTraversal<T>(root: TreeNode<T> | null): T[] {
+  const result: T[] = [];
+  
+  function traverse(node: TreeNode<T> | null) {
+    if (!node) return;
+    
+    traverse(node.left);           // 左
+    traverse(node.right);          // 右
+    result.push(node.value);       // 根
+  }
+  
+  traverse(root);
+  return result;
+}
+
+/**
+  * 后序遍历 - 迭代版本(双栈法)
+  */
+function postorderTraversalIterative<T>(root: TreeNode<T> | null): T[] {
+  if (!root) return [];
+  
+  const result: T[] = [];
+  const stack1: TreeNode<T>[] = [root];
+  const stack2: TreeNode<T>[] = [];
+  
+  // 第一个栈:根 → 右 → 左 (前序的镜像)
+  while (stack1.length > 0) {
+    const node = stack1.pop()!;
+    stack2.push(node);
+    
+    if (node.left) stack1.push(node.left);
+    if (node.right) stack1.push(node.right);
+  }
+  
+  // 第二个栈反转,得到后序
+  while (stack2.length > 0) {
+    result.push(stack2.pop()!.value);
+  }
+  
+  return result;
+}
+
+// 测试
+console.log(postorderTraversal(tree.root));
+// [4, 5, 2, 3, 1]
+```
+
+---
+
+### 5. 层序遍历
+
+```typescript
+/**
+  * 层序遍历 - 使用队列
+  */
+function levelOrderTraversal<T>(root: TreeNode<T> | null): T[] {
+  if (!root) return [];
+  
+  const result: T[] = [];
+  const queue: TreeNode<T>[] = [root];
+  
+  while (queue.length > 0) {
+    const node = queue.shift()!;
+    result.push(node.value);
+    
+    if (node.left) queue.push(node.left);
+    if (node.right) queue.push(node.right);
+  }
+  
+  return result;
+}
+
+/**
+  * 层序遍历 - 返回二维数组(按层分组)
+  */
+function levelOrderTraversalByLevel<T>(root: TreeNode<T> | null): T[][] {
+  if (!root) return [];
+  
+  const result: T[][] = [];
+  const queue: TreeNode<T>[] = [root];
+  
+  while (queue.length > 0) {
+    const levelSize = queue.length;
+    const currentLevel: T[] = [];
+    
+    // 处理当前层的所有节点
+    for (let i = 0; i < levelSize; i++) {
+      const node = queue.shift()!;
+      currentLevel.push(node.value);
+      
+      if (node.left) queue.push(node.left);
+      if (node.right) queue.push(node.right);
+    }
+    
+    result.push(currentLevel);
+  }
+  
+  return result;
+}
+
+// 测试
+console.log(levelOrderTraversal(tree.root));
+// [1, 2, 3, 4, 5]
+
+console.log(levelOrderTraversalByLevel(tree.root));
+// [[1], [2, 3], [4, 5]]
+```
+
+**可视化队列过程**:
+```
+树:     1
+        / \
+      2   3
+      / \
+    4   5
+
+过程:
+1. queue=[1], result=[]
+2. dequeue 1, queue=[2,3], result=[1]
+3. dequeue 2, queue=[3,4,5], result=[1,2]
+4. dequeue 3, queue=[4,5], result=[1,2,3]
+5. dequeue 4, queue=[5], result=[1,2,3,4]
+6. dequeue 5, queue=[], result=[1,2,3,4,5]
+```
+
+---
+
+### 6. 树的基本操作
+
+```typescript
+/**
+  * 计算树的最大深度
+  */
+function maxDepth<T>(root: TreeNode<T> | null): number {
+  if (!root) return 0;
+  
+  const leftDepth = maxDepth(root.left);
+  const rightDepth = maxDepth(root.right);
+  
+  return Math.max(leftDepth, rightDepth) + 1;
+}
+
+/**
+  * 计算树的最小深度
+  */
+function minDepth<T>(root: TreeNode<T> | null): number {
+  if (!root) return 0;
+  
+  // 如果只有一个子树,返回该子树的深度
+  if (!root.left) return minDepth(root.right) + 1;
+  if (!root.right) return minDepth(root.left) + 1;
+  
+  return Math.min(minDepth(root.left), minDepth(root.right)) + 1;
+}
+
+/**
+  * 计算节点总数
+  */
+function countNodes<T>(root: TreeNode<T> | null): number {
+  if (!root) return 0;
+  
+  return 1 + countNodes(root.left) + countNodes(root.right);
+}
+
+/**
+  * 计算叶子节点数
+  */
+function countLeaves<T>(root: TreeNode<T> | null): number {
+  if (!root) return 0;
+  
+  // 叶子节点:没有左右子树
+  if (!root.left && !root.right) return 1;
+  
+  return countLeaves(root.left) + countLeaves(root.right);
+}
+
+/**
+  * 判断是否为平衡二叉树
+  */
+function isBalanced<T>(root: TreeNode<T> | null): boolean {
+  function checkHeight(node: TreeNode<T> | null): number {
+    if (!node) return 0;
+    
+    const leftHeight = checkHeight(node.left);
+    if (leftHeight === -1) return -1; // 左子树不平衡
+    
+    const rightHeight = checkHeight(node.right);
+    if (rightHeight === -1) return -1; // 右子树不平衡
+    
+    // 左右子树高度差超过1,不平衡
+    if (Math.abs(leftHeight - rightHeight) > 1) return -1;
+    
+    return Math.max(leftHeight, rightHeight) + 1;
+  }
+  
+  return checkHeight(root) !== -1;
+}
+
+/**
+  * 判断是否为对称二叉树
+  */
+function isSymmetric<T>(root: TreeNode<T> | null): boolean {
+  function isMirror(
+    left: TreeNode<T> | null,
+    right: TreeNode<T> | null
+  ): boolean {
+    if (!left && !right) return true;
+    if (!left || !right) return false;
+    
+    return (
+      left.value === right.value &&
+      isMirror(left.left, right.right) &&
+      isMirror(left.right, right.left)
+    );
+  }
+  
+  if (!root) return true;
+  return isMirror(root.left, root.right);
+}
+
+/**
+  * 翻转二叉树
+  */
+function invertTree<T>(root: TreeNode<T> | null): TreeNode<T> | null {
+  if (!root) return null;
+  
+  // 交换左右子树
+  [root.left, root.right] = [root.right, root.left];
+  
+  // 递归翻转子树
+  invertTree(root.left);
+  invertTree(root.right);
+  
+  return root;
+}
+
+// 测试
+console.log('最大深度:', maxDepth(tree.root));        // 3
+console.log('最小深度:', minDepth(tree.root));        // 2
+console.log('节点总数:', countNodes(tree.root));      // 5
+console.log('叶子节点数:', countLeaves(tree.root));   // 3
+console.log('是否平衡:', isBalanced(tree.root));      // true
+```
+
+---
+
+### 7. 路径问题
+
+```typescript
+/**
+  * 二叉树的所有路径
+  */
+function binaryTreePaths<T>(root: TreeNode<T> | null): string[] {
+  const paths: string[] = [];
+  
+  function dfs(node: TreeNode<T> | null, path: string) {
+    if (!node) return;
+    
+    path += node.value;
+    
+    // 叶子节点,记录路径
+    if (!node.left && !node.right) {
+      paths.push(path);
+      return;
+    }
+    
+    // 继续遍历
+    path += '->';
+    dfs(node.left, path);
+    dfs(node.right, path);
+  }
+  
+  dfs(root, '');
+  return paths;
+}
+
+/**
+  * 路径总和
+  */
+function hasPathSum<T>(root: TreeNode<number> | null, targetSum: number): boolean {
+  if (!root) return false;
+  
+  // 叶子节点,检查是否等于目标和
+  if (!root.left && !root.right) {
+    return root.value === targetSum;
+  }
+  
+  // 递归检查子树
+  return (
+    hasPathSum(root.left, targetSum - root.value) ||
+    hasPathSum(root.right, targetSum - root.value)
+  );
+}
+
+/**
+  * 路径总和 II - 返回所有路径
+  */
+function pathSum(root: TreeNode<number> | null, targetSum: number): number[][] {
+  const result: number[][] = [];
+  
+  function dfs(node: TreeNode<number> | null, sum: number, path: number[]) {
+    if (!node) return;
+    
+    path.push(node.value);
+    
+    // 叶子节点且和等于目标
+    if (!node.left && !node.right && sum === node.value) {
+      result.push([...path]); // 复制路径
+    }
+    
+    // 继续遍历
+    dfs(node.left, sum - node.value, path);
+    dfs(node.right, sum - node.value, path);
+    
+    // 回溯
+    path.pop();
+  }
+  
+  dfs(root, targetSum, []);
+  return result;
+}
+
+// 测试
+console.log(binaryTreePaths(tree.root));
+// ["1->2->4", "1->2->5", "1->3"]
+```
+
+---
+
+## 五、复杂度分析
+
+### 遍历算法复杂度
+
+<table>
+  <thead>
+    <tr>
+      <th>遍历方式</th>
+      <th>时间复杂度</th>
+      <th>空间复杂度</th>
+      <th>说明</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>前序遍历(递归)</td>
+      <td>O(n)</td>
+      <td>O(h)</td>
+      <td>h 为树高</td>
+    </tr>
+    <tr>
+      <td>前序遍历(迭代)</td>
+      <td>O(n)</td>
+      <td>O(h)</td>
+      <td>栈空间</td>
+    </tr>
+    <tr>
+      <td>中序遍历(递归)</td>
+      <td>O(n)</td>
+      <td>O(h)</td>
+      <td>h 为树高</td>
+    </tr>
+    <tr>
+      <td>中序遍历(迭代)</td>
+      <td>O(n)</td>
+      <td>O(h)</td>
+      <td>栈空间</td>
+    </tr>
+    <tr>
+      <td>后序遍历(递归)</td>
+      <td>O(n)</td>
+      <td>O(h)</td>
+      <td>h 为树高</td>
+    </tr>
+    <tr>
+      <td>后序遍历(迭代)</td>
+      <td>O(n)</td>
+      <td>O(h)</td>
+      <td>栈空间</td>
+    </tr>
+    <tr>
+      <td>层序遍历</td>
+      <td>O(n)</td>
+      <td>O(w)</td>
+      <td>w 为最大宽度</td>
+    </tr>
+  </tbody>
+</table>
+
+### 树的高度与节点数关系
+
+```
+完全二叉树:
+- 高度 h, 节点数 n
+- 2^h ≤ n < 2^(h+1)
+- h = ⌊log₂(n)⌋
+
+平衡二叉树:
+- 高度 h = O(log n)
+
+斜树(退化成链表):
+- 高度 h = O(n)
+```
+
+### 递归 vs 迭代
+
+<table>
+  <thead>
+    <tr>
+      <th>方式</th>
+      <th>优点</th>
+      <th>缺点</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>递归</td>
+      <td>代码简洁,易理解</td>
+      <td>可能栈溢出,空间开销大</td>
+    </tr>
+    <tr>
+      <td>迭代</td>
+      <td>空间可控,不会栈溢出</td>
+      <td>代码复杂,需要手动维护栈/队列</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## 六、实战应用
+
+### 案例1: DOM 树遍历
+
+```typescript
+/**
+  * DOM 树节点
+  */
+interface DOMNode {
+  tagName: string;
+  children: DOMNode[];
+  attributes?: Record<string, string>;
+}
+
+/**
+  * DOM 树遍历器
+  */
+class DOMTreeTraverser {
+  /**
+    * 深度优先遍历(前序)
+    */
+  static dfs(node: DOMNode, callback: (node: DOMNode) => void): void {
+    callback(node);
+    
+    for (const child of node.children) {
+      this.dfs(child, callback);
+    }
+  }
+  
+  /**
+    * 广度优先遍历
+    */
+  static bfs(node: DOMNode, callback: (node: DOMNode) => void): void {
+    const queue: DOMNode[] = [node];
+    
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      callback(current);
+      
+      queue.push(...current.children);
+    }
+  }
+  
+  /**
+    * 查找节点
+    */
+  static find(
+    node: DOMNode,
+    predicate: (node: DOMNode) => boolean
+  ): DOMNode | null {
+    if (predicate(node)) {
+      return node;
+    }
+    
+    for (const child of node.children) {
+      const found = this.find(child, predicate);
+      if (found) return found;
+    }
+    
+    return null;
+  }
+  
+  /**
+    * 计算树的深度
+    */
+  static depth(node: DOMNode): number {
+    if (node.children.length === 0) {
+      return 1;
+    }
+    
+    return 1 + Math.max(...node.children.map(child => this.depth(child)));
+  }
+  
+  /**
+    * 获取所有叶子节点
+    */
+  static getLeaves(node: DOMNode): DOMNode[] {
+    const leaves: DOMNode[] = [];
+    
+    function collect(n: DOMNode) {
+      if (n.children.length === 0) {
+        leaves.push(n);
+      } else {
+        n.children.forEach(collect);
+      }
+    }
+    
+    collect(node);
+    return leaves;
+  }
+  
+  /**
+    * 序列化为 HTML 字符串
+    */
+  static toHTML(node: DOMNode, indent: number = 0): string {
+    const spaces = '  '.repeat(indent);
+    const attrs = node.attributes
+      ? ' ' + Object.entries(node.attributes)
+          .map(([key, value]) => `${key}="${value}"`)
+          .join(' ')
+      : '';
+    
+    if (node.children.length === 0) {
+      return `${spaces}<${node.tagName}${attrs} />`;
+    }
+    
+    const childrenHTML = node.children
+      .map(child => this.toHTML(child, indent + 1))
+      .join('\n');
+    
+    return `${spaces}<${node.tagName}${attrs}>\n${childrenHTML}\n${spaces}</${node.tagName}>`;
+  }
+}
+
+// 测试
+const dom: DOMNode = {
+  tagName: 'div',
+  attributes: { id: 'root' },
+  children: [
+    {
+      tagName: 'header',
+      children: [
+        { tagName: 'h1', children: [] },
+        { tagName: 'nav', children: [] }
+      ]
+    },
+    {
+      tagName: 'main',
+      children: [
+        { tagName: 'article', children: [] }
+      ]
+    }
+  ]
+};
+
+console.log('深度:', DOMTreeTraverser.depth(dom)); // 3
+
+console.log('\nDFS 遍历:');
+DOMTreeTraverser.dfs(dom, node => {
+  console.log(node.tagName);
+});
+// div, header, h1, nav, main, article
+
+console.log('\nBFS 遍历:');
+DOMTreeTraverser.bfs(dom, node => {
+  console.log(node.tagName);
+});
+// div, header, main, h1, nav, article
+
+const found = DOMTreeTraverser.find(dom, node => node.tagName === 'nav');
+console.log('\n找到节点:', found?.tagName); // nav
+
+console.log('\nHTML:');
+console.log(DOMTreeTraverser.toHTML(dom));
+```
+
+---
+
+### 案例2: 文件系统树
+
+```typescript
+/**
+  * 文件系统节点
+  */
+interface FileNode {
+  name: string;
+  type: 'file' | 'directory';
+  size?: number;        // 文件大小(字节)
+  children?: FileNode[];
+}
+
+/**
+  * 文件系统树操作
+  */
+class FileSystemTree {
+  /**
+    * 计算目录总大小
+    */
+  static calculateSize(node: FileNode): number {
+    if (node.type === 'file') {
+      return node.size || 0;
+    }
+    
+    return (node.children || []).reduce(
+      (sum, child) => sum + this.calculateSize(child),
+      0
+    );
+  }
+  
+  /**
+    * 查找文件
+    */
+  static findFile(node: FileNode, fileName: string): FileNode | null {
+    if (node.name === fileName) {
+      return node;
+    }
+    
+    if (node.type === 'directory' && node.children) {
+      for (const child of node.children) {
+        const found = this.findFile(child, fileName);
+        if (found) return found;
+      }
+    }
+    
+    return null;
+  }
+  
+  /**
+    * 获取文件路径
+    */
+  static getPath(root: FileNode, target: string): string | null {
+    function dfs(node: FileNode, path: string): string | null {
+      const currentPath = path + '/' + node.name;
+      
+      if (node.name === target) {
+        return currentPath;
+      }
+      
+      if (node.type === 'directory' && node.children) {
+        for (const child of node.children) {
+          const found = dfs(child, currentPath);
+          if (found) return found;
+        }
+      }
+      
+      return null;
+    }
+    
+    return dfs(root, '');
+  }
+  
+  /**
+    * 列出所有文件
+    */
+  static listAllFiles(node: FileNode): string[] {
+    const files: string[] = [];
+    
+    function collect(n: FileNode, path: string) {
+      const currentPath = path + '/' + n.name;
+      
+      if (n.type === 'file') {
+        files.push(currentPath);
+      } else if (n.children) {
+        n.children.forEach(child => collect(child, currentPath));
+      }
+    }
+    
+    collect(node, '');
+    return files;
+  }
+  
+  /**
+    * 打印树结构
+    */
+  static printTree(node: FileNode, indent: number = 0): void {
+    const prefix = '  '.repeat(indent);
+    const icon = node.type === 'directory' ? '📁' : '📄';
+    const size = node.type === 'file' ? ` (${node.size} bytes)` : '';
+    
+    console.log(`${prefix}${icon} ${node.name}${size}`);
+    
+    if (node.children) {
+      node.children.forEach(child => this.printTree(child, indent + 1));
+    }
+  }
+  
+  /**
+    * 统计信息
+    */
+  static getStats(node: FileNode): {
+    totalFiles: number;
+    totalDirs: number;
+    totalSize: number;
+    maxDepth: number;
+  } {
+    let totalFiles = 0;
+    let totalDirs = 0;
+    let maxDepth = 0;
+    
+    function traverse(n: FileNode, depth: number) {
+      maxDepth = Math.max(maxDepth, depth);
+      
+      if (n.type === 'file') {
+        totalFiles++;
+      } else {
+        totalDirs++;
+        n.children?.forEach(child => traverse(child, depth + 1));
+      }
+    }
+    
+    traverse(node, 1);
+    
+    return {
+      totalFiles,
+      totalDirs,
+      totalSize: this.calculateSize(node),
+      maxDepth
+    };
+  }
+}
+
+// 测试
+const fileSystem: FileNode = {
+  name: 'src',
+  type: 'directory',
+  children: [
+    {
+      name: 'components',
+      type: 'directory',
+      children: [
+        { name: 'Header.tsx', type: 'file', size: 1024 },
+        { name: 'Footer.tsx', type: 'file', size: 512 }
+      ]
+    },
+    {
+      name: 'utils',
+      type: 'directory',
+      children: [
+        { name: 'helpers.ts', type: 'file', size: 2048 }
+      ]
+    },
+    { name: 'App.tsx', type: 'file', size: 4096 }
+  ]
+};
+
+console.log('文件树结构:');
+FileSystemTree.printTree(fileSystem);
+// 📁 src
+//   📁 components
+//     📄 Header.tsx (1024 bytes)
+//     📄 Footer.tsx (512 bytes)
+//   📁 utils
+//     📄 helpers.ts (2048 bytes)
+//   📄 App.tsx (4096 bytes)
+
+const stats = FileSystemTree.getStats(fileSystem);
+console.log('\n统计信息:');
+console.log('文件数:', stats.totalFiles);      // 4
+console.log('目录数:', stats.totalDirs);        // 3
+console.log('总大小:', stats.totalSize, 'bytes'); // 7680
+console.log('最大深度:', stats.maxDepth);       // 3
+
+const path = FileSystemTree.getPath(fileSystem, 'Header.tsx');
+console.log('\n文件路径:', path);
+// /src/components/Header.tsx
+
+const allFiles = FileSystemTree.listAllFiles(fileSystem);
+console.log('\n所有文件:');
+allFiles.forEach(file => console.log(file));
+```
+
+---
+
+### 案例3: React 组件树遍历
+
+```typescript
+/**
+  * React 组件节点(简化版)
+  */
+interface ComponentNode {
+  type: string;
+  props: Record<string, any>;
+  children: ComponentNode[];
+}
+
+/**
+  * React 组件树工具
+  */
+class ComponentTree {
+  /**
+    * 查找组件
+    */
+  static findComponent(
+    root: ComponentNode,
+    type: string
+  ): ComponentNode | null {
+    if (root.type === type) {
+      return root;
+    }
+    
+    for (const child of root.children) {
+      const found = this.findComponent(child, type);
+      if (found) return found;
+    }
+    
+    return null;
+  }
+  
+  /**
+    * 查找所有匹配的组件
+    */
+  static findAllComponents(
+    root: ComponentNode,
+    type: string
+  ): ComponentNode[] {
+    const result: ComponentNode[] = [];
+    
+    function traverse(node: ComponentNode) {
+      if (node.type === type) {
+        result.push(node);
+      }
+      node.children.forEach(traverse);
+    }
+    
+    traverse(root);
+    return result;
+  }
+  
+  /**
+    * 计算组件树深度
+    */
+  static getDepth(root: ComponentNode): number {
+    if (root.children.length === 0) {
+      return 1;
+    }
+    
+    return 1 + Math.max(...root.children.map(child => this.getDepth(child)));
+  }
+  
+  /**
+    * 获取组件路径
+    */
+  static getComponentPath(
+    root: ComponentNode,
+    targetType: string
+  ): string[] | null {
+    function dfs(node: ComponentNode, path: string[]): string[] | null {
+      const currentPath = [...path, node.type];
+      
+      if (node.type === targetType) {
+        return currentPath;
+      }
+      
+      for (const child of node.children) {
+        const found = dfs(child, currentPath);
+        if (found) return found;
+      }
+      
+      return null;
+    }
+    
+    return dfs(root, []);
+  }
+  
+  /**
+    * 打印组件树
+    */
+  static printTree(node: ComponentNode, indent: number = 0): void {
+    const prefix = '  '.repeat(indent);
+    const propsStr = Object.keys(node.props).length > 0
+      ? ` ${JSON.stringify(node.props)}`
+      : '';
+    
+    console.log(`${prefix}<${node.type}${propsStr}>`);
+    node.children.forEach(child => this.printTree(child, indent + 1));
+  }
+  
+  /**
+    * 统计组件数量
+    */
+  static countComponents(root: ComponentNode): Map<string, number> {
+    const counts = new Map<string, number>();
+    
+    function traverse(node: ComponentNode) {
+      counts.set(node.type, (counts.get(node.type) || 0) + 1);
+      node.children.forEach(traverse);
+    }
+    
+    traverse(root);
+    return counts;
+  }
+}
+
+// 测试
+const componentTree: ComponentNode = {
+  type: 'App',
+  props: {},
+  children: [
+    {
+      type: 'Header',
+      props: { title: 'My App' },
+      children: [
+        { type: 'Nav', props: {}, children: [] },
+        { type: 'Logo', props: {}, children: [] }
+      ]
+    },
+    {
+      type: 'Main',
+      props: {},
+      children: [
+        { type: 'Sidebar', props: {}, children: [] },
+        { type: 'Content', props: {}, children: [] }
+      ]
+    },
+    { type: 'Footer', props: {}, children: [] }
+  ]
+};
+
+console.log('组件树结构:');
+ComponentTree.printTree(componentTree);
+
+console.log('\n组件深度:', ComponentTree.getDepth(componentTree)); // 3
+
+const path = ComponentTree.getComponentPath(componentTree, 'Nav');
+console.log('\n组件路径:', path?.join(' > '));
+// App > Header > Nav
+
+const counts = ComponentTree.countComponents(componentTree);
+console.log('\n组件统计:');
+counts.forEach((count, type) => {
+  console.log(`${type}: ${count}`);
+});
+```
+
+---
+
+## 七、练习题
+
+### 题目1: 二叉树的最大路径和 (LeetCode 124)
+
+**难度**: 困难
+
+**题目描述**:
+路径被定义为一条从树中任意节点出发,沿父节点-子节点连接,达到任意节点的序列。同一个节点在一条路径序列中至多出现一次。该路径至少包含一个节点,且不一定经过根节点。
+
+```typescript
+/**
+  * @param root - 二叉树根节点
+  * @return 最大路径和
+  */
+function maxPathSum(root: TreeNode<number> | null): number {
+  // 在这里实现你的代码
+}
+
+// 测试用例
+// 输入:    1
+//        / \
+//       2   3
+// 输出: 6 (2 + 1 + 3)
+```
+
+**提示**: 对于每个节点,最大路径和可能是:
+1. 左子树最大路径 + 当前节点
+2. 右子树最大路径 + 当前节点
+3. 左子树 + 当前节点 + 右子树
+
+---
+
+### 题目2: 二叉树的右视图 (LeetCode 199)
+
+**难度**: 中等
+
+**题目描述**:
+给定一个二叉树,想象自己站在它的右侧,返回从右侧所能看到的节点值。
+
+```typescript
+/**
+  * @param root - 二叉树根节点
+  * @return 右视图节点值数组
+  */
+function rightSideView(root: TreeNode<number> | null): number[] {
+  // 在这里实现你的代码
+}
+
+// 测试用例
+// 输入:    1
+//        /   \
+//       2     3
+//        \     \
+//         5     4
+// 输出: [1, 3, 4]
+```
+
+**提示**: 使用层序遍历,每层取最后一个节点
+
+---
+
+### 题目3: 二叉树的序列化与反序列化 (LeetCode 297)
+
+**难度**: 困难
+
+**题目描述**:
+设计算法来序列化和反序列化二叉树。
+
+```typescript
+/**
+  * 序列化
+  */
+function serialize(root: TreeNode<number> | null): string {
+  // 在这里实现你的代码
+}
+
+/**
+  * 反序列化
+  */
+function deserialize(data: string): TreeNode<number> | null {
+  // 在这里实现你的代码
+}
+
+// 测试用例
+// 输入:    1
+//        / \
+//       2   3
+//          / \
+//         4   5
+// 序列化: "1,2,null,null,3,4,null,null,5,null,null"
+```
+
+---
+
+## 八、总结与扩展
+
+### 核心要点
+
+1. **树的遍历**:
+    - DFS: 前序、中序、后序
+    - BFS: 层序遍历
+    - 递归 vs 迭代
+
+2. **常见操作**:
+    - 计算深度/高度
+    - 查找节点
+    - 路径问题
+    - 树的变换
+
+3. **实战应用**:
+    - DOM 树操作
+    - 文件系统
+    - 组件树
+    - 路由配置
+
+### 遍历方式的选择
+
+<table>
+  <thead>
+    <tr>
+      <th>场景</th>
+      <th>推荐遍历</th>
+      <th>原因</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>复制树</td>
+      <td>前序</td>
+      <td>先创建父节点</td>
+    </tr>
+    <tr>
+      <td>删除树</td>
+      <td>后序</td>
+      <td>先删除子节点</td>
+    </tr>
+    <tr>
+      <td>BST 排序</td>
+      <td>中序</td>
+      <td>得到有序序列</td>
+    </tr>
+    <tr>
+      <td>层级关系</td>
+      <td>层序</td>
+      <td>逐层处理</td>
+    </tr>
+    <tr>
+      <td>最短路径</td>
+      <td>BFS</td>
+      <td>先找到的一定最短</td>
+    </tr>
+    <tr>
+      <td>深度搜索</td>
+      <td>DFS</td>
+      <td>探索所有可能</td>
+    </tr>
+  </tbody>
+</table>
+
+### 常见陷阱
+
+1. **空节点检查**:
+```typescript
+// ❌ 没有检查 null
+function traverse(root: TreeNode) {
+  traverse(root.left); // root 可能是 null
+}
+
+// ✅ 正确检查
+function traverse(root: TreeNode | null) {
+  if (!root) return;
+  traverse(root.left);
+}
+```
+
+2. **递归栈溢出**:
+```typescript
+// 树太深可能导致栈溢出
+// 考虑使用迭代版本
+```
+
+3. **修改树结构时的引用问题**:
+```typescript
+// ❌ 直接修改可能影响遍历
+function removeNodes(root: TreeNode) {
+  traverse(root, node => {
+    if (shouldRemove(node)) {
+      node.parent.children.remove(node); // 可能导致遍历错误
+    }
+  });
+}
+
+// ✅ 先收集再删除
+function removeNodes(root: TreeNode) {
+  const toRemove = [];
+  traverse(root, node => {
+    if (shouldRemove(node)) {
+      toRemove.push(node);
+    }
+  });
+  toRemove.forEach(node => remove(node));
+}
+```
+
+### 进阶学习
+
+1. **二叉搜索树 (BST)**: 下一篇详细讲解
+2. **平衡树**: AVL树、红黑树
+3. **B树/B+树**: 数据库索引
+4. **字典树 (Trie)**: 字符串搜索
+5. **线段树**: 区间查询
+6. **树状数组**: 前缀和优化
+
+### 性能优化建议
+
+- ✅ 对于深度很大的树,使用迭代代替递归
+- ✅ 缓存计算结果,避免重复计算
+- ✅ 使用合适的遍历方式
+- ✅ 考虑使用平衡树优化查找
+- ✅ 对于频繁修改的场景,考虑使用其他数据结构
+
+---
+
+## 下期预告
+
+下一篇我们将学习**二叉搜索树 (BST)**,探讨:
+- BST 的插入、删除、查找
+- 平衡二叉树 (AVL)
+- 红黑树原理
+- 实战:自动完成、范围查询
+
+---
+
+**相关资源**:
+- [LeetCode 树题单](https://leetcode.cn/tag/tree/)
+- [可视化二叉树](https://visualgo.net/en/bst)
+- [本系列代码仓库](https://github.com/yourname/frontend-algorithms)

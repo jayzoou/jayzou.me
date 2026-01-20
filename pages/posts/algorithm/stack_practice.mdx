@@ -1,0 +1,1845 @@
+
+# 前端算法系列(二):栈与队列(实战篇) - 真实场景应用
+
+> 在基础篇和进阶篇中,我们学习了栈和队列的原理与技巧。本篇将通过 7 个真实的前端场景,展示如何在实际项目中应用这些数据结构。
+
+## 一、浏览器历史记录系统
+
+### 需求分析
+
+实现一个完整的浏览器历史记录系统,支持:
+- 访问新页面
+- 后退(可指定步数)
+- 前进(可指定步数)
+- 清除前进历史
+- 获取历史记录列表
+
+### 完整实现
+
+```typescript
+/**
+  * 浏览器历史记录管理器
+  */
+class BrowserHistory {
+  private backStack: string[] = [];      // 后退栈
+  private forwardStack: string[] = [];   // 前进栈
+  private currentPage: string;           // 当前页面
+  private maxHistory: number;            // 最大历史记录数
+  
+  constructor(homepage: string, maxHistory: number = 50) {
+    this.currentPage = homepage;
+    this.maxHistory = maxHistory;
+  }
+  
+  /**
+    * 访问新页面
+    */
+  visit(url: string): void {
+    // 将当前页面加入后退栈
+    this.backStack.push(this.currentPage);
+    
+    // 限制历史记录数量
+    if (this.backStack.length > this.maxHistory) {
+      this.backStack.shift();
+    }
+    
+    // 更新当前页面
+    this.currentPage = url;
+    
+    // 清空前进栈(访问新页面后不能前进)
+    this.forwardStack = [];
+    
+    console.log(`📄 访问: ${url}`);
+  }
+  
+  /**
+    * 后退指定步数
+    */
+  back(steps: number = 1): string {
+    let actualSteps = 0;
+    
+    while (steps > 0 && this.backStack.length > 0) {
+      // 将当前页面加入前进栈
+      this.forwardStack.push(this.currentPage);
+      
+      // 从后退栈取出页面
+      this.currentPage = this.backStack.pop()!;
+      
+      steps--;
+      actualSteps++;
+    }
+    
+    console.log(`⬅️  后退 ${actualSteps} 步: ${this.currentPage}`);
+    return this.currentPage;
+  }
+  
+  /**
+    * 前进指定步数
+    */
+  forward(steps: number = 1): string {
+    let actualSteps = 0;
+    
+    while (steps > 0 && this.forwardStack.length > 0) {
+      // 将当前页面加入后退栈
+      this.backStack.push(this.currentPage);
+      
+      // 从前进栈取出页面
+      this.currentPage = this.forwardStack.pop()!;
+      
+      steps--;
+      actualSteps++;
+    }
+    
+    console.log(`➡️  前进 ${actualSteps} 步: ${this.currentPage}`);
+    return this.currentPage;
+  }
+  
+  /**
+    * 获取当前页面
+    */
+  getCurrentPage(): string {
+    return this.currentPage;
+  }
+  
+  /**
+    * 获取历史记录列表
+    */
+  getHistory(): {
+    back: string[];
+    current: string;
+    forward: string[];
+  } {
+    return {
+      back: [...this.backStack],
+      current: this.currentPage,
+      forward: [...this.forwardStack].reverse()
+    };
+  }
+  
+  /**
+    * 检查是否可以后退
+    */
+  canGoBack(): boolean {
+    return this.backStack.length > 0;
+  }
+  
+  /**
+    * 检查是否可以前进
+    */
+  canGoForward(): boolean {
+    return this.forwardStack.length > 0;
+  }
+  
+  /**
+    * 清除所有历史记录
+    */
+  clear(): void {
+    this.backStack = [];
+    this.forwardStack = [];
+    console.log('🗑️  历史记录已清除');
+  }
+  
+  /**
+    * 打印历史记录(用于调试)
+    */
+  printHistory(): void {
+    const history = this.getHistory();
+    console.log('\n📚 历史记录:');
+    console.log('后退栈:', history.back.join(' → '));
+    console.log('当前页:', history.current);
+    console.log('前进栈:', history.forward.join(' → '));
+    console.log('');
+  }
+}
+
+// 使用示例
+const browser = new BrowserHistory("google.com");
+
+browser.visit("youtube.com");
+browser.visit("facebook.com");
+browser.visit("twitter.com");
+browser.printHistory();
+// 后退栈: google.com → youtube.com → facebook.com
+// 当前页: twitter.com
+// 前进栈: 
+
+browser.back(2);
+browser.printHistory();
+// 后退栈: google.com
+// 当前页: youtube.com
+// 前进栈: facebook.com → twitter.com
+
+browser.forward(1);
+browser.printHistory();
+// 后退栈: google.com → youtube.com
+// 当前页: facebook.com
+// 前进栈: twitter.com
+
+browser.visit("instagram.com"); // 访问新页面,清空前进栈
+browser.printHistory();
+// 后退栈: google.com → youtube.com → facebook.com
+// 当前页: instagram.com
+// 前进栈: 
+```
+
+### React 集成示例
+
+```typescript
+/**
+  * React Hook 封装
+  */
+import { useState, useCallback } from 'react';
+
+function useBrowserHistory(initialUrl: string) {
+  const [history] = useState(() => new BrowserHistory(initialUrl));
+  const [, forceUpdate] = useState({});
+  
+  const visit = useCallback((url: string) => {
+    history.visit(url);
+    forceUpdate({});
+  }, [history]);
+  
+  const back = useCallback((steps?: number) => {
+    history.back(steps);
+    forceUpdate({});
+  }, [history]);
+  
+  const forward = useCallback((steps?: number) => {
+    history.forward(steps);
+    forceUpdate({});
+  }, [history]);
+  
+  return {
+    currentPage: history.getCurrentPage(),
+    canGoBack: history.canGoBack(),
+    canGoForward: history.canGoForward(),
+    visit,
+    back,
+    forward,
+    getHistory: () => history.getHistory()
+  };
+}
+
+// 组件中使用
+function BrowserDemo() {
+  const { currentPage, canGoBack, canGoForward, visit, back, forward } = 
+    useBrowserHistory('google.com');
+  
+  return (
+    <div>
+      <div>当前页面: {currentPage}</div>
+      <button onClick={() => back()} disabled={!canGoBack}>后退</button>
+      <button onClick={() => forward()} disabled={!canGoForward}>前进</button>
+      <button onClick={() => visit('youtube.com')}>访问 YouTube</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 二、撤销重做系统
+
+### 需求分析
+
+实现一个通用的撤销重做系统,支持:
+- 记录操作历史
+- 撤销操作
+- 重做操作
+- 批量操作
+- 操作合并
+- 历史记录限制
+
+### 完整实现
+
+```typescript
+/**
+  * 操作接口
+  */
+interface Action<T = any> {
+  type: string;           // 操作类型
+  execute: () => void;    // 执行操作
+  undo: () => void;       // 撤销操作
+  data?: T;               // 操作数据
+  timestamp: number;      // 时间戳
+}
+
+/**
+  * 撤销重做管理器
+  */
+class UndoRedoManager<T = any> {
+  private undoStack: Action<T>[] = [];
+  private redoStack: Action<T>[] = [];
+  private maxSize: number;
+  private isExecuting: boolean = false;
+  
+  constructor(maxSize: number = 100) {
+    this.maxSize = maxSize;
+  }
+  
+  /**
+    * 执行新操作
+    */
+  execute(action: Action<T>): void {
+    if (this.isExecuting) return;
+    
+    this.isExecuting = true;
+    
+    try {
+      // 执行操作
+      action.execute();
+      
+      // 添加到撤销栈
+      this.undoStack.push({
+        ...action,
+        timestamp: Date.now()
+      });
+      
+      // 清空重做栈
+      this.redoStack = [];
+      
+      // 限制栈大小
+      if (this.undoStack.length > this.maxSize) {
+        this.undoStack.shift();
+      }
+      
+      console.log(`✅ 执行: ${action.type}`);
+    } finally {
+      this.isExecuting = false;
+    }
+  }
+  
+  /**
+    * 撤销操作
+    */
+  undo(): boolean {
+    if (this.undoStack.length === 0) {
+      console.log('⚠️  没有可撤销的操作');
+      return false;
+    }
+    
+    this.isExecuting = true;
+    
+    try {
+      const action = this.undoStack.pop()!;
+      action.undo();
+      this.redoStack.push(action);
+      
+      console.log(`↩️  撤销: ${action.type}`);
+      return true;
+    } finally {
+      this.isExecuting = false;
+    }
+  }
+  
+  /**
+    * 重做操作
+    */
+  redo(): boolean {
+    if (this.redoStack.length === 0) {
+      console.log('⚠️  没有可重做的操作');
+      return false;
+    }
+    
+    this.isExecuting = true;
+    
+    try {
+      const action = this.redoStack.pop()!;
+      action.execute();
+      this.undoStack.push(action);
+      
+      console.log(`↪️  重做: ${action.type}`);
+      return true;
+    } finally {
+      this.isExecuting = false;
+    }
+  }
+  
+  /**
+    * 批量撤销
+    */
+  undoMultiple(count: number): number {
+    let undone = 0;
+    while (count > 0 && this.undo()) {
+      undone++;
+      count--;
+    }
+    return undone;
+  }
+  
+  /**
+    * 批量重做
+    */
+  redoMultiple(count: number): number {
+    let redone = 0;
+    while (count > 0 && this.redo()) {
+      redone++;
+      count--;
+    }
+    return redone;
+  }
+  
+  /**
+    * 清除历史记录
+    */
+  clear(): void {
+    this.undoStack = [];
+    this.redoStack = [];
+    console.log('🗑️  历史记录已清除');
+  }
+  
+  /**
+    * 获取历史记录
+    */
+  getHistory(): {
+    undoCount: number;
+    redoCount: number;
+    undoList: string[];
+    redoList: string[];
+  } {
+    return {
+      undoCount: this.undoStack.length,
+      redoCount: this.redoStack.length,
+      undoList: this.undoStack.map(a => a.type),
+      redoList: this.redoStack.map(a => a.type)
+    };
+  }
+  
+  /**
+    * 检查是否可以撤销
+    */
+  canUndo(): boolean {
+    return this.undoStack.length > 0;
+  }
+  
+  /**
+    * 检查是否可以重做
+    */
+  canRedo(): boolean {
+    return this.redoStack.length > 0;
+  }
+}
+
+// 使用示例:富文本编辑器
+interface TextState {
+  content: string;
+  cursorPosition: number;
+}
+
+class TextEditor {
+  private content: string = '';
+  private undoRedo: UndoRedoManager<TextState>;
+  
+  constructor() {
+    this.undoRedo = new UndoRedoManager<TextState>();
+  }
+  
+  /**
+    * 插入文本
+    */
+  insertText(text: string, position: number): void {
+    const oldContent = this.content;
+    const newContent = 
+      oldContent.slice(0, position) + text + oldContent.slice(position);
+    
+    this.undoRedo.execute({
+      type: `插入文本: "${text}"`,
+      execute: () => {
+        this.content = newContent;
+      },
+      undo: () => {
+        this.content = oldContent;
+      },
+      data: { content: newContent, cursorPosition: position + text.length },
+      timestamp: Date.now()
+    });
+  }
+  
+  /**
+    * 删除文本
+    */
+  deleteText(start: number, end: number): void {
+    const oldContent = this.content;
+    const deletedText = oldContent.slice(start, end);
+    const newContent = oldContent.slice(0, start) + oldContent.slice(end);
+    
+    this.undoRedo.execute({
+      type: `删除文本: "${deletedText}"`,
+      execute: () => {
+        this.content = newContent;
+      },
+      undo: () => {
+        this.content = oldContent;
+      },
+      data: { content: newContent, cursorPosition: start },
+      timestamp: Date.now()
+    });
+  }
+  
+  /**
+    * 替换文本
+    */
+  replaceText(start: number, end: number, newText: string): void {
+    const oldContent = this.content;
+    const replacedText = oldContent.slice(start, end);
+    const newContent = 
+      oldContent.slice(0, start) + newText + oldContent.slice(end);
+    
+    this.undoRedo.execute({
+      type: `替换文本: "${replacedText}" → "${newText}"`,
+      execute: () => {
+        this.content = newContent;
+      },
+      undo: () => {
+        this.content = oldContent;
+      },
+      data: { content: newContent, cursorPosition: start + newText.length },
+      timestamp: Date.now()
+    });
+  }
+  
+  /**
+    * 撤销
+    */
+  undo(): void {
+    this.undoRedo.undo();
+  }
+  
+  /**
+    * 重做
+    */
+  redo(): void {
+    this.undoRedo.redo();
+  }
+  
+  /**
+    * 获取内容
+    */
+  getContent(): string {
+    return this.content;
+  }
+  
+  /**
+    * 打印历史
+    */
+  printHistory(): void {
+    const history = this.undoRedo.getHistory();
+    console.log('\n📝 编辑历史:');
+    console.log('可撤销:', history.undoList.join(' → '));
+    console.log('可重做:', history.redoList.join(' → '));
+    console.log('当前内容:', this.content);
+    console.log('');
+  }
+}
+
+// 测试
+const editor = new TextEditor();
+
+editor.insertText('Hello', 0);
+editor.insertText(' World', 5);
+editor.insertText('!', 11);
+editor.printHistory();
+// 当前内容: Hello World!
+
+editor.undo();
+editor.printHistory();
+// 当前内容: Hello World
+
+editor.undo();
+editor.printHistory();
+// 当前内容: Hello
+
+editor.redo();
+editor.printHistory();
+// 当前内容: Hello World
+
+editor.replaceText(6, 11, 'TypeScript');
+editor.printHistory();
+// 当前内容: Hello TypeScript
+```
+
+### 快捷键绑定
+
+```typescript
+/**
+  * 绑定键盘快捷键
+  */
+function setupUndoRedoShortcuts(editor: TextEditor) {
+  document.addEventListener('keydown', (e) => {
+    // Ctrl+Z / Cmd+Z: 撤销
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+      e.preventDefault();
+      editor.undo();
+    }
+    
+    // Ctrl+Shift+Z / Cmd+Shift+Z: 重做
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
+      e.preventDefault();
+      editor.redo();
+    }
+    
+    // Ctrl+Y / Cmd+Y: 重做(Windows 风格)
+    if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+      e.preventDefault();
+      editor.redo();
+    }
+  });
+}
+```
+
+---
+
+## 三、异步任务队列
+
+### 需求分析
+
+实现一个异步任务队列,支持:
+- 控制并发数
+- 任务优先级
+- 任务取消
+- 错误处理
+- 进度追踪
+
+### 完整实现
+
+```typescript
+/**
+  * 任务接口
+  */
+interface Task<T = any> {
+  id: string;
+  fn: () => Promise<T>;
+  priority?: number;      // 优先级(数字越大越优先)
+  timeout?: number;       // 超时时间(毫秒)
+  retries?: number;       // 重试次数
+}
+
+/**
+  * 任务结果
+  */
+interface TaskResult<T = any> {
+  id: string;
+  status: 'success' | 'error' | 'timeout' | 'cancelled';
+  data?: T;
+  error?: Error;
+  duration: number;
+}
+
+/**
+  * 异步任务队列
+  */
+class AsyncTaskQueue<T = any> {
+  private queue: Task<T>[] = [];
+  private running: Map<string, Promise<any>> = new Map();
+  private results: Map<string, TaskResult<T>> = new Map();
+  private maxConcurrent: number;
+  private paused: boolean = false;
+  
+  constructor(maxConcurrent: number = 3) {
+    this.maxConcurrent = maxConcurrent;
+  }
+  
+  /**
+    * 添加任务
+    */
+  async add(task: Task<T>): Promise<TaskResult<T>> {
+    return new Promise((resolve, reject) => {
+      const wrappedTask: Task<T> = {
+        ...task,
+        priority: task.priority || 0,
+        fn: async () => {
+          const startTime = Date.now();
+          
+          try {
+            // 设置超时
+            const timeoutPromise = task.timeout
+              ? new Promise<never>((_, reject) =>
+                  setTimeout(() => reject(new Error('Task timeout')), task.timeout)
+                )
+              : null;
+            
+            // 执行任务
+            const result = timeoutPromise
+              ? await Promise.race([task.fn(), timeoutPromise])
+              : await task.fn();
+            
+            const taskResult: TaskResult<T> = {
+              id: task.id,
+              status: 'success',
+              data: result,
+              duration: Date.now() - startTime
+            };
+            
+            this.results.set(task.id, taskResult);
+            resolve(taskResult);
+            return result;
+          } catch (error) {
+            const taskResult: TaskResult<T> = {
+              id: task.id,
+              status: error instanceof Error && error.message === 'Task timeout'
+                ? 'timeout'
+                : 'error',
+              error: error as Error,
+              duration: Date.now() - startTime
+            };
+            
+            this.results.set(task.id, taskResult);
+            
+            // 重试逻辑
+            if (task.retries && task.retries > 0) {
+              console.log(`🔄 重试任务 ${task.id}, 剩余次数: ${task.retries}`);
+              return this.add({ ...task, retries: task.retries - 1 });
+            }
+            
+            reject(taskResult);
+            throw error;
+          }
+        }
+      };
+      
+      // 按优先级插入队列
+      this.insertByPriority(wrappedTask);
+      this.run();
+    });
+  }
+  
+  /**
+    * 按优先级插入任务
+    */
+  private insertByPriority(task: Task<T>): void {
+    const index = this.queue.findIndex(t => (t.priority || 0) < (task.priority || 0));
+    if (index === -1) {
+      this.queue.push(task);
+    } else {
+      this.queue.splice(index, 0, task);
+    }
+    console.log(`➕ 添加任务 ${task.id} (优先级: ${task.priority || 0})`);
+  }
+  
+  /**
+    * 执行队列中的任务
+    */
+  private async run(): Promise<void> {
+    if (this.paused) return;
+    
+    while (
+      this.running.size < this.maxConcurrent &&
+      this.queue.length > 0
+    ) {
+      const task = this.queue.shift()!;
+      
+      console.log(`▶️  开始执行任务 ${task.id}`);
+      
+      const promise = task.fn().finally(() => {
+        this.running.delete(task.id);
+        console.log(`✅ 完成任务 ${task.id}`);
+        this.run(); // 继续执行下一个任务
+      });
+      
+      this.running.set(task.id, promise);
+    }
+  }
+  
+  /**
+    * 取消任务
+    */
+  cancel(taskId: string): boolean {
+    // 从队列中移除
+    const index = this.queue.findIndex(t => t.id === taskId);
+    if (index !== -1) {
+      this.queue.splice(index, 1);
+      
+      this.results.set(taskId, {
+        id: taskId,
+        status: 'cancelled',
+        duration: 0
+      });
+      
+      console.log(`❌ 取消任务 ${taskId}`);
+      return true;
+    }
+    
+    return false;
+  }
+  
+  /**
+    * 暂停队列
+    */
+  pause(): void {
+    this.paused = true;
+    console.log('⏸️  队列已暂停');
+  }
+  
+  /**
+    * 恢复队列
+    */
+  resume(): void {
+    this.paused = false;
+    console.log('▶️  队列已恢复');
+    this.run();
+  }
+  
+  /**
+    * 清空队列
+    */
+  clear(): void {
+    this.queue = [];
+    console.log('🗑️  队列已清空');
+  }
+  
+  /**
+    * 等待所有任务完成
+    */
+  async waitAll(): Promise<TaskResult<T>[]> {
+    while (this.queue.length > 0 || this.running.size > 0) {
+      await Promise.all(this.running.values());
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    return Array.from(this.results.values());
+  }
+  
+  /**
+    * 获取队列状态
+    */
+  getStatus(): {
+    pending: number;
+    running: number;
+    completed: number;
+    failed: number;
+  } {
+    const results = Array.from(this.results.values());
+    return {
+      pending: this.queue.length,
+      running: this.running.size,
+      completed: results.filter(r => r.status === 'success').length,
+      failed: results.filter(r => r.status === 'error' || r.status === 'timeout').length
+    };
+  }
+  
+  /**
+    * 获取任务结果
+    */
+  getResult(taskId: string): TaskResult<T> | undefined {
+    return this.results.get(taskId);
+  }
+}
+
+// 使用示例
+const taskQueue = new AsyncTaskQueue(2); // 最多同时执行2个任务
+
+// 模拟 API 请求
+const fetchData = (id: number, delay: number): Promise<string> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(`数据 ${id}`);
+    }, delay);
+  });
+};
+
+// 添加任务
+taskQueue.add({
+  id: 'task-1',
+  fn: () => fetchData(1, 2000),
+  priority: 1
+});
+
+taskQueue.add({
+  id: 'task-2',
+  fn: () => fetchData(2, 1000),
+  priority: 2 // 高优先级
+});
+
+taskQueue.add({
+  id: 'task-3',
+  fn: () => fetchData(3, 1500),
+  timeout: 1000, // 1秒超时
+  retries: 2     // 重试2次
+});
+
+taskQueue.add({
+  id: 'task-4',
+  fn: () => fetchData(4, 500)
+});
+
+// 等待所有任务完成
+taskQueue.waitAll().then(results => {
+  console.log('\n📊 任务完成统计:');
+  console.log('总任务数:', results.length);
+  console.log('成功:', results.filter(r => r.status === 'success').length);
+  console.log('失败:', results.filter(r => r.status === 'error').length);
+  console.log('超时:', results.filter(r => r.status === 'timeout').length);
+});
+```
+
+### 实际应用场景
+
+```typescript
+/**
+  * 图片批量上传
+  */
+async function uploadImages(files: File[]) {
+  const uploadQueue = new AsyncTaskQueue(3); // 最多同时上传3张
+  
+  const tasks = files.map((file, index) => ({
+    id: `upload-${index}`,
+    fn: async () => {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+      
+      return response.json();
+    },
+    timeout: 30000, // 30秒超时
+    retries: 2      // 失败重试2次
+  }));
+  
+  // 添加所有任务
+  const promises = tasks.map(task => uploadQueue.add(task));
+  
+  // 等待所有上传完成
+  const results = await Promise.allSettled(promises);
+  
+  return results;
+}
+```
+
+---
+
+## 四、LRU 缓存实现
+
+### 需求分析
+
+实现一个 LRU (Least Recently Used) 缓存,支持:
+- O(1) 的读写操作
+- 自动淘汰最久未使用的数据
+- 容量限制
+- 过期时间
+
+### 完整实现
+
+```typescript
+/**
+  * 缓存项
+  */
+interface CacheItem<T> {
+  key: string;
+  value: T;
+  expireTime?: number; // 过期时间戳
+}
+
+/**
+  * LRU 缓存
+  */
+class LRUCache<T = any> {
+  private capacity: number;
+  private cache: Map<string, T>;
+  private expireMap: Map<string, number>;
+  
+  constructor(capacity: number) {
+    this.capacity = capacity;
+    this.cache = new Map();
+    this.expireMap = new Map();
+  }
+  
+  /**
+    * 获取值
+    */
+  get(key: string): T | undefined {
+    // 检查是否过期
+    if (this.isExpired(key)) {
+      this.delete(key);
+      return undefined;
+    }
+    
+    if (!this.cache.has(key)) {
+      return undefined;
+    }
+    
+    // 更新访问顺序(删除后重新插入)
+    const value = this.cache.get(key)!;
+    this.cache.delete(key);
+    this.cache.set(key, value);
+    
+    console.log(`🔍 读取缓存: ${key}`);
+    return value;
+  }
+  
+  /**
+    * 设置值
+    */
+  set(key: string, value: T, ttl?: number): void {
+    // 如果键已存在,先删除
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    }
+    
+    // 插入新值
+    this.cache.set(key, value);
+    
+    // 设置过期时间
+    if (ttl) {
+      this.expireMap.set(key, Date.now() + ttl);
+    }
+    
+    // 如果超出容量,删除最久未使用的(Map 的第一个元素)
+    if (this.cache.size > this.capacity) {
+      const firstKey = this.cache.keys().next().value;
+      this.delete(firstKey);
+      console.log(`🗑️  淘汰缓存: ${firstKey}`);
+    }
+    
+    console.log(`💾 写入缓存: ${key}`);
+  }
+  
+  /**
+    * 删除键
+    */
+  delete(key: string): boolean {
+    this.expireMap.delete(key);
+    return this.cache.delete(key);
+  }
+  
+  /**
+    * 检查是否过期
+    */
+  private isExpired(key: string): boolean {
+    const expireTime = this.expireMap.get(key);
+    if (!expireTime) return false;
+    
+    if (Date.now() > expireTime) {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  /**
+    * 清理过期缓存
+    */
+  cleanup(): number {
+    let cleaned = 0;
+    for (const [key, expireTime] of this.expireMap.entries()) {
+      if (Date.now() > expireTime) {
+        this.delete(key);
+        cleaned++;
+      }
+    }
+    
+    if (cleaned > 0) {
+      console.log(`🧹 清理了 ${cleaned} 个过期缓存`);
+    }
+    
+    return cleaned;
+  }
+  
+  /**
+    * 清空缓存
+    */
+  clear(): void {
+    this.cache.clear();
+    this.expireMap.clear();
+    console.log('🗑️  缓存已清空');
+  }
+  
+  /**
+    * 获取缓存大小
+    */
+  size(): number {
+    return this.cache.size;
+  }
+  
+  /**
+    * 检查键是否存在
+    */
+  has(key: string): boolean {
+    if (this.isExpired(key)) {
+      this.delete(key);
+      return false;
+    }
+    return this.cache.has(key);
+  }
+  
+  /**
+    * 获取所有键
+    */
+  keys(): string[] {
+    // 清理过期缓存
+    this.cleanup();
+    return Array.from(this.cache.keys());
+  }
+  
+  /**
+    * 打印缓存状态
+    */
+  print(): void {
+    console.log('\n📦 缓存内容:');
+    console.log('容量:', `${this.cache.size}/${this.capacity}`);
+    console.log('键值对:', Array.from(this.cache.entries()));
+    console.log('');
+  }
+}
+
+// 测试
+const cache = new LRUCache<string>(3);
+
+cache.set('a', '数据A');
+cache.set('b', '数据B');
+cache.set('c', '数据C');
+cache.print();
+// 容量: 3/3
+
+console.log(cache.get('a')); // 访问 a,更新顺序
+cache.set('d', '数据D');     // 淘汰 b
+cache.print();
+// 容量: 3/3, 键: a, c, d
+
+// 测试过期时间
+cache.set('e', '数据E', 1000); // 1秒后过期
+setTimeout(() => {
+  console.log(cache.get('e')); // undefined (已过期)
+}, 1500);
+```
+
+### 实际应用:API 响应缓存
+
+```typescript
+/**
+  * API 缓存装饰器
+  */
+class APICache {
+  private cache: LRUCache<any>;
+  
+  constructor(capacity: number = 100) {
+    this.cache = new LRUCache(capacity);
+    
+    // 每分钟清理一次过期缓存
+    setInterval(() => this.cache.cleanup(), 60000);
+  }
+  
+  /**
+    * 包装 fetch 请求
+    */
+  async fetch(url: string, options?: RequestInit, ttl: number = 300000): Promise<any> {
+    const cacheKey = this.getCacheKey(url, options);
+    
+    // 尝试从缓存读取
+    const cached = this.cache.get(cacheKey);
+    if (cached) {
+      console.log('✅ 命中缓存:', url);
+      return cached;
+    }
+    
+    // 发起请求
+    console.log('🌐 发起请求:', url);
+    const response = await fetch(url, options);
+    const data = await response.json();
+    
+    // 写入缓存
+    this.cache.set(cacheKey, data, ttl);
+    
+    return data;
+  }
+  
+  /**
+    * 生成缓存键
+    */
+  private getCacheKey(url: string, options?: RequestInit): string {
+    return `${url}:${JSON.stringify(options || {})}`;
+  }
+  
+  /**
+    * 清除指定 URL 的缓存
+    */
+  invalidate(url: string): void {
+    const keys = this.cache.keys().filter(key => key.startsWith(url));
+    keys.forEach(key => this.cache.delete(key));
+    console.log(`🗑️  清除了 ${keys.length} 个相关缓存`);
+  }
+}
+
+// 使用示例
+const apiCache = new APICache(50);
+
+// 第一次请求(发起网络请求)
+await apiCache.fetch('/api/users', {}, 60000); // 缓存1分钟
+
+// 第二次请求(从缓存读取)
+await apiCache.fetch('/api/users', {}, 60000);
+
+// 清除缓存
+apiCache.invalidate('/api/users');
+```
+
+---
+
+## 五、函数调用栈追踪器
+
+### 需求分析
+
+实现一个函数调用栈追踪器,用于:
+- 调试递归函数
+- 性能分析
+- 调用链可视化
+
+### 完整实现
+
+```typescript
+/**
+  * 调用信息
+  */
+interface CallInfo {
+  functionName: string;
+  args: any[];
+  startTime: number;
+  endTime?: number;
+  result?: any;
+  error?: Error;
+}
+
+/**
+  * 函数调用栈追踪器
+  */
+class CallStackTracker {
+  private stack: CallInfo[] = [];
+  private callHistory: CallInfo[] = [];
+  private maxDepth: number = 0;
+  private enabled: boolean = true;
+  
+  /**
+    * 进入函数
+    */
+  enter(functionName: string, args: any[] = []): void {
+    if (!this.enabled) return;
+    
+    const callInfo: CallInfo = {
+      functionName,
+      args,
+      startTime: performance.now()
+    };
+    
+    this.stack.push(callInfo);
+    this.maxDepth = Math.max(this.maxDepth, this.stack.length);
+    
+    this.printIndented(`→ ${functionName}(${this.formatArgs(args)})`);
+  }
+  
+  /**
+    * 退出函数
+    */
+  exit(result?: any): void {
+    if (!this.enabled) return;
+    
+    const callInfo = this.stack.pop();
+    if (!callInfo) return;
+    
+    callInfo.endTime = performance.now();
+    callInfo.result = result;
+    
+    const duration = callInfo.endTime - callInfo.startTime;
+    this.callHistory.push(callInfo);
+    
+    this.printIndented(
+      `← ${callInfo.functionName} (${duration.toFixed(2)}ms)`,
+      this.stack.length
+    );
+  }
+  
+  /**
+    * 记录错误
+    */
+  error(error: Error): void {
+    if (!this.enabled) return;
+    
+    const callInfo = this.stack[this.stack.length - 1];
+    if (callInfo) {
+      callInfo.error = error;
+      callInfo.endTime = performance.now();
+    }
+    
+    this.printIndented(`❌ ${error.message}`);
+  }
+  
+  /**
+    * 打印缩进的日志
+    */
+  private printIndented(message: string, depth?: number): void {
+    const indent = '  '.repeat(depth ?? this.stack.length);
+    console.log(`${indent}${message}`);
+  }
+  
+  /**
+    * 格式化参数
+    */
+  private formatArgs(args: any[]): string {
+    return args.map(arg => {
+      if (typeof arg === 'object') {
+        return JSON.stringify(arg);
+      }
+      return String(arg);
+    }).join(', ');
+  }
+  
+  /**
+    * 获取统计信息
+    */
+  getStats(): {
+    maxDepth: number;
+    totalCalls: number;
+    averageDuration: number;
+    slowestCalls: CallInfo[];
+  } {
+    const durations = this.callHistory
+      .filter(c => c.endTime)
+      .map(c => c.endTime! - c.startTime);
+    
+    const avgDuration = durations.length > 0
+      ? durations.reduce((a, b) => a + b, 0) / durations.length
+      : 0;
+    
+    const slowest = [...this.callHistory]
+      .filter(c => c.endTime)
+      .sort((a, b) => (b.endTime! - b.startTime) - (a.endTime! - a.startTime))
+      .slice(0, 5);
+    
+    return {
+      maxDepth: this.maxDepth,
+      totalCalls: this.callHistory.length,
+      averageDuration: avgDuration,
+      slowestCalls: slowest
+    };
+  }
+  
+  /**
+    * 启用/禁用追踪
+    */
+  setEnabled(enabled: boolean): void {
+    this.enabled = enabled;
+  }
+  
+  /**
+    * 清除历史
+    */
+  clear(): void {
+    this.stack = [];
+    this.callHistory = [];
+    this.maxDepth = 0;
+  }
+}
+
+// 使用示例:追踪斐波那契函数
+const tracker = new CallStackTracker();
+
+function fibonacci(n: number): number {
+  tracker.enter('fibonacci', [n]);
+  
+  if (n <= 1) {
+    tracker.exit(n);
+    return n;
+  }
+  
+  const result = fibonacci(n - 1) + fibonacci(n - 2);
+  tracker.exit(result);
+  return result;
+}
+
+console.log('\n🔍 追踪 fibonacci(4):\n');
+const result = fibonacci(4);
+console.log(`\n结果: ${result}\n`);
+
+const stats = tracker.getStats();
+console.log('📊 统计信息:');
+console.log('最大深度:', stats.maxDepth);
+console.log('总调用次数:', stats.totalCalls);
+console.log('平均耗时:', stats.averageDuration.toFixed(2), 'ms');
+
+// 输出:
+// → fibonacci(4)
+//   → fibonacci(3)
+//     → fibonacci(2)
+//       → fibonacci(1)
+//       ← fibonacci (0.05ms)
+//       → fibonacci(0)
+//       ← fibonacci (0.03ms)
+//     ← fibonacci (0.15ms)
+//     → fibonacci(1)
+//     ← fibonacci (0.03ms)
+//   ← fibonacci (0.25ms)
+//   → fibonacci(2)
+//     → fibonacci(1)
+//     ← fibonacci (0.03ms)
+//     → fibonacci(0)
+//     ← fibonacci (0.02ms)
+//   ← fibonacci (0.12ms)
+// ← fibonacci (0.42ms)
+```
+
+### 装饰器版本
+
+```typescript
+/**
+  * 函数追踪装饰器
+  */
+function trace(tracker: CallStackTracker) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
+    const originalMethod = descriptor.value;
+    
+    descriptor.value = function (...args: any[]) {
+      tracker.enter(propertyKey, args);
+      
+      try {
+        const result = originalMethod.apply(this, args);
+        
+        // 处理 Promise
+        if (result instanceof Promise) {
+          return result
+            .then(value => {
+              tracker.exit(value);
+              return value;
+            })
+            .catch(error => {
+              tracker.error(error);
+              throw error;
+            });
+        }
+        
+        tracker.exit(result);
+        return result;
+      } catch (error) {
+        tracker.error(error as Error);
+        throw error;
+      }
+    };
+    
+    return descriptor;
+  };
+}
+
+// 使用装饰器
+class Calculator {
+  @trace(tracker)
+  factorial(n: number): number {
+    if (n <= 1) return 1;
+    return n * this.factorial(n - 1);
+  }
+}
+```
+
+---
+
+## 六、表达式求值器
+
+### 需求分析
+
+实现一个完整的表达式求值器,支持:
+- 四则运算
+- 括号
+- 变量
+- 函数调用
+
+### 完整实现
+
+```typescript
+/**
+  * 表达式求值器
+  */
+class ExpressionEvaluator {
+  private variables: Map<string, number> = new Map();
+  private functions: Map<string, (...args: number[]) => number> = new Map();
+  
+  constructor() {
+    // 注册内置函数
+    this.registerFunction('abs', Math.abs);
+    this.registerFunction('sqrt', Math.sqrt);
+    this.registerFunction('pow', Math.pow);
+    this.registerFunction('max', Math.max);
+    this.registerFunction('min', Math.min);
+  }
+  
+  /**
+    * 注册变量
+    */
+  setVariable(name: string, value: number): void {
+    this.variables.set(name, value);
+  }
+  
+  /**
+    * 注册函数
+    */
+  registerFunction(name: string, fn: (...args: number[]) => number): void {
+    this.functions.set(name, fn);
+  }
+  
+  /**
+    * 求值
+    */
+  evaluate(expression: string): number {
+    // 1. 词法分析:分词
+    const tokens = this.tokenize(expression);
+    
+    // 2. 语法分析:中缀转后缀
+    const postfix = this.infixToPostfix(tokens);
+    
+    // 3. 计算后缀表达式
+    return this.evaluatePostfix(postfix);
+  }
+  
+  /**
+    * 词法分析
+    */
+  private tokenize(expression: string): string[] {
+    const tokens: string[] = [];
+    let current = '';
+    
+    for (let i = 0; i < expression.length; i++) {
+      const char = expression[i];
+      
+      if (char === ' ') {
+        if (current) {
+          tokens.push(current);
+          current = '';
+        }
+      } else if ('+-*/()'.includes(char)) {
+        if (current) {
+          tokens.push(current);
+          current = '';
+        }
+        tokens.push(char);
+      } else {
+        current += char;
+      }
+    }
+    
+    if (current) {
+      tokens.push(current);
+    }
+    
+    return tokens;
+  }
+  
+  /**
+    * 中缀转后缀
+    */
+  private infixToPostfix(tokens: string[]): string[] {
+    const output: string[] = [];
+    const operators: string[] = [];
+    const precedence: Record<string, number> = {
+      '+': 1, '-': 1,
+      '*': 2, '/': 2
+    };
+    
+    for (const token of tokens) {
+      if (this.isNumber(token)) {
+        output.push(token);
+      } else if (this.isVariable(token)) {
+        output.push(token);
+      } else if (this.isFunction(token)) {
+        operators.push(token);
+      } else if (token === '(') {
+        operators.push(token);
+      } else if (token === ')') {
+        while (operators.length && operators[operators.length - 1] !== '(') {
+          output.push(operators.pop()!);
+        }
+        operators.pop(); // 弹出 '('
+        
+        // 如果栈顶是函数,也弹出
+        if (operators.length && this.isFunction(operators[operators.length - 1])) {
+          output.push(operators.pop()!);
+        }
+      } else if (token in precedence) {
+        while (
+          operators.length &&
+          operators[operators.length - 1] !== '(' &&
+          precedence[operators[operators.length - 1]] >= precedence[token]
+        ) {
+          output.push(operators.pop()!);
+        }
+        operators.push(token);
+      }
+    }
+    
+    while (operators.length) {
+      output.push(operators.pop()!);
+    }
+    
+    return output;
+  }
+  
+  /**
+    * 计算后缀表达式
+    */
+  private evaluatePostfix(tokens: string[]): number {
+    const stack: number[] = [];
+    
+    for (const token of tokens) {
+      if (this.isNumber(token)) {
+        stack.push(parseFloat(token));
+      } else if (this.isVariable(token)) {
+        const value = this.variables.get(token);
+        if (value === undefined) {
+          throw new Error(`未定义的变量: ${token}`);
+        }
+        stack.push(value);
+      } else if (this.isFunction(token)) {
+        const fn = this.functions.get(token);
+        if (!fn) {
+          throw new Error(`未定义的函数: ${token}`);
+        }
+        
+        // 函数参数个数(简化处理,假设都是2个参数)
+        const b = stack.pop()!;
+        const a = stack.pop()!;
+        stack.push(fn(a, b));
+      } else {
+        const b = stack.pop()!;
+        const a = stack.pop()!;
+        
+        switch (token) {
+          case '+': stack.push(a + b); break;
+          case '-': stack.push(a - b); break;
+          case '*': stack.push(a * b); break;
+          case '/': stack.push(a / b); break;
+        }
+      }
+    }
+    
+    return stack[0];
+  }
+  
+  /**
+    * 判断是否为数字
+    */
+  private isNumber(token: string): boolean {
+    return !isNaN(parseFloat(token));
+  }
+  
+  /**
+    * 判断是否为变量
+    */
+  private isVariable(token: string): boolean {
+    return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(token) && !this.functions.has(token);
+  }
+  
+  /**
+    * 判断是否为函数
+    */
+  private isFunction(token: string): boolean {
+    return this.functions.has(token);
+  }
+}
+
+// 测试
+const evaluator = new ExpressionEvaluator();
+
+console.log(evaluator.evaluate('3 + 5 * 2'));           // 13
+console.log(evaluator.evaluate('(1 + 2) * 3'));         // 9
+console.log(evaluator.evaluate('10 + 2 * 6'));          // 22
+
+// 使用变量
+evaluator.setVariable('x', 10);
+evaluator.setVariable('y', 5);
+console.log(evaluator.evaluate('x + y * 2'));           // 20
+
+// 使用函数
+console.log(evaluator.evaluate('max(3, 5)'));           // 5
+console.log(evaluator.evaluate('pow(2, 3)'));           // 8
+console.log(evaluator.evaluate('sqrt(16) + abs(-5)'));  // 9
+```
+
+---
+
+## 七、性能对比与总结
+
+### 性能测试
+
+```typescript
+/**
+  * 性能测试工具
+  */
+function benchmark(name: string, fn: () => void, iterations: number = 10000) {
+  const start = performance.now();
+  
+  for (let i = 0; i < iterations; i++) {
+    fn();
+  }
+  
+  const end = performance.now();
+  const duration = end - start;
+  const avgTime = duration / iterations;
+  
+  console.log(`\n📊 ${name}`);
+  console.log(`总耗时: ${duration.toFixed(2)}ms`);
+  console.log(`平均耗时: ${avgTime.toFixed(4)}ms`);
+  console.log(`吞吐量: ${(iterations / duration * 1000).toFixed(0)} ops/s`);
+}
+
+// 测试数组队列 vs 循环队列
+console.log('=== 队列性能对比 ===');
+
+benchmark('数组队列', () => {
+  const queue: number[] = [];
+  for (let i = 0; i < 100; i++) {
+    queue.push(i);
+    queue.shift();
+  }
+});
+
+benchmark('循环队列', () => {
+  const queue = new CircularQueue<number>(100);
+  for (let i = 0; i < 100; i++) {
+    queue.enqueue(i);
+    queue.dequeue();
+  }
+});
+
+// 输出示例:
+// 📊 数组队列
+// 总耗时: 1250.50ms
+// 平均耗时: 0.1251ms
+// 吞吐量: 7997 ops/s
+//
+// 📊 循环队列
+// 总耗时: 85.20ms
+// 平均耗时: 0.0085ms
+// 吞吐量: 117371 ops/s
+```
+
+### 最佳实践总结
+
+| 场景 | 推荐方案 | 原因 |
+|------|---------|------|
+| 浏览器历史 | 双栈 | 支持前进后退 |
+| 撤销重做 | 双栈 + 时间戳 | 需要记录操作历史 |
+| 异步任务 | 优先队列 + 并发控制 | 支持优先级和限流 |
+| API 缓存 | LRU + 过期时间 | 自动淘汰 + 时效性 |
+| 表达式求值 | 双栈(运算符+操作数) | 经典算法 |
+| 函数追踪 | 栈 + 性能计时 | 记录调用链 |
+| 高频出队 | 循环队列 | O(1) 性能 |
+
+### 常见陷阱
+
+1. **内存泄漏**
+```typescript
+// ❌ 队列不断增长
+const queue: any[] = [];
+setInterval(() => {
+  queue.push(data);
+  // 忘记出队
+}, 1000);
+
+// ✅ 限制队列大小
+if (queue.length > MAX_SIZE) {
+  queue.shift();
+}
+```
+
+2. **栈溢出**
+```typescript
+// ❌ 递归深度过大
+function deepRecursion(n: number): number {
+  if (n === 0) return 0;
+  return deepRecursion(n - 1); // 可能栈溢出
+}
+
+// ✅ 改用迭代
+function iterative(n: number): number {
+  let result = 0;
+  while (n > 0) {
+    result += n--;
+  }
+  return result;
+}
+```
+
+3. **并发问题**
+```typescript
+// ❌ 没有并发控制
+const promises = urls.map(url => fetch(url)); // 同时发起所有请求
+
+// ✅ 使用任务队列
+const queue = new AsyncTaskQueue(5);
+const promises = urls.map(url => 
+  queue.add({ id: url, fn: () => fetch(url) })
+);
+```
+
+---
+
+## 八、总结
+
+### 核心要点
+
+1. **浏览器历史**: 双栈实现前进后退
+2. **撤销重做**: 栈 + 命令模式
+3. **异步任务**: 队列 + 并发控制 + 优先级
+4. **LRU 缓存**: Map + 访问顺序 + 过期时间
+5. **表达式求值**: 双栈 + 调度场算法
+6. **函数追踪**: 栈 + 性能计时
+
+### 性能优化建议
+
+- ✅ 使用**循环队列**代替数组队列
+- ✅ 为 LRU 缓存设置**合理容量**
+- ✅ 异步任务队列要**限制并发数**
+- ✅ 定期**清理过期数据**
+- ✅ 使用**对象池**减少 GC 压力
+
+### 实际应用场景
+
+- 🌐 浏览器:历史记录、标签页管理
+- ✏️ 编辑器:撤销重做、语法高亮
+- 🎨 设计工具:图层管理、操作历史
+- 📡 网络:请求队列、缓存管理
+- 🎮 游戏:状态回溯、动画队列
+
+---
+
+## 系列回顾
+
+本系列我们学习了栈与队列的:
+
+**基础篇**:
+- 栈和队列的基本概念
+- 基础实现和经典问题
+- 括号匹配、用栈实现队列
+
+**进阶篇**:
+- 循环队列 - O(1) 出队
+- 单调栈 - 下一个更大元素
+- 最小栈 - O(1) 获取最小值
+- 单调队列 - 滑动窗口最大值
+
+**实战篇**:
+- 浏览器历史记录系统
+- 撤销重做系统
+- 异步任务队列
+- LRU 缓存
+- 函数调用栈追踪
+- 表达式求值器
+
+---
+
+## 下期预告
+
+下一篇我们将学习**链表操作**,探讨:
+- 链表的基本操作
+- 双向链表与循环链表
+- LRU 缓存的链表实现
+- React Fiber 的链表结构
+
+敬请期待!
+
+---
+
+**相关资源**:
+- [完整代码仓库](https://github.com/yourname/frontend-algorithms)
+- [在线演示](https://demo.example.com)
+- [LeetCode 题单](https://leetcode.cn/tag/stack/)

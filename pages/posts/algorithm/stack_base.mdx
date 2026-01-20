@@ -1,0 +1,948 @@
+
+# 前端算法系列(二):栈与队列(基础篇) - 数据结构入门
+
+## 一、问题引入
+
+作为前端开发工程师,你每天都在和栈与队列打交道,只是可能没有意识到:
+
+### 场景1: 浏览器的前进后退
+```javascript
+// 用户浏览网页的历史记录
+访问: A → B → C → D
+点击后退: D → C → B
+点击前进: B → C → D
+
+// 如何实现这个功能?
+```
+
+### 场景2: 表达式求值
+```javascript
+// 计算器需要处理复杂表达式
+const expression = "3 + 5 * (2 - 8)";
+// 如何正确计算优先级?
+
+// React JSX 语法检查
+const jsx = "<div><span></span></div>";
+// 如何验证标签是否匹配?
+```
+
+### 场景3: 异步任务管理
+```javascript
+// 多个 API 请求需要按顺序执行
+const tasks = [fetchUser, fetchOrders, fetchProducts];
+// 如何保证执行顺序?
+```
+
+这些场景分别对应了**栈**和**队列**的经典应用。今天我们从基础开始,深入学习这两种数据结构。
+
+---
+
+## 二、算法原理
+
+### 栈 (Stack) - 后进先出 (LIFO)
+
+栈就像一摞盘子,只能从顶部添加或移除。
+
+```
+push(3)          push(5)          pop()
+┌─────┐         ┌─────┐         ┌─────┐
+│     │         │  5  │ ← top   │     │
+├─────┤         ├─────┤         ├─────┤
+│  3  │ ← top   │  3  │         │  3  │ ← top
+├─────┤         ├─────┤         ├─────┤
+│  1  │         │  1  │         │  1  │
+└─────┘         └─────┘         └─────┘
+```
+
+**核心操作**:
+- `push(item)`: 入栈 - O(1)
+- `pop()`: 出栈 - O(1)
+- `peek()`: 查看栈顶 - O(1)
+- `isEmpty()`: 判断是否为空 - O(1)
+
+**特点**: 后进先出,适合需要"回溯"的场景
+
+**生活中的栈**:
+- 浏览器的后退按钮
+- 编辑器的撤销功能
+- 函数调用栈
+- 递归算法
+
+---
+
+### 队列 (Queue) - 先进先出 (FIFO)
+
+队列就像排队买票,先来的先服务。
+
+```
+enqueue(3)       enqueue(5)       dequeue()
+┌─────┐         ┌─────┐         ┌─────┐
+│  3  │ ← rear  │  5  │ ← rear  │  5  │ ← rear
+└─────┘         ├─────┤         └─────┘
+  ↑             │  3  │           ↑
+  front          └─────┘          front
+                  ↑
+                front
+```
+
+**核心操作**:
+- `enqueue(item)`: 入队 - O(1)
+- `dequeue()`: 出队 - O(1)
+- `front()`: 查看队首 - O(1)
+- `isEmpty()`: 判断是否为空 - O(1)
+
+**特点**: 先进先出,适合需要"排队"的场景
+
+**生活中的队列**:
+- 打印任务队列
+- 消息队列
+- 事件循环
+- 广度优先搜索
+
+---
+
+### 栈 vs 队列
+
+<table>
+  <thead>
+    <tr>
+      <th>特性</th>
+      <th>栈</th>
+      <th>队列</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>操作顺序</td>
+      <td>后进先出(LIFO)</td>
+      <td>先进先出(FIFO)</td>
+    </tr>
+    <tr>
+      <td>添加位置</td>
+      <td>顶部</td>
+      <td>尾部</td>
+    </tr>
+    <tr>
+      <td>移除位置</td>
+      <td>顶部</td>
+      <td>头部</td>
+    </tr>
+    <tr>
+      <td>典型应用</td>
+      <td>撤销、回溯、递归</td>
+      <td>任务调度、BFS</td>
+    </tr>
+    <tr>
+      <td>类比</td>
+      <td>一摞盘子</td>
+      <td>排队</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## 三、代码实现
+
+### 1. 栈的基础实现
+
+```typescript
+/**
+  * 栈的实现 - 基于数组
+  */
+class Stack<T> {
+  private items: T[] = [];
+  
+  /**
+    * 入栈
+    */
+  push(item: T): void {
+    this.items.push(item);
+  }
+  
+  /**
+    * 出栈
+    */
+  pop(): T | undefined {
+    return this.items.pop();
+  }
+  
+  /**
+    * 查看栈顶元素(不移除)
+    */
+  peek(): T | undefined {
+    return this.items[this.items.length - 1];
+  }
+  
+  /**
+    * 判断栈是否为空
+    */
+  isEmpty(): boolean {
+    return this.items.length === 0;
+  }
+  
+  /**
+    * 获取栈的大小
+    */
+  size(): number {
+    return this.items.length;
+  }
+  
+  /**
+    * 清空栈
+    */
+  clear(): void {
+    this.items = [];
+  }
+  
+  /**
+    * 打印栈(用于调试)
+    */
+  toString(): string {
+    return this.items.toString();
+  }
+}
+
+// 测试
+const stack = new Stack<number>();
+stack.push(1);
+stack.push(2);
+stack.push(3);
+console.log(stack.peek());     // 3 (查看栈顶)
+console.log(stack.pop());      // 3 (弹出栈顶)
+console.log(stack.size());     // 2 (剩余元素)
+console.log(stack.toString()); // "1,2"
+```
+
+**关键点**:
+- 使用数组的 `push()` 和 `pop()` 方法,都是 O(1) 操作
+- `peek()` 只查看不移除,常用于判断条件
+- 泛型 `<T>` 让栈可以存储任意类型
+
+---
+
+### 2. 队列的基础实现
+
+```typescript
+/**
+  * 队列的实现 - 基于数组(简单版)
+  */
+class Queue<T> {
+  private items: T[] = [];
+  
+  /**
+    * 入队(从尾部添加)
+    */
+  enqueue(item: T): void {
+    this.items.push(item);
+  }
+  
+  /**
+    * 出队(从头部移除)
+    */
+  dequeue(): T | undefined {
+    return this.items.shift(); // 注意:shift() 是 O(n) 操作
+  }
+  
+  /**
+    * 查看队首元素
+    */
+  front(): T | undefined {
+    return this.items[0];
+  }
+  
+  /**
+    * 判断队列是否为空
+    */
+  isEmpty(): boolean {
+    return this.items.length === 0;
+  }
+  
+  /**
+    * 获取队列大小
+    */
+  size(): number {
+    return this.items.length;
+  }
+  
+  /**
+    * 清空队列
+    */
+  clear(): void {
+    this.items = [];
+  }
+}
+
+// 测试
+const queue = new Queue<string>();
+queue.enqueue('A');
+queue.enqueue('B');
+queue.enqueue('C');
+console.log(queue.front());    // 'A' (查看队首)
+console.log(queue.dequeue());  // 'A' (移除队首)
+console.log(queue.size());     // 2 (剩余元素)
+```
+
+**性能问题**: 
+- `shift()` 操作是 O(n),因为需要移动所有元素
+- 对于频繁出队的场景,性能不佳
+- 下一篇会介绍高效的循环队列实现
+
+---
+
+### 3. 经典问题:有效的括号
+
+```typescript
+/**
+  * 判断括号是否有效
+  * 例: "()" ✓  "()[]{}" ✓  "(]" ✗  "([)]" ✗
+  */
+function isValidParentheses(s: string): boolean {
+  const stack: string[] = [];
+  const pairs: Record<string, string> = {
+    ')': '(',
+    ']': '[',
+    '}': '{'
+  };
+  
+  for (const char of s) {
+    // 如果是右括号
+    if (char in pairs) {
+      // 检查栈顶是否匹配
+      if (stack.length === 0 || stack[stack.length - 1] !== pairs[char]) {
+        return false;
+      }
+      stack.pop();
+    } else {
+      // 左括号入栈
+      stack.push(char);
+    }
+  }
+  
+  // 栈应该为空
+  return stack.length === 0;
+}
+
+// 测试
+console.log(isValidParentheses("()"));       // true
+console.log(isValidParentheses("()[]{}"));   // true
+console.log(isValidParentheses("(]"));       // false
+console.log(isValidParentheses("([)]"));     // false
+console.log(isValidParentheses("{[]}"));     // true
+```
+
+**算法思路**:
+1. 遇到左括号,入栈
+2. 遇到右括号,检查栈顶是否匹配
+3. 最后栈应该为空
+
+**可视化过程**:
+```
+输入: "({[]})"
+
+读取 '(': stack = ['(']
+读取 '{': stack = ['(', '{']
+读取 '[': stack = ['(', '{', '[']
+读取 ']': 匹配 '[', stack = ['(', '{']
+读取 '}': 匹配 '{', stack = ['(']
+读取 ')': 匹配 '(', stack = []
+
+栈为空 → 有效 ✓
+```
+
+**应用场景**:
+- JSX 标签匹配检查
+- HTML 标签验证
+- 编译器语法分析
+- Markdown 语法检查
+
+---
+
+### 4. 经典问题:用栈实现队列
+
+```typescript
+/**
+  * 用两个栈实现队列
+  * 思路:一个栈负责入队,一个栈负责出队
+  */
+class MyQueue {
+  private inStack: number[] = [];   // 入队栈
+  private outStack: number[] = [];  // 出队栈
+  
+  /**
+    * 入队
+    */
+  push(x: number): void {
+    this.inStack.push(x);
+  }
+  
+  /**
+    * 出队
+    */
+  pop(): number {
+    this.moveToOutStack();
+    return this.outStack.pop()!;
+  }
+  
+  /**
+    * 查看队首
+    */
+  peek(): number {
+    this.moveToOutStack();
+    return this.outStack[this.outStack.length - 1];
+  }
+  
+  /**
+    * 判断是否为空
+    */
+  empty(): boolean {
+    return this.inStack.length === 0 && this.outStack.length === 0;
+  }
+  
+  /**
+    * 将 inStack 的元素移到 outStack
+    */
+  private moveToOutStack(): void {
+    // 只有 outStack 为空时才移动
+    if (this.outStack.length === 0) {
+      while (this.inStack.length) {
+        this.outStack.push(this.inStack.pop()!);
+      }
+    }
+  }
+}
+
+// 测试
+const myQueue = new MyQueue();
+myQueue.push(1);
+myQueue.push(2);
+console.log(myQueue.peek());  // 1 (队首)
+console.log(myQueue.pop());   // 1 (出队)
+console.log(myQueue.empty()); // false
+```
+
+**可视化过程**:
+```
+push(1): inStack=[1], outStack=[]
+push(2): inStack=[1,2], outStack=[]
+
+peek(): 
+  移动到 outStack: inStack=[], outStack=[2,1]
+  返回 outStack 栈顶: 1
+
+pop():
+  outStack=[2,1]
+  弹出栈顶: 1
+  outStack=[2]
+```
+
+**时间复杂度分析**:
+- push: O(1)
+- pop/peek: 均摊 O(1)
+  - 每个元素最多被移动一次
+  - n 次操作总共 O(n),平均 O(1)
+
+---
+
+### 5. 经典问题:用队列实现栈
+
+```typescript
+/**
+  * 用一个队列实现栈
+  * 思路:每次 push 后,将前面的元素移到后面
+  */
+class MyStack {
+  private queue: number[] = [];
+  
+  /**
+    * 入栈
+    */
+  push(x: number): void {
+    const size = this.queue.length;
+    this.queue.push(x);
+    
+    // 将前面的元素移到后面,使新元素在队首
+    for (let i = 0; i < size; i++) {
+      this.queue.push(this.queue.shift()!);
+    }
+  }
+  
+  /**
+    * 出栈
+    */
+  pop(): number {
+    return this.queue.shift()!;
+  }
+  
+  /**
+    * 查看栈顶
+    */
+  top(): number {
+    return this.queue[0];
+  }
+  
+  /**
+    * 判断是否为空
+    */
+  empty(): boolean {
+    return this.queue.length === 0;
+  }
+}
+
+// 测试
+const myStack = new MyStack();
+myStack.push(1);
+myStack.push(2);
+console.log(myStack.top());   // 2 (栈顶)
+console.log(myStack.pop());   // 2 (出栈)
+console.log(myStack.empty()); // false
+```
+
+**可视化过程**:
+```
+push(1): queue=[1]
+
+push(2): 
+  queue=[1,2]
+  移动1到后面: queue=[2,1]
+
+push(3):
+  queue=[2,1,3]
+  移动2到后面: queue=[1,3,2]
+  移动1到后面: queue=[3,2,1]
+
+pop(): 返回 3
+```
+
+**时间复杂度**:
+- push: O(n) - 需要移动所有元素
+- pop/top: O(1)
+
+---
+
+## 四、复杂度分析
+
+### 基本操作复杂度对比
+
+<table>
+  <thead>
+    <tr>
+      <th>操作</th>
+      <th>栈(数组)</th>
+      <th>队列(数组)</th>
+      <th>说明</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>push/enqueue</td>
+      <td>O(1)</td>
+      <td>O(1)</td>
+      <td>数组尾部操作</td>
+    </tr>
+    <tr>
+      <td>pop/dequeue</td>
+      <td>O(1)</td>
+      <td>O(n)</td>
+      <td>队列需要移动元素</td>
+    </tr>
+    <tr>
+      <td>peek/front</td>
+      <td>O(1)</td>
+      <td>O(1)</td>
+      <td>直接访问</td>
+    </tr>
+    <tr>
+      <td>空间复杂度</td>
+      <td>O(n)</td>
+      <td>O(n)</td>
+      <td>存储 n 个元素</td>
+    </tr>
+  </tbody>
+</table>
+
+### 为什么数组队列的 dequeue 是 O(n)?
+
+```javascript
+// shift() 操作需要移动所有元素
+[1, 2, 3, 4, 5].shift()
+
+// 内部实现相当于:
+for (let i = 0; i < arr.length - 1; i++) {
+  arr[i] = arr[i + 1]; // 每个元素都要向前移动
+}
+arr.length--;
+
+// 时间复杂度: O(n)
+```
+
+**图解**:
+```
+移除队首前: [1, 2, 3, 4, 5]
+              ↑
+            移除这个
+
+移除队首后: [2, 3, 4, 5]
+            ← ← ← ← (所有元素向左移动)
+```
+
+### 栈的优势
+
+```javascript
+// 栈的 pop 是 O(1)
+[1, 2, 3, 4, 5].pop()
+
+// 只需要:
+arr.length--; // 直接减少长度
+
+// 不需要移动任何元素!
+```
+
+---
+
+## 五、实战应用
+
+### 案例1: 浏览器历史记录(简化版)
+
+```typescript
+/**
+  * 浏览器历史记录管理
+  * 支持后退、访问新页面
+  */
+class SimpleBrowserHistory {
+  private backStack: string[] = [];
+  private currentPage: string;
+  
+  constructor(homepage: string) {
+    this.currentPage = homepage;
+  }
+  
+  /**
+    * 访问新页面
+    */
+  visit(url: string): void {
+    this.backStack.push(this.currentPage);
+    this.currentPage = url;
+    console.log(`访问: ${url}`);
+  }
+  
+  /**
+    * 后退
+    */
+  back(): string {
+    if (this.backStack.length === 0) {
+      console.log('已经是第一页了');
+      return this.currentPage;
+    }
+    
+    const previousPage = this.backStack.pop()!;
+    console.log(`后退到: ${previousPage}`);
+    this.currentPage = previousPage;
+    return this.currentPage;
+  }
+  
+  /**
+    * 获取当前页面
+    */
+  getCurrentPage(): string {
+    return this.currentPage;
+  }
+}
+
+// 使用示例
+const browser = new SimpleBrowserHistory("google.com");
+browser.visit("youtube.com");  // 访问: youtube.com
+browser.visit("facebook.com"); // 访问: facebook.com
+browser.back();                // 后退到: youtube.com
+browser.back();                // 后退到: google.com
+browser.back();                // 已经是第一页了
+```
+
+**可视化**:
+```
+初始: current=google.com, stack=[]
+
+visit(youtube.com):
+  current=youtube.com, stack=[google.com]
+
+visit(facebook.com):
+  current=facebook.com, stack=[google.com, youtube.com]
+
+back():
+  current=youtube.com, stack=[google.com]
+
+back():
+  current=google.com, stack=[]
+```
+
+---
+
+### 案例2: 简单计算器
+
+```typescript
+/**
+  * 简单计算器 - 只支持加减
+  */
+function calculate(s: string): number {
+  const stack: number[] = [];
+  let num = 0;
+  let sign = '+';
+  
+  for (let i = 0; i < s.length; i++) {
+    const char = s[i];
+    
+    // 构建数字
+    if (!isNaN(Number(char)) && char !== ' ') {
+      num = num * 10 + Number(char);
+    }
+    
+    // 遇到运算符或最后一个字符
+    if ((char === '+' || char === '-') || i === s.length - 1) {
+      if (i === s.length - 1 && !isNaN(Number(char))) {
+        // 最后一个字符是数字,需要处理
+      }
+      
+      if (sign === '+') {
+        stack.push(num);
+      } else if (sign === '-') {
+        stack.push(-num);
+      }
+      
+      sign = char;
+      num = 0;
+    }
+  }
+  
+  // 求和
+  return stack.reduce((sum, n) => sum + n, 0);
+}
+
+// 测试
+console.log(calculate("1 + 1"));      // 2
+console.log(calculate(" 2-1 + 2 "));  // 3
+console.log(calculate("10+5-3"));     // 12
+```
+
+**思路**:
+- 遇到 `+`,将数字入栈
+- 遇到 `-`,将负数入栈
+- 最后将栈中所有数字相加
+
+---
+
+### 案例3: 任务队列
+
+```typescript
+/**
+  * 简单任务队列
+  */
+class TaskQueue {
+  private queue: (() => void)[] = [];
+  
+  /**
+    * 添加任务
+    */
+  addTask(task: () => void): void {
+    this.queue.push(task);
+    console.log(`任务已添加,队列长度: ${this.queue.length}`);
+  }
+  
+  /**
+    * 执行下一个任务
+    */
+  executeNext(): void {
+    if (this.queue.length === 0) {
+      console.log('队列为空');
+      return;
+    }
+    
+    const task = this.queue.shift()!;
+    console.log('执行任务...');
+    task();
+  }
+  
+  /**
+    * 执行所有任务
+    */
+  executeAll(): void {
+    while (this.queue.length > 0) {
+      this.executeNext();
+    }
+  }
+  
+  /**
+    * 获取队列长度
+    */
+  size(): number {
+    return this.queue.length;
+  }
+}
+
+// 使用示例
+const taskQueue = new TaskQueue();
+
+taskQueue.addTask(() => console.log('任务1: 发送邮件'));
+taskQueue.addTask(() => console.log('任务2: 生成报告'));
+taskQueue.addTask(() => console.log('任务3: 备份数据'));
+
+taskQueue.executeAll();
+// 输出:
+// 执行任务...
+// 任务1: 发送邮件
+// 执行任务...
+// 任务2: 生成报告
+// 执行任务...
+// 任务3: 备份数据
+```
+
+---
+
+## 六、练习题
+
+### 题目1: 删除字符串中的所有相邻重复项
+
+**难度**: 简单
+
+**题目描述**:
+给出由小写字母组成的字符串 `s`,重复删除相邻且相同的字母。
+
+```typescript
+/**
+  * @param s - 输入字符串
+  * @return 删除后的字符串
+  */
+function removeDuplicates(s: string): string {
+  // 在这里实现你的代码
+}
+
+// 测试用例
+console.log(removeDuplicates("abbaca")); // "ca"
+// 解释: "bb" 被删除,得到 "aaca",然后 "aa" 被删除,得到 "ca"
+
+console.log(removeDuplicates("azxxzy")); // "ay"
+```
+
+**提示**: 使用栈,遇到相同字符就弹出。
+
+<details>
+<summary>点击查看答案</summary>
+
+```typescript
+function removeDuplicates(s: string): string {
+  const stack: string[] = [];
+  
+  for (const char of s) {
+    // 如果栈顶字符与当前字符相同,弹出
+    if (stack.length > 0 && stack[stack.length - 1] === char) {
+      stack.pop();
+    } else {
+      // 否则入栈
+      stack.push(char);
+    }
+  }
+  
+  return stack.join('');
+}
+```
+
+**时间复杂度**: O(n)  
+**空间复杂度**: O(n)
+</details>
+
+---
+
+### 题目2: 用栈实现队列的完整版
+
+**难度**: 简单
+
+**题目描述**:
+实现一个队列,支持 push、pop、peek、empty 操作,只能使用栈。
+
+```typescript
+class MyQueue {
+  constructor() {
+    // 初始化你的数据结构
+  }
+  
+  push(x: number): void {
+    // 实现入队
+  }
+  
+  pop(): number {
+    // 实现出队
+  }
+  
+  peek(): number {
+    // 查看队首
+  }
+  
+  empty(): boolean {
+    // 判断是否为空
+  }
+}
+```
+
+**提示**: 使用两个栈,一个负责入队,一个负责出队。
+
+---
+
+## 七、总结
+
+### 核心要点
+
+1. **栈(LIFO)**: 后进先出
+    - 用于需要"回溯"的场景
+    - 括号匹配、撤销功能、函数调用
+
+2. **队列(FIFO)**: 先进先出
+    - 用于需要"排队"的场景
+    - 任务调度、消息队列、BFS
+
+3. **基本操作都是 O(1)**
+    - 栈: push/pop/peek
+    - 队列: enqueue/front (dequeue 在数组实现中是 O(n))
+
+### 识别栈与队列问题的信号
+
+<table>
+  <thead>
+    <tr>
+      <th>信号</th>
+      <th>数据结构</th>
+      <th>典型问题</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>需要"最近的"、"最新的"</td>
+      <td>栈</td>
+      <td>浏览器历史、撤销重做</td>
+    </tr>
+    <tr>
+      <td>需要"配对"、"匹配"</td>
+      <td>栈</td>
+      <td>括号匹配、标签验证</td>
+    </tr>
+    <tr>
+      <td>需要"按顺序处理"</td>
+      <td>队列</td>
+      <td>任务队列、BFS</td>
+    </tr>
+  </tbody>
+</table>
+
+### 下期预告
+
+在**进阶篇**中,我们将学习:
+- 循环队列 - O(1) 的高效出队
+- 单调栈 - 下一个更大元素
+- 最小栈 - O(1) 获取最小值
+- 实战:表达式求值、滑动窗口
+
+---
+
+**相关资源**:
+- [LeetCode 栈题单](https://leetcode.cn/tag/stack/)
+- [LeetCode 队列题单](https://leetcode.cn/tag/queue/)
+- [可视化数据结构](https://visualgo.net/en/list)
+

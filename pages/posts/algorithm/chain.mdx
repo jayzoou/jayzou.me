@@ -1,0 +1,1912 @@
+
+# 前端算法系列(三):链表操作 - 从基础到实战
+
+## 一、问题引入
+
+作为前端开发工程师,你可能觉得链表离你很远,但实际上:
+
+### 场景1: React Fiber 架构
+```javascript
+// React 16+ 使用链表结构来表示组件树
+function FiberNode() {
+  this.child = null;      // 第一个子节点
+  this.sibling = null;    // 下一个兄弟节点
+  this.return = null;     // 父节点
+}
+
+// 为什么不用数组?
+// 链表可以中断遍历,支持时间切片!
+```
+
+### 场景2: 浏览器历史记录(优化版)
+```javascript
+// 使用双向链表实现,比栈更灵活
+class HistoryNode {
+  url: string;
+  prev: HistoryNode | null;
+  next: HistoryNode | null;
+}
+
+// 可以快速跳转到任意历史记录
+```
+
+### 场景3: LRU 缓存(高效版)
+```javascript
+// 双向链表 + 哈希表 = O(1) 的读写
+class LRUNode {
+  key: string;
+  value: any;
+  prev: LRUNode | null;
+  next: LRUNode | null;
+}
+
+// 比纯 Map 实现更高效
+```
+
+### 场景4: 音乐播放列表
+```javascript
+// 循环链表实现播放列表
+class Song {
+  name: string;
+  next: Song | null;
+}
+
+// 自动循环播放
+```
+
+今天我们将深入学习链表,从基础到实战,掌握这个强大的数据结构。
+
+---
+
+## 二、算法原理
+
+### 什么是链表?
+
+链表是一种线性数据结构,由节点组成,每个节点包含:
+- **数据域**: 存储数据
+- **指针域**: 指向下一个节点
+
+```
+数组 vs 链表:
+
+数组: [1][2][3][4][5]  (连续内存)
+      ↑ 可以直接访问 arr[2]
+
+链表: [1]→[2]→[3]→[4]→[5]  (分散内存)
+      ↑ 必须从头遍历到 [3]
+```
+
+### 链表的类型
+
+#### 1. 单向链表
+```
+[data|next] → [data|next] → [data|next] → null
+  head                                      tail
+```
+
+#### 2. 双向链表
+```
+      ←→      ←→      ←→
+null [prev|data|next] [prev|data|next] [prev|data|next] null
+      head                                                tail
+```
+
+#### 3. 循环链表
+```
+[data|next] → [data|next] → [data|next]
+      ↑                            ↓
+      └────────────────────────────┘
+```
+
+### 链表 vs 数组
+
+<table>
+  <thead>
+    <tr>
+      <th>操作</th>
+      <th>数组</th>
+      <th>链表</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>随机访问</td>
+      <td>O(1)</td>
+      <td>O(n)</td>
+    </tr>
+    <tr>
+      <td>插入(头部)</td>
+      <td>O(n)</td>
+      <td>O(1)</td>
+    </tr>
+    <tr>
+      <td>插入(尾部)</td>
+      <td>O(1)</td>
+      <td>O(1)*</td>
+    </tr>
+    <tr>
+      <td>删除(头部)</td>
+      <td>O(n)</td>
+      <td>O(1)</td>
+    </tr>
+    <tr>
+      <td>删除(中间)</td>
+      <td>O(n)</td>
+      <td>O(1)**</td>
+    </tr>
+    <tr>
+      <td>内存使用</td>
+      <td>连续</td>
+      <td>分散</td>
+    </tr>
+    <tr>
+      <td>缓存友好</td>
+      <td>✓</td>
+      <td>✗</td>
+    </tr>
+  </tbody>
+</table>
+
+*需要维护 tail 指针  
+**前提是已经找到节点
+
+---
+
+## 三、代码实现
+
+### 1. 单向链表
+
+```typescript
+/**
+  * 链表节点
+  */
+class ListNode<T> {
+  value: T;
+  next: ListNode<T> | null = null;
+  
+  constructor(value: T) {
+    this.value = value;
+  }
+}
+
+/**
+  * 单向链表
+  */
+class LinkedList<T> {
+  private head: ListNode<T> | null = null;
+  private tail: ListNode<T> | null = null;
+  private length: number = 0;
+  
+  /**
+    * 在头部插入 - O(1)
+    */
+  prepend(value: T): void {
+    const newNode = new ListNode(value);
+    
+    if (!this.head) {
+      this.head = this.tail = newNode;
+    } else {
+      newNode.next = this.head;
+      this.head = newNode;
+    }
+    
+    this.length++;
+  }
+  
+  /**
+    * 在尾部插入 - O(1)
+    */
+  append(value: T): void {
+    const newNode = new ListNode(value);
+    
+    if (!this.tail) {
+      this.head = this.tail = newNode;
+    } else {
+      this.tail.next = newNode;
+      this.tail = newNode;
+    }
+    
+    this.length++;
+  }
+  
+  /**
+    * 在指定位置插入 - O(n)
+    */
+  insertAt(index: number, value: T): boolean {
+    if (index < 0 || index > this.length) {
+      return false;
+    }
+    
+    if (index === 0) {
+      this.prepend(value);
+      return true;
+    }
+    
+    if (index === this.length) {
+      this.append(value);
+      return true;
+    }
+    
+    const newNode = new ListNode(value);
+    const prev = this.getNodeAt(index - 1)!;
+    
+    newNode.next = prev.next;
+    prev.next = newNode;
+    this.length++;
+    
+    return true;
+  }
+  
+  /**
+    * 删除头部 - O(1)
+    */
+  removeFirst(): T | undefined {
+    if (!this.head) {
+      return undefined;
+    }
+    
+    const value = this.head.value;
+    this.head = this.head.next;
+    
+    if (!this.head) {
+      this.tail = null;
+    }
+    
+    this.length--;
+    return value;
+  }
+  
+  /**
+    * 删除尾部 - O(n)
+    */
+  removeLast(): T | undefined {
+    if (!this.head) {
+      return undefined;
+    }
+    
+    if (this.head === this.tail) {
+      const value = this.head.value;
+      this.head = this.tail = null;
+      this.length--;
+      return value;
+    }
+    
+    // 找到倒数第二个节点
+    let current = this.head;
+    while (current.next !== this.tail) {
+      current = current.next!;
+    }
+    
+    const value = this.tail!.value;
+    current.next = null;
+    this.tail = current;
+    this.length--;
+    
+    return value;
+  }
+  
+  /**
+    * 删除指定位置 - O(n)
+    */
+  removeAt(index: number): T | undefined {
+    if (index < 0 || index >= this.length) {
+      return undefined;
+    }
+    
+    if (index === 0) {
+      return this.removeFirst();
+    }
+    
+    const prev = this.getNodeAt(index - 1)!;
+    const removed = prev.next!;
+    
+    prev.next = removed.next;
+    
+    if (removed === this.tail) {
+      this.tail = prev;
+    }
+    
+    this.length--;
+    return removed.value;
+  }
+  
+  /**
+    * 查找元素 - O(n)
+    */
+  find(value: T): number {
+    let current = this.head;
+    let index = 0;
+    
+    while (current) {
+      if (current.value === value) {
+        return index;
+      }
+      current = current.next;
+      index++;
+    }
+    
+    return -1;
+  }
+  
+  /**
+    * 获取指定位置的节点 - O(n)
+    */
+  private getNodeAt(index: number): ListNode<T> | null {
+    if (index < 0 || index >= this.length) {
+      return null;
+    }
+    
+    let current = this.head;
+    for (let i = 0; i < index; i++) {
+      current = current!.next;
+    }
+    
+    return current;
+  }
+  
+  /**
+    * 获取指定位置的值 - O(n)
+    */
+  get(index: number): T | undefined {
+    const node = this.getNodeAt(index);
+    return node ? node.value : undefined;
+  }
+  
+  /**
+    * 反转链表 - O(n)
+    */
+  reverse(): void {
+    if (!this.head || !this.head.next) {
+      return;
+    }
+    
+    let prev: ListNode<T> | null = null;
+    let current: ListNode<T> | null = this.head;
+    this.tail = this.head;
+    
+    while (current) {
+      const next = current.next;
+      current.next = prev;
+      prev = current;
+      current = next;
+    }
+    
+    this.head = prev;
+  }
+  
+  /**
+    * 清空链表
+    */
+  clear(): void {
+    this.head = this.tail = null;
+    this.length = 0;
+  }
+  
+  /**
+    * 获取长度
+    */
+  size(): number {
+    return this.length;
+  }
+  
+  /**
+    * 判断是否为空
+    */
+  isEmpty(): boolean {
+    return this.length === 0;
+  }
+  
+  /**
+    * 转换为数组
+    */
+  toArray(): T[] {
+    const result: T[] = [];
+    let current = this.head;
+    
+    while (current) {
+      result.push(current.value);
+      current = current.next;
+    }
+    
+    return result;
+  }
+  
+  /**
+    * 打印链表
+    */
+  toString(): string {
+    return this.toArray().join(' → ');
+  }
+}
+
+// 测试
+const list = new LinkedList<number>();
+list.append(1);
+list.append(2);
+list.append(3);
+console.log(list.toString()); // 1 → 2 → 3
+
+list.prepend(0);
+console.log(list.toString()); // 0 → 1 → 2 → 3
+
+list.insertAt(2, 1.5);
+console.log(list.toString()); // 0 → 1 → 1.5 → 2 → 3
+
+list.reverse();
+console.log(list.toString()); // 3 → 2 → 1.5 → 1 → 0
+```
+
+---
+
+### 2. 双向链表
+
+```typescript
+/**
+  * 双向链表节点
+  */
+class DoublyListNode<T> {
+  value: T;
+  prev: DoublyListNode<T> | null = null;
+  next: DoublyListNode<T> | null = null;
+  
+  constructor(value: T) {
+    this.value = value;
+  }
+}
+
+/**
+  * 双向链表
+  */
+class DoublyLinkedList<T> {
+  private head: DoublyListNode<T> | null = null;
+  private tail: DoublyListNode<T> | null = null;
+  private length: number = 0;
+  
+  /**
+    * 在头部插入 - O(1)
+    */
+  prepend(value: T): void {
+    const newNode = new DoublyListNode(value);
+    
+    if (!this.head) {
+      this.head = this.tail = newNode;
+    } else {
+      newNode.next = this.head;
+      this.head.prev = newNode;
+      this.head = newNode;
+    }
+    
+    this.length++;
+  }
+  
+  /**
+    * 在尾部插入 - O(1)
+    */
+  append(value: T): void {
+    const newNode = new DoublyListNode(value);
+    
+    if (!this.tail) {
+      this.head = this.tail = newNode;
+    } else {
+      newNode.prev = this.tail;
+      this.tail.next = newNode;
+      this.tail = newNode;
+    }
+    
+    this.length++;
+  }
+  
+  /**
+    * 删除头部 - O(1)
+    */
+  removeFirst(): T | undefined {
+    if (!this.head) {
+      return undefined;
+    }
+    
+    const value = this.head.value;
+    this.head = this.head.next;
+    
+    if (this.head) {
+      this.head.prev = null;
+    } else {
+      this.tail = null;
+    }
+    
+    this.length--;
+    return value;
+  }
+  
+  /**
+    * 删除尾部 - O(1)
+    */
+  removeLast(): T | undefined {
+    if (!this.tail) {
+      return undefined;
+    }
+    
+    const value = this.tail.value;
+    this.tail = this.tail.prev;
+    
+    if (this.tail) {
+      this.tail.next = null;
+    } else {
+      this.head = null;
+    }
+    
+    this.length--;
+    return value;
+  }
+  
+  /**
+    * 在指定节点后插入
+    */
+  insertAfter(node: DoublyListNode<T>, value: T): void {
+    const newNode = new DoublyListNode(value);
+    
+    newNode.prev = node;
+    newNode.next = node.next;
+    
+    if (node.next) {
+      node.next.prev = newNode;
+    } else {
+      this.tail = newNode;
+    }
+    
+    node.next = newNode;
+    this.length++;
+  }
+  
+  /**
+    * 删除指定节点 - O(1)
+    */
+  removeNode(node: DoublyListNode<T>): void {
+    if (node.prev) {
+      node.prev.next = node.next;
+    } else {
+      this.head = node.next;
+    }
+    
+    if (node.next) {
+      node.next.prev = node.prev;
+    } else {
+      this.tail = node.prev;
+    }
+    
+    this.length--;
+  }
+  
+  /**
+    * 移动节点到头部 - O(1)
+    */
+  moveToFront(node: DoublyListNode<T>): void {
+    if (node === this.head) {
+      return;
+    }
+    
+    // 从原位置移除
+    if (node.prev) {
+      node.prev.next = node.next;
+    }
+    
+    if (node.next) {
+      node.next.prev = node.prev;
+    } else {
+      this.tail = node.prev;
+    }
+    
+    // 移到头部
+    node.prev = null;
+    node.next = this.head;
+    
+    if (this.head) {
+      this.head.prev = node;
+    }
+    
+    this.head = node;
+  }
+  
+  /**
+    * 正向遍历
+    */
+  forwardTraversal(): T[] {
+    const result: T[] = [];
+    let current = this.head;
+    
+    while (current) {
+      result.push(current.value);
+      current = current.next;
+    }
+    
+    return result;
+  }
+  
+  /**
+    * 反向遍历
+    */
+  backwardTraversal(): T[] {
+    const result: T[] = [];
+    let current = this.tail;
+    
+    while (current) {
+      result.push(current.value);
+      current = current.prev;
+    }
+    
+    return result;
+  }
+  
+  /**
+    * 获取长度
+    */
+  size(): number {
+    return this.length;
+  }
+  
+  /**
+    * 打印链表
+    */
+  toString(): string {
+    return this.forwardTraversal().join(' ⇄ ');
+  }
+}
+
+// 测试
+const dlist = new DoublyLinkedList<number>();
+dlist.append(1);
+dlist.append(2);
+dlist.append(3);
+console.log(dlist.toString()); // 1 ⇄ 2 ⇄ 3
+
+console.log(dlist.forwardTraversal());  // [1, 2, 3]
+console.log(dlist.backwardTraversal()); // [3, 2, 1]
+
+dlist.removeLast(); // O(1) 操作!
+console.log(dlist.toString()); // 1 ⇄ 2
+```
+
+---
+
+### 3. 经典问题:反转链表
+
+```typescript
+/**
+  * 反转链表(迭代法)
+  */
+function reverseList(head: ListNode<number> | null): ListNode<number> | null {
+  let prev: ListNode<number> | null = null;
+  let current = head;
+  
+  while (current) {
+    const next = current.next;  // 保存下一个节点
+    current.next = prev;        // 反转指针
+    prev = current;             // 移动 prev
+    current = next;             // 移动 current
+  }
+  
+  return prev; // prev 是新的头节点
+}
+
+// 可视化过程:
+// 初始: 1 → 2 → 3 → null
+//
+// 步骤1: null ← 1   2 → 3 → null
+//        prev  cur  next
+//
+// 步骤2: null ← 1 ← 2   3 → null
+//              prev cur  next
+//
+// 步骤3: null ← 1 ← 2 ← 3
+//                    prev cur(null)
+```
+
+**递归版本**:
+
+```typescript
+/**
+  * 反转链表(递归法)
+  */
+function reverseListRecursive(head: ListNode<number> | null): ListNode<number> | null {
+  // 基础情况
+  if (!head || !head.next) {
+    return head;
+  }
+  
+  // 递归反转后面的链表
+  const newHead = reverseListRecursive(head.next);
+  
+  // 反转当前节点
+  head.next.next = head;
+  head.next = null;
+  
+  return newHead;
+}
+
+// 可视化递归过程:
+// 输入: 1 → 2 → 3 → null
+//
+// reverseListRecursive(1)
+//   reverseListRecursive(2)
+//     reverseListRecursive(3)
+//       return 3
+//     3.next = 2, 2.next = null
+//     return 3
+//   2.next = 1, 1.next = null
+//   return 3
+//
+// 结果: 3 → 2 → 1 → null
+```
+
+---
+
+### 4. 经典问题:检测环
+
+```typescript
+/**
+  * 检测链表是否有环(快慢指针)
+  */
+function hasCycle(head: ListNode<number> | null): boolean {
+  if (!head || !head.next) {
+    return false;
+  }
+  
+  let slow = head;
+  let fast = head;
+  
+  while (fast && fast.next) {
+    slow = slow.next!;        // 慢指针走1步
+    fast = fast.next.next;    // 快指针走2步
+    
+    if (slow === fast) {
+      return true; // 相遇说明有环
+    }
+  }
+  
+  return false;
+}
+
+// 可视化:
+// 有环: 1 → 2 → 3 → 4
+//            ↑       ↓
+//            6 ← 5 ←─┘
+//
+// slow: 1 → 2 → 3 → 4 → 5 → 6 → 3 → 4
+// fast: 1 → 3 → 5 → 3 → 5 → 3 (相遇!)
+```
+
+**找到环的入口**:
+
+```typescript
+/**
+  * 找到环的入口节点
+  */
+function detectCycle(head: ListNode<number> | null): ListNode<number> | null {
+  if (!head || !head.next) {
+    return null;
+  }
+  
+  let slow = head;
+  let fast = head;
+  
+  // 第一步:检测是否有环
+  while (fast && fast.next) {
+    slow = slow.next!;
+    fast = fast.next.next;
+    
+    if (slow === fast) {
+      // 第二步:找到入口
+      let ptr = head;
+      while (ptr !== slow) {
+        ptr = ptr.next!;
+        slow = slow.next!;
+      }
+      return ptr;
+    }
+  }
+  
+  return null;
+}
+
+// 数学原理:
+// 设链表头到环入口距离为 a
+// 环入口到相遇点距离为 b
+// 相遇点到环入口距离为 c
+//
+// 慢指针走的距离: a + b
+// 快指针走的距离: a + b + c + b = a + 2b + c
+//
+// 快指针速度是慢指针2倍:
+// 2(a + b) = a + 2b + c
+// a = c
+//
+// 所以从头和相遇点同时出发,会在入口相遇!
+```
+
+---
+
+### 5. 经典问题:合并两个有序链表
+
+```typescript
+/**
+  * 合并两个有序链表
+  */
+function mergeTwoLists(
+  l1: ListNode<number> | null,
+  l2: ListNode<number> | null
+): ListNode<number> | null {
+  // 哨兵节点,简化边界处理
+  const dummy = new ListNode(0);
+  let current = dummy;
+  
+  while (l1 && l2) {
+    if (l1.value <= l2.value) {
+      current.next = l1;
+      l1 = l1.next;
+    } else {
+      current.next = l2;
+      l2 = l2.next;
+    }
+    current = current.next;
+  }
+  
+  // 连接剩余部分
+  current.next = l1 || l2;
+  
+  return dummy.next;
+}
+
+// 可视化:
+// l1: 1 → 3 → 5
+// l2: 2 → 4 → 6
+//
+// 步骤:
+// 1. 比较 1 和 2, 选 1: 1
+// 2. 比较 3 和 2, 选 2: 1 → 2
+// 3. 比较 3 和 4, 选 3: 1 → 2 → 3
+// 4. 比较 5 和 4, 选 4: 1 → 2 → 3 → 4
+// 5. 比较 5 和 6, 选 5: 1 → 2 → 3 → 4 → 5
+// 6. l1 为空,连接 l2: 1 → 2 → 3 → 4 → 5 → 6
+```
+
+**递归版本**:
+
+```typescript
+/**
+  * 合并两个有序链表(递归)
+  */
+function mergeTwoListsRecursive(
+  l1: ListNode<number> | null,
+  l2: ListNode<number> | null
+): ListNode<number> | null {
+  if (!l1) return l2;
+  if (!l2) return l1;
+  
+  if (l1.value <= l2.value) {
+    l1.next = mergeTwoListsRecursive(l1.next, l2);
+    return l1;
+  } else {
+    l2.next = mergeTwoListsRecursive(l1, l2.next);
+    return l2;
+  }
+}
+```
+
+---
+
+### 6. 经典问题:删除倒数第 N 个节点
+
+```typescript
+/**
+  * 删除链表倒数第 n 个节点
+  */
+function removeNthFromEnd(
+  head: ListNode<number> | null,
+  n: number
+): ListNode<number> | null {
+  const dummy = new ListNode(0);
+  dummy.next = head;
+  
+  let fast: ListNode<number> | null = dummy;
+  let slow: ListNode<number> | null = dummy;
+  
+  // fast 先走 n+1 步
+  for (let i = 0; i <= n; i++) {
+    if (!fast) return head;
+    fast = fast.next;
+  }
+  
+  // fast 和 slow 一起走,直到 fast 到末尾
+  while (fast) {
+    fast = fast.next;
+    slow = slow!.next;
+  }
+  
+  // 删除 slow.next
+  slow!.next = slow!.next!.next;
+  
+  return dummy.next;
+}
+
+// 可视化:
+// 链表: 1 → 2 → 3 → 4 → 5, n = 2
+//
+// 初始: dummy → 1 → 2 → 3 → 4 → 5 → null
+//       slow/fast
+//
+// fast 先走 3 步:
+//       dummy → 1 → 2 → 3 → 4 → 5 → null
+//       slow         fast
+//
+// 一起走到 fast 为 null:
+//       dummy → 1 → 2 → 3 → 4 → 5 → null
+//                   slow         fast
+//
+// 删除 slow.next (4):
+//       dummy → 1 → 2 → 3 → 5 → null
+```
+
+---
+
+### 7. 经典问题:链表排序
+
+```typescript
+/**
+  * 链表排序(归并排序)
+  */
+function sortList(head: ListNode<number> | null): ListNode<number> | null {
+  if (!head || !head.next) {
+    return head;
+  }
+  
+  // 1. 找到中点(快慢指针)
+  let slow = head;
+  let fast = head.next;
+  
+  while (fast && fast.next) {
+    slow = slow.next!;
+    fast = fast.next.next;
+  }
+  
+  // 2. 分割链表
+  const mid = slow.next;
+  slow.next = null;
+  
+  // 3. 递归排序
+  const left = sortList(head);
+  const right = sortList(mid);
+  
+  // 4. 合并
+  return mergeTwoLists(left, right);
+}
+
+// 时间复杂度: O(n log n)
+// 空间复杂度: O(log n) (递归栈)
+```
+
+---
+
+## 四、复杂度分析
+
+### 操作复杂度对比
+
+<table>
+  <thead>
+    <tr>
+      <th>操作</th>
+      <th>数组</th>
+      <th>单向链表</th>
+      <th>双向链表</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>访问第 i 个元素</td>
+      <td>O(1)</td>
+      <td>O(n)</td>
+      <td>O(n)</td>
+    </tr>
+    <tr>
+      <td>头部插入</td>
+      <td>O(n)</td>
+      <td>O(1)</td>
+      <td>O(1)</td>
+    </tr>
+    <tr>
+      <td>尾部插入</td>
+      <td>O(1)</td>
+      <td>O(1)*</td>
+      <td>O(1)</td>
+    </tr>
+    <tr>
+      <td>头部删除</td>
+      <td>O(n)</td>
+      <td>O(1)</td>
+      <td>O(1)</td>
+    </tr>
+    <tr>
+      <td>尾部删除</td>
+      <td>O(1)</td>
+      <td>O(n)</td>
+      <td>O(1)</td>
+    </tr>
+    <tr>
+      <td>中间插入</td>
+      <td>O(n)</td>
+      <td>O(1)</td>
+      <td>O(1)</td>
+    </tr>
+    <tr>
+      <td>中间删除</td>
+      <td>O(n)</td>
+      <td>O(1)</td>
+      <td>O(1)</td>
+    </tr>
+    <tr>
+      <td>查找元素</td>
+      <td>O(n)</td>
+      <td>O(n)</td>
+      <td>O(n)</td>
+    </tr>
+  </tbody>
+</table>
+
+*需要维护 tail 指针  
+**前提是已经定位到节点
+
+### 为什么双向链表删除尾部是 O(1)?
+
+```typescript
+// 单向链表:需要找到倒数第二个节点
+removeLast() {
+  let current = this.head;
+  while (current.next !== this.tail) { // O(n)
+    current = current.next;
+  }
+  this.tail = current;
+}
+
+// 双向链表:直接访问 tail.prev
+removeLast() {
+  this.tail = this.tail.prev; // O(1)
+}
+```
+
+### 空间复杂度
+
+- **链表节点**: 每个节点需要额外的指针空间
+  - 单向链表: 1 个指针
+  - 双向链表: 2 个指针
+
+- **内存开销对比**:
+```
+数组: [1][2][3][4][5]
+空间: 5 * sizeof(int) = 20 字节
+
+单向链表: [1|→][2|→][3|→][4|→][5|→]
+空间: 5 * (sizeof(int) + sizeof(pointer)) = 40 字节
+
+双向链表: [←|1|→][←|2|→][←|3|→][←|4|→][←|5|→]
+空间: 5 * (sizeof(int) + 2*sizeof(pointer)) = 60 字节
+```
+
+---
+
+## 五、实战应用
+
+### 案例1: LRU 缓存(双向链表 + 哈希表)
+
+```typescript
+/**
+  * LRU 缓存(高效版)
+  * 使用双向链表 + 哈希表实现 O(1) 的读写
+  */
+class LRUCacheOptimized<K, V> {
+  private capacity: number;
+  private cache: Map<K, DoublyListNode<{ key: K; value: V }>>;
+  private list: DoublyLinkedList<{ key: K; value: V }>;
+  
+  constructor(capacity: number) {
+    this.capacity = capacity;
+    this.cache = new Map();
+    this.list = new DoublyLinkedList();
+  }
+  
+  /**
+    * 获取值 - O(1)
+    */
+  get(key: K): V | undefined {
+    const node = this.cache.get(key);
+    
+    if (!node) {
+      return undefined;
+    }
+    
+    // 移动到链表头部(最近使用)
+    this.list.moveToFront(node);
+    
+    return node.value.value;
+  }
+  
+  /**
+    * 设置值 - O(1)
+    */
+  put(key: K, value: V): void {
+    let node = this.cache.get(key);
+    
+    if (node) {
+      // 更新值
+      node.value.value = value;
+      this.list.moveToFront(node);
+    } else {
+      // 新增节点
+      this.list.prepend({ key, value });
+      const newNode = this.list['head']!; // 获取头节点
+      this.cache.set(key, newNode);
+      
+      // 超出容量,删除尾部(最久未使用)
+      if (this.cache.size > this.capacity) {
+        const tail = this.list['tail']!;
+        this.cache.delete(tail.value.key);
+        this.list.removeLast();
+      }
+    }
+  }
+  
+  /**
+    * 打印缓存状态
+    */
+  print(): void {
+    const items = this.list.forwardTraversal();
+    console.log('LRU 缓存:', items.map(item => `${item.key}:${item.value}`).join(' → '));
+  }
+}
+
+// 测试
+const lru = new LRUCacheOptimized<string, number>(3);
+
+lru.put('a', 1);
+lru.put('b', 2);
+lru.put('c', 3);
+lru.print(); // a:1 → b:2 → c:3
+
+lru.get('a'); // 访问 a
+lru.print(); // a:1 → c:3 → b:2 (a 移到最前)
+
+lru.put('d', 4); // 淘汰 b
+lru.print(); // d:4 → a:1 → c:3
+```
+
+**性能对比**:
+```
+Map 实现 vs 双向链表 + 哈希表:
+
+操作        Map实现    链表+哈希
+get         O(1)      O(1)
+put         O(1)      O(1)
+淘汰最旧     O(n)      O(1)  ← 关键优势!
+```
+
+---
+
+### 案例2: 浏览器历史记录(双向链表版)
+
+```typescript
+/**
+  * 浏览器历史记录(双向链表版)
+  */
+class BrowserHistoryLinked {
+  private current: DoublyListNode<string>;
+  
+  constructor(homepage: string) {
+    this.current = new DoublyListNode(homepage);
+  }
+  
+  /**
+    * 访问新页面
+    */
+  visit(url: string): void {
+    const newNode = new DoublyListNode(url);
+    
+    // 连接到当前节点
+    newNode.prev = this.current;
+    this.current.next = newNode;
+    
+    // 移动到新节点
+    this.current = newNode;
+    
+    console.log(`访问: ${url}`);
+  }
+  
+  /**
+    * 后退
+    */
+  back(steps: number): string {
+    while (steps > 0 && this.current.prev) {
+      this.current = this.current.prev;
+      steps--;
+    }
+    
+    console.log(`后退到: ${this.current.value}`);
+    return this.current.value;
+  }
+  
+  /**
+    * 前进
+    */
+  forward(steps: number): string {
+    while (steps > 0 && this.current.next) {
+      this.current = this.current.next;
+      steps--;
+    }
+    
+    console.log(`前进到: ${this.current.value}`);
+    return this.current.value;
+  }
+  
+  /**
+    * 获取当前页面
+    */
+  getCurrentPage(): string {
+    return this.current.value;
+  }
+  
+  /**
+    * 获取历史记录
+    */
+  getHistory(): { back: string[]; current: string; forward: string[] } {
+    const back: string[] = [];
+    const forward: string[] = [];
+    
+    // 收集后退历史
+    let node = this.current.prev;
+    while (node) {
+      back.unshift(node.value);
+      node = node.prev;
+    }
+    
+    // 收集前进历史
+    node = this.current.next;
+    while (node) {
+      forward.push(node.value);
+      node = node.next;
+    }
+    
+    return {
+      back,
+      current: this.current.value,
+      forward
+    };
+  }
+}
+
+// 测试
+const browser = new BrowserHistoryLinked('google.com');
+browser.visit('youtube.com');
+browser.visit('facebook.com');
+
+console.log(browser.getHistory());
+// back: ['google.com', 'youtube.com']
+// current: 'facebook.com'
+// forward: []
+
+browser.back(1);
+console.log(browser.getHistory());
+// back: ['google.com']
+// current: 'youtube.com'
+// forward: ['facebook.com']
+```
+
+---
+
+### 案例3: 音乐播放列表(循环链表)
+
+```typescript
+/**
+  * 音乐播放列表
+  */
+class MusicPlaylist {
+  private head: ListNode<string> | null = null;
+  private current: ListNode<string> | null = null;
+  private length: number = 0;
+  
+  /**
+    * 添加歌曲
+    */
+  addSong(name: string): void {
+    const newNode = new ListNode(name);
+    
+    if (!this.head) {
+      this.head = newNode;
+      this.current = newNode;
+      newNode.next = newNode; // 指向自己,形成环
+    } else {
+      // 找到尾节点
+      let tail = this.head;
+      while (tail.next !== this.head) {
+        tail = tail.next!;
+      }
+      
+      // 插入新节点
+      tail.next = newNode;
+      newNode.next = this.head;
+    }
+    
+    this.length++;
+    console.log(`添加歌曲: ${name}`);
+  }
+  
+  /**
+    * 播放下一首
+    */
+  next(): string | null {
+    if (!this.current) {
+      return null;
+    }
+    
+    this.current = this.current.next;
+    console.log(`播放: ${this.current!.value}`);
+    return this.current!.value;
+  }
+  
+  /**
+    * 播放上一首
+    */
+  prev(): string | null {
+    if (!this.current || !this.head) {
+      return null;
+    }
+    
+    // 找到当前节点的前一个节点
+    let node = this.head;
+    while (node.next !== this.current) {
+      node = node.next!;
+    }
+    
+    this.current = node;
+    console.log(`播放: ${this.current.value}`);
+    return this.current.value;
+  }
+  
+  /**
+    * 获取当前歌曲
+    */
+  getCurrentSong(): string | null {
+    return this.current ? this.current.value : null;
+  }
+  
+  /**
+    * 获取所有歌曲
+    */
+  getAllSongs(): string[] {
+    if (!this.head) {
+      return [];
+    }
+    
+    const songs: string[] = [];
+    let node = this.head;
+    
+    do {
+      songs.push(node.value);
+      node = node.next!;
+    } while (node !== this.head);
+    
+    return songs;
+  }
+  
+  /**
+    * 随机播放
+    */
+  shuffle(): void {
+    const songs = this.getAllSongs();
+    
+    // Fisher-Yates 洗牌算法
+    for (let i = songs.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [songs[i], songs[j]] = [songs[j], songs[i]];
+    }
+    
+    // 重建链表
+    this.head = null;
+    this.current = null;
+    this.length = 0;
+    
+    songs.forEach(song => this.addSong(song));
+    
+    console.log('已随机播放');
+  }
+}
+
+// 测试
+const playlist = new MusicPlaylist();
+playlist.addSong('歌曲1');
+playlist.addSong('歌曲2');
+playlist.addSong('歌曲3');
+playlist.addSong('歌曲4');
+
+console.log('所有歌曲:', playlist.getAllSongs());
+// ['歌曲1', '歌曲2', '歌曲3', '歌曲4']
+
+playlist.next(); // 播放: 歌曲2
+playlist.next(); // 播放: 歌曲3
+playlist.next(); // 播放: 歌曲4
+playlist.next(); // 播放: 歌曲1 (循环!)
+
+playlist.prev(); // 播放: 歌曲4
+```
+
+---
+
+### 案例4: 文本编辑器的撤销栈(链表优化)
+
+```typescript
+/**
+  * 文本编辑器操作
+  */
+interface EditOperation {
+  type: 'insert' | 'delete';
+  position: number;
+  text: string;
+  timestamp: number;
+}
+
+/**
+  * 文本编辑器(链表版撤销栈)
+  */
+class TextEditorLinked {
+  private content: string = '';
+  private undoList: DoublyLinkedList<EditOperation>;
+  private redoList: DoublyLinkedList<EditOperation>;
+  private maxHistory: number;
+  
+  constructor(maxHistory: number = 100) {
+    this.undoList = new DoublyLinkedList();
+    this.redoList = new DoublyLinkedList();
+    this.maxHistory = maxHistory;
+  }
+  
+  /**
+    * 插入文本
+    */
+  insert(position: number, text: string): void {
+    const operation: EditOperation = {
+      type: 'insert',
+      position,
+      text,
+      timestamp: Date.now()
+    };
+    
+    // 执行操作
+    this.content = 
+      this.content.slice(0, position) + 
+      text + 
+      this.content.slice(position);
+    
+    // 记录到撤销列表
+    this.undoList.append(operation);
+    
+    // 限制历史记录数量
+    if (this.undoList.size() > this.maxHistory) {
+      this.undoList.removeFirst();
+    }
+    
+    // 清空重做列表
+    this.redoList.clear();
+    
+    console.log(`插入: "${text}" at ${position}`);
+  }
+  
+  /**
+    * 删除文本
+    */
+  delete(position: number, length: number): void {
+    const deletedText = this.content.slice(position, position + length);
+    
+    const operation: EditOperation = {
+      type: 'delete',
+      position,
+      text: deletedText,
+      timestamp: Date.now()
+    };
+    
+    // 执行操作
+    this.content = 
+      this.content.slice(0, position) + 
+      this.content.slice(position + length);
+    
+    // 记录到撤销列表
+    this.undoList.append(operation);
+    
+    if (this.undoList.size() > this.maxHistory) {
+      this.undoList.removeFirst();
+    }
+    
+    this.redoList.clear();
+    
+    console.log(`删除: "${deletedText}" at ${position}`);
+  }
+  
+  /**
+    * 撤销
+    */
+  undo(): boolean {
+    const operation = this.undoList.removeLast();
+    
+    if (!operation) {
+      console.log('没有可撤销的操作');
+      return false;
+    }
+    
+    // 执行反向操作
+    if (operation.type === 'insert') {
+      // 撤销插入 = 删除
+      this.content = 
+        this.content.slice(0, operation.position) + 
+        this.content.slice(operation.position + operation.text.length);
+    } else {
+      // 撤销删除 = 插入
+      this.content = 
+        this.content.slice(0, operation.position) + 
+        operation.text + 
+        this.content.slice(operation.position);
+    }
+    
+    // 移到重做列表
+    this.redoList.append(operation);
+    
+    console.log(`撤销: ${operation.type}`);
+    return true;
+  }
+  
+  /**
+    * 重做
+    */
+  redo(): boolean {
+    const operation = this.redoList.removeLast();
+    
+    if (!operation) {
+      console.log('没有可重做的操作');
+      return false;
+    }
+    
+    // 重新执行操作
+    if (operation.type === 'insert') {
+      this.content = 
+        this.content.slice(0, operation.position) + 
+        operation.text + 
+        this.content.slice(operation.position);
+    } else {
+      this.content = 
+        this.content.slice(0, operation.position) + 
+        this.content.slice(operation.position + operation.text.length);
+    }
+    
+    // 移回撤销列表
+    this.undoList.append(operation);
+    
+    console.log(`重做: ${operation.type}`);
+    return true;
+  }
+  
+  /**
+    * 获取内容
+    */
+  getContent(): string {
+    return this.content;
+  }
+  
+  /**
+    * 获取历史统计
+    */
+  getHistoryStats(): {
+    undoCount: number;
+    redoCount: number;
+    totalOperations: number;
+  } {
+    return {
+      undoCount: this.undoList.size(),
+      redoCount: this.redoList.size(),
+      totalOperations: this.undoList.size() + this.redoList.size()
+    };
+  }
+}
+
+// 测试
+const editor = new TextEditorLinked();
+
+editor.insert(0, 'Hello');
+editor.insert(5, ' World');
+editor.insert(11, '!');
+console.log('内容:', editor.getContent()); // "Hello World!"
+
+editor.undo();
+console.log('内容:', editor.getContent()); // "Hello World"
+
+editor.undo();
+console.log('内容:', editor.getContent()); // "Hello"
+
+editor.redo();
+console.log('内容:', editor.getContent()); // "Hello World"
+```
+
+---
+
+## 六、练习题
+
+### 题目1: 回文链表 (LeetCode 234)
+
+**难度**: 简单
+
+**题目描述**:
+判断一个链表是否为回文链表。
+
+```typescript
+/**
+  * @param head - 链表头节点
+  * @return 是否为回文
+  */
+function isPalindrome(head: ListNode<number> | null): boolean {
+  // 在这里实现你的代码
+}
+
+// 测试用例
+// 输入: 1 → 2 → 2 → 1
+// 输出: true
+
+// 输入: 1 → 2
+// 输出: false
+```
+
+**提示**: 
+1. 使用快慢指针找到中点
+2. 反转后半部分
+3. 比较前后两部分
+
+<details>
+<summary>点击查看答案</summary>
+
+```typescript
+function isPalindrome(head: ListNode<number> | null): boolean {
+  if (!head || !head.next) {
+    return true;
+  }
+  
+  // 1. 找到中点
+  let slow = head;
+  let fast = head;
+  
+  while (fast.next && fast.next.next) {
+    slow = slow.next!;
+    fast = fast.next.next;
+  }
+  
+  // 2. 反转后半部分
+  let secondHalf = reverseList(slow.next);
+  
+  // 3. 比较
+  let p1 = head;
+  let p2 = secondHalf;
+  
+  while (p2) {
+    if (p1!.value !== p2.value) {
+      return false;
+    }
+    p1 = p1!.next;
+    p2 = p2.next;
+  }
+  
+  return true;
+}
+```
+
+**时间复杂度**: O(n)  
+**空间复杂度**: O(1)
+</details>
+
+---
+
+### 题目2: 两数相加 (LeetCode 2)
+
+**难度**: 中等
+
+**题目描述**:
+给你两个非空链表,表示两个非负整数。它们每位数字都是按照逆序的方式存储的,将两个数相加并以相同形式返回。
+
+```typescript
+/**
+  * @param l1 - 第一个链表
+  * @param l2 - 第二个链表
+  * @return 和的链表
+  */
+function addTwoNumbers(
+  l1: ListNode<number> | null,
+  l2: ListNode<number> | null
+): ListNode<number> | null {
+  // 在这里实现你的代码
+}
+
+// 测试用例
+// 输入: l1 = [2,4,3], l2 = [5,6,4]
+// 输出: [7,0,8]
+// 解释: 342 + 465 = 807
+```
+
+**提示**: 注意进位处理
+
+<details>
+<summary>点击查看答案</summary>
+
+```typescript
+function addTwoNumbers(
+  l1: ListNode<number> | null,
+  l2: ListNode<number> | null
+): ListNode<number> | null {
+  const dummy = new ListNode(0);
+  let current = dummy;
+  let carry = 0;
+  
+  while (l1 || l2 || carry) {
+    const sum = (l1?.value || 0) + (l2?.value || 0) + carry;
+    carry = Math.floor(sum / 10);
+    
+    current.next = new ListNode(sum % 10);
+    current = current.next;
+    
+    l1 = l1?.next || null;
+    l2 = l2?.next || null;
+  }
+  
+  return dummy.next;
+}
+```
+
+**时间复杂度**: O(max(m, n))  
+**空间复杂度**: O(max(m, n))
+</details>
+
+---
+
+### 题目3: 重排链表 (LeetCode 143)
+
+**难度**: 中等
+
+**题目描述**:
+给定链表 L0 → L1 → ... → Ln-1 → Ln,  
+重排为 L0 → Ln → L1 → Ln-1 → L2 → Ln-2 → ...
+
+```typescript
+/**
+  * @param head - 链表头节点
+  */
+function reorderList(head: ListNode<number> | null): void {
+  // 在这里实现你的代码
+}
+
+// 测试用例
+// 输入: 1 → 2 → 3 → 4
+// 输出: 1 → 4 → 2 → 3
+
+// 输入: 1 → 2 → 3 → 4 → 5
+// 输出: 1 → 5 → 2 → 4 → 3
+```
+
+**提示**: 
+1. 找到中点
+2. 反转后半部分
+3. 合并两部分
+
+---
+
+## 七、总结与扩展
+
+### 核心要点
+
+1. **链表基础**:
+    - 单向链表: 只能向前遍历
+    - 双向链表: 可以双向遍历,删除尾部 O(1)
+    - 循环链表: 适合循环操作
+
+2. **经典技巧**:
+    - 快慢指针: 找中点、检测环
+    - 哨兵节点: 简化边界处理
+    - 递归: 反转、合并
+
+3. **实战应用**:
+    - LRU 缓存: 双向链表 + 哈希表
+    - 浏览器历史: 双向链表
+    - 播放列表: 循环链表
+    - 撤销重做: 双向链表
+
+### 链表 vs 数组的选择
+
+**使用链表的场景**:
+- ✅ 频繁的插入删除操作
+- ✅ 不需要随机访问
+- ✅ 大小不固定
+- ✅ 需要 O(1) 的头部/尾部操作
+
+**使用数组的场景**:
+- ✅ 需要随机访问
+- ✅ 大小相对固定
+- ✅ 内存连续性重要(缓存友好)
+- ✅ 简单的遍历操作
+
+### 常见陷阱
+
+1. **空指针**:
+```typescript
+// ❌ 没有检查 null
+function traverse(head: ListNode | null) {
+  while (head.next) { // 如果 head 是 null 会报错
+    head = head.next;
+  }
+}
+
+// ✅ 正确检查
+function traverse(head: ListNode | null) {
+  while (head && head.next) {
+    head = head.next;
+  }
+}
+```
+
+2. **环形链表死循环**:
+```typescript
+// ❌ 没有检测环
+function traverse(head: ListNode | null) {
+  while (head) {
+    head = head.next; // 如果有环会死循环
+  }
+}
+
+// ✅ 使用快慢指针检测环
+if (hasCycle(head)) {
+  console.log('链表有环!');
+}
+```
+
+3. **内存泄漏**:
+```typescript
+// ❌ 删除节点后没有断开引用
+function removeNode(node: ListNode) {
+  // node 仍然持有 next 的引用
+}
+
+// ✅ 断开引用
+function removeNode(node: ListNode) {
+  node.next = null; // 帮助 GC
+}
+```
+
+### 进阶学习
+
+1. **跳表 (Skip List)**: 链表 + 多层索引,实现 O(log n) 查找
+2. **XOR 链表**: 用异或运算节省指针空间
+3. **展开链表 (Unrolled Linked List)**: 每个节点存储多个元素
+4. **自调整链表**: 访问频率高的节点自动前移
+
+### 性能优化建议
+
+- ✅ 维护 tail 指针,避免遍历到尾部
+- ✅ 使用哨兵节点,简化边界处理
+- ✅ 双向链表比单向链表更灵活
+- ✅ 结合哈希表实现 O(1) 查找
+- ✅ 注意缓存局部性,链表对 CPU 缓存不友好
+
+---
+
+## 下期预告
+
+下一篇我们将学习**树结构基础**,探讨:
+- 二叉树的遍历(前中后序、层序)
+- DOM 树操作
+- 组件树渲染
+- 文件系统树
+
+---
+
+**相关资源**:
+- [LeetCode 链表题单](https://leetcode.cn/tag/linked-list/)
+- [可视化链表](https://visualgo.net/en/list)
+- [本系列代码仓库](https://github.com/yourname/frontend-algorithms)
+
+

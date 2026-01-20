@@ -1,0 +1,1749 @@
+
+# 前端算法系列(六):二叉搜索树 - 从基础到实战
+
+## 一、问题引入
+
+作为前端开发工程师,你可能遇到过这些场景:
+
+### 场景1: 自动完成搜索
+```javascript
+// 用户输入 "rea",需要快速找到所有匹配的单词
+const words = ['react', 'read', 'real', 'redux', 'vue', 'angular'];
+
+// 如何高效地实现前缀搜索?
+// 线性搜索: O(n)
+// 使用 BST: O(log n)
+```
+
+### 场景2: 范围查询
+```javascript
+// 查找价格在 100-500 之间的所有商品
+const products = [
+{ name: 'A', price: 150 },
+{ name: 'B', price: 300 },
+{ name: 'C', price: 800 },
+// ... 10000 个商品
+];
+
+// 如何快速找到范围内的商品?
+```
+
+### 场景3: 有序数据维护
+```javascript
+// 实时排行榜,需要频繁插入和查询排名
+class Leaderboard {
+insert(score: number): void;      // 插入新分数
+getRank(score: number): number;   // 查询排名
+getTopK(k: number): number[];     // 获取前K名
+}
+
+// 如何高效实现?
+```
+
+### 场景4: 数据库索引
+```javascript
+// B树/B+树是 BST 的变体,用于数据库索引
+// MySQL 的 InnoDB 引擎使用 B+ 树
+
+SELECT * FROM users WHERE age BETWEEN 20 AND 30;
+// 如何快速定位数据?
+```
+
+今天我们将深入学习**二叉搜索树 (BST)**,这是实现高效查找的关键数据结构。
+
+---
+
+## 二、算法原理
+
+### 什么是二叉搜索树?
+
+二叉搜索树 (Binary Search Tree, BST) 是一种特殊的二叉树,满足:
+
+```
+对于任意节点:
+- 左子树的所有节点值 < 当前节点值
+- 右子树的所有节点值 > 当前节点值
+- 左右子树也都是 BST
+
+示例:
+        5
+      / \
+      3   7
+    / \ / \
+    2  4 6  8
+
+- 3 < 5 < 7
+- 2 < 3 < 4
+- 6 < 7 < 8
+```
+
+### BST 的性质
+
+1. **中序遍历得到有序序列**
+```
+中序遍历: 2, 3, 4, 5, 6, 7, 8 (升序)
+```
+
+2. **查找效率高**
+```
+查找 6:
+5 → 7 → 6  (只需3步)
+
+比线性查找快:
+5 → 3 → 2 → 4 → 7 → 6  (需要6步)
+```
+
+3. **支持高效的范围查询**
+```
+查找 3-6 之间的所有值:
+从 3 开始,中序遍历到 6 即可
+```
+
+### BST vs 普通二叉树
+
+| 特性 | 普通二叉树 | BST |
+|------|-----------|-----|
+| 节点顺序 | 无要求 | 左 < 根 < 右 |
+| 查找 | O(n) | O(log n) ~ O(n) |
+| 插入 | O(1) | O(log n) ~ O(n) |
+| 删除 | O(n) | O(log n) ~ O(n) |
+| 中序遍历 | 无序 | 有序 |
+
+### BST 的最坏情况
+
+```
+平衡的 BST:              退化成链表:
+    5                      1
+  / \                      \
+  3   7                      2
+/ \ / \                      \
+2  4 6  8                      3
+                                \
+高度: O(log n)                    4
+查找: O(log n)                     \
+                                  5
+                              
+                              高度: O(n)
+                              查找: O(n)
+```
+
+**解决方案**: 自平衡二叉搜索树 (AVL树、红黑树)
+
+---
+
+## 三、代码实现
+
+### 1. BST 节点定义
+
+```typescript
+/**
+* BST 节点
+*/
+class BSTNode<T> {
+value: T;
+left: BSTNode<T> | null = null;
+right: BSTNode<T> | null = null;
+
+constructor(value: T) {
+  this.value = value;
+}
+}
+
+/**
+* 二叉搜索树
+*/
+class BinarySearchTree<T> {
+root: BSTNode<T> | null = null;
+private compareFn: (a: T, b: T) => number;
+
+constructor(compareFn?: (a: T, b: T) => number) {
+  // 默认比较函数
+  this.compareFn = compareFn || ((a, b) => {
+    if (a < b) return -1;
+    if (a > b) return 1;
+    return 0;
+  });
+}
+}
+```
+
+---
+
+### 2. 插入操作
+
+```typescript
+/**
+* 插入节点 - 递归版本
+*/
+insert(value: T): void {
+this.root = this.insertNode(this.root, value);
+}
+
+private insertNode(node: BSTNode<T> | null, value: T): BSTNode<T> {
+// 找到插入位置,创建新节点
+if (!node) {
+  return new BSTNode(value);
+}
+
+const cmp = this.compareFn(value, node.value);
+
+if (cmp < 0) {
+  // 插入左子树
+  node.left = this.insertNode(node.left, value);
+} else if (cmp > 0) {
+  // 插入右子树
+  node.right = this.insertNode(node.right, value);
+}
+// cmp === 0: 值已存在,不插入(可根据需求修改)
+
+return node;
+}
+
+/**
+* 插入节点 - 迭代版本
+*/
+insertIterative(value: T): void {
+const newNode = new BSTNode(value);
+
+if (!this.root) {
+  this.root = newNode;
+  return;
+}
+
+let current = this.root;
+
+while (true) {
+  const cmp = this.compareFn(value, current.value);
+  
+  if (cmp < 0) {
+    if (!current.left) {
+      current.left = newNode;
+      return;
+    }
+    current = current.left;
+  } else if (cmp > 0) {
+    if (!current.right) {
+      current.right = newNode;
+      return;
+    }
+    current = current.right;
+  } else {
+    return; // 值已存在
+  }
+}
+}
+```
+
+**可视化插入过程**:
+```
+插入序列: 5, 3, 7, 2, 4, 6, 8
+
+插入 5:
+  5
+
+插入 3 (3 < 5, 插入左边):
+  5
+  /
+3
+
+插入 7 (7 > 5, 插入右边):
+  5
+  / \
+3   7
+
+插入 2 (2 < 5, 2 < 3, 插入左边):
+  5
+  / \
+3   7
+/
+2
+
+插入 4 (4 < 5, 4 > 3, 插入右边):
+  5
+  / \
+3   7
+/ \
+2   4
+
+最终结果:
+    5
+  / \
+  3   7
+/ \ / \
+2  4 6  8
+```
+
+---
+
+### 3. 查找操作
+
+```typescript
+/**
+* 查找节点 - 递归版本
+*/
+search(value: T): boolean {
+return this.searchNode(this.root, value) !== null;
+}
+
+private searchNode(node: BSTNode<T> | null, value: T): BSTNode<T> | null {
+if (!node) {
+  return null;
+}
+
+const cmp = this.compareFn(value, node.value);
+
+if (cmp < 0) {
+  return this.searchNode(node.left, value);
+} else if (cmp > 0) {
+  return this.searchNode(node.right, value);
+} else {
+  return node; // 找到了
+}
+}
+
+/**
+* 查找节点 - 迭代版本
+*/
+searchIterative(value: T): boolean {
+let current = this.root;
+
+while (current) {
+  const cmp = this.compareFn(value, current.value);
+  
+  if (cmp < 0) {
+    current = current.left;
+  } else if (cmp > 0) {
+    current = current.right;
+  } else {
+    return true; // 找到了
+  }
+}
+
+return false;
+}
+```
+
+**查找过程可视化**:
+```
+查找 6:
+    5          5 < 6, 向右
+  / \
+  3   7        7 > 6, 向左
+/ \ / \
+2  4 6  8      找到 6!
+
+路径: 5 → 7 → 6 (3步)
+```
+
+---
+
+### 4. 删除操作
+
+删除是 BST 中最复杂的操作,需要考虑三种情况:
+
+```typescript
+/**
+* 删除节点
+*/
+delete(value: T): void {
+this.root = this.deleteNode(this.root, value);
+}
+
+private deleteNode(node: BSTNode<T> | null, value: T): BSTNode<T> | null {
+if (!node) {
+  return null;
+}
+
+const cmp = this.compareFn(value, node.value);
+
+if (cmp < 0) {
+  // 在左子树中删除
+  node.left = this.deleteNode(node.left, value);
+  return node;
+} else if (cmp > 0) {
+  // 在右子树中删除
+  node.right = this.deleteNode(node.right, value);
+  return node;
+} else {
+  // 找到要删除的节点
+  
+  // 情况1: 叶子节点(无子节点)
+  if (!node.left && !node.right) {
+    return null;
+  }
+  
+  // 情况2: 只有一个子节点
+  if (!node.left) {
+    return node.right;
+  }
+  if (!node.right) {
+    return node.left;
+  }
+  
+  // 情况3: 有两个子节点
+  // 找到右子树的最小节点(后继节点)
+  const minRight = this.findMin(node.right);
+  
+  // 用后继节点的值替换当前节点
+  node.value = minRight.value;
+  
+  // 删除后继节点
+  node.right = this.deleteNode(node.right, minRight.value);
+  
+  return node;
+}
+}
+
+/**
+* 找到最小节点
+*/
+private findMin(node: BSTNode<T>): BSTNode<T> {
+while (node.left) {
+  node = node.left;
+}
+return node;
+}
+
+/**
+* 找到最大节点
+*/
+private findMax(node: BSTNode<T>): BSTNode<T> {
+while (node.right) {
+  node = node.right;
+}
+return node;
+}
+```
+
+**删除操作可视化**:
+
+```
+原始树:
+    5
+  / \
+  3   7
+/ \ / \
+2  4 6  8
+
+情况1: 删除叶子节点 (删除 2)
+    5
+  / \
+  3   7
+  \ / \
+  4 6  8
+
+情况2: 删除只有一个子节点的节点 (删除 3)
+    5
+  / \
+  4   7
+    / \
+    6   8
+
+情况3: 删除有两个子节点的节点 (删除 5)
+步骤:
+1. 找到右子树的最小节点 (6)
+2. 用 6 替换 5
+3. 删除原来的 6
+
+结果:
+    6
+  / \
+  4   7
+      \
+        8
+```
+
+---
+
+### 5. 最小值和最大值
+
+```typescript
+/**
+* 获取最小值
+*/
+min(): T | null {
+if (!this.root) return null;
+
+const minNode = this.findMin(this.root);
+return minNode.value;
+}
+
+/**
+* 获取最大值
+*/
+max(): T | null {
+if (!this.root) return null;
+
+const maxNode = this.findMax(this.root);
+return maxNode.value;
+}
+```
+
+---
+
+### 6. 中序遍历(得到有序序列)
+
+```typescript
+/**
+* 中序遍历 - 返回有序数组
+*/
+inorderTraversal(): T[] {
+const result: T[] = [];
+
+function traverse(node: BSTNode<T> | null) {
+  if (!node) return;
+  
+  traverse(node.left);
+  result.push(node.value);
+  traverse(node.right);
+}
+
+traverse(this.root);
+return result;
+}
+
+/**
+* 中序遍历 - 迭代版本
+*/
+inorderTraversalIterative(): T[] {
+const result: T[] = [];
+const stack: BSTNode<T>[] = [];
+let current = this.root;
+
+while (current || stack.length > 0) {
+  while (current) {
+    stack.push(current);
+    current = current.left;
+  }
+  
+  current = stack.pop()!;
+  result.push(current.value);
+  current = current.right;
+}
+
+return result;
+}
+```
+
+---
+
+### 7. 范围查询
+
+```typescript
+/**
+* 范围查询 - 查找 [min, max] 之间的所有值
+*/
+rangeSearch(min: T, max: T): T[] {
+const result: T[] = [];
+
+const traverse = (node: BSTNode<T> | null) => {
+  if (!node) return;
+  
+  // 如果当前节点值 > min,可能在左子树中有符合条件的节点
+  if (this.compareFn(node.value, min) > 0) {
+    traverse(node.left);
+  }
+  
+  // 如果当前节点在范围内,加入结果
+  if (
+    this.compareFn(node.value, min) >= 0 &&
+    this.compareFn(node.value, max) <= 0
+  ) {
+    result.push(node.value);
+  }
+  
+  // 如果当前节点值 < max,可能在右子树中有符合条件的节点
+  if (this.compareFn(node.value, max) < 0) {
+    traverse(node.right);
+  }
+};
+
+traverse(this.root);
+return result;
+}
+```
+
+**范围查询可视化**:
+```
+树:     5
+      / \
+    3   7
+    / \ / \
+  2  4 6  8
+
+查找 3-6:
+1. 从根节点 5 开始
+2. 5 在范围内,加入结果: [5]
+3. 5 > 3,检查左子树
+  - 3 在范围内: [5, 3]
+  - 3 的右子树: 4 在范围内: [5, 3, 4]
+4. 5 < 6,检查右子树
+  - 7 > 6,只检查左子树
+  - 6 在范围内: [5, 3, 4, 6]
+
+结果(中序): [3, 4, 5, 6]
+```
+
+---
+
+### 8. 验证 BST
+
+```typescript
+/**
+* 验证是否为有效的 BST
+*/
+isValidBST(): boolean {
+function validate(
+  node: BSTNode<T> | null,
+  min: T | null,
+  max: T | null
+): boolean {
+  if (!node) return true;
+  
+  // 检查当前节点是否在有效范围内
+  if (min !== null && this.compareFn(node.value, min) <= 0) {
+    return false;
+  }
+  if (max !== null && this.compareFn(node.value, max) >= 0) {
+    return false;
+  }
+  
+  // 递归检查左右子树
+  return (
+    validate(node.left, min, node.value) &&
+    validate(node.right, node.value, max)
+  );
+}
+
+return validate.call(this, this.root, null, null);
+}
+```
+
+---
+
+### 9. 完整的 BST 类
+
+```typescript
+/**
+* 完整的二叉搜索树实现
+*/
+class BinarySearchTree<T> {
+root: BSTNode<T> | null = null;
+private compareFn: (a: T, b: T) => number;
+private size: number = 0;
+
+constructor(compareFn?: (a: T, b: T) => number) {
+  this.compareFn = compareFn || ((a, b) => {
+    if (a < b) return -1;
+    if (a > b) return 1;
+    return 0;
+  });
+}
+
+// ... (上面实现的所有方法)
+
+/**
+  * 获取节点数量
+  */
+getSize(): number {
+  return this.size;
+}
+
+/**
+  * 判断是否为空
+  */
+isEmpty(): boolean {
+  return this.root === null;
+}
+
+/**
+  * 清空树
+  */
+clear(): void {
+  this.root = null;
+  this.size = 0;
+}
+
+/**
+  * 获取高度
+  */
+height(): number {
+  function getHeight(node: BSTNode<T> | null): number {
+    if (!node) return 0;
+    return 1 + Math.max(getHeight(node.left), getHeight(node.right));
+  }
+  
+  return getHeight(this.root);
+}
+
+/**
+  * 打印树结构
+  */
+print(): void {
+  function printNode(
+    node: BSTNode<T> | null,
+    prefix: string = '',
+    isLeft: boolean = true
+  ) {
+    if (!node) return;
+    
+    console.log(prefix + (isLeft ? '├── ' : '└── ') + node.value);
+    
+    if (node.left || node.right) {
+      if (node.left) {
+        printNode(node.left, prefix + (isLeft ? '│   ' : '    '), true);
+      }
+      if (node.right) {
+        printNode(node.right, prefix + (isLeft ? '│   ' : '    '), false);
+      }
+    }
+  }
+  
+  if (!this.root) {
+    console.log('Empty tree');
+    return;
+  }
+  
+  console.log(this.root.value);
+  if (this.root.left) {
+    printNode(this.root.left, '', true);
+  }
+  if (this.root.right) {
+    printNode(this.root.right, '', false);
+  }
+}
+}
+
+// 测试
+const bst = new BinarySearchTree<number>();
+
+// 插入节点
+[5, 3, 7, 2, 4, 6, 8].forEach(val => bst.insert(val));
+
+// 打印树
+bst.print();
+// 5
+// ├── 3
+// │   ├── 2
+// │   └── 4
+// └── 7
+//     ├── 6
+//     └── 8
+
+// 查找
+console.log(bst.search(6));  // true
+console.log(bst.search(10)); // false
+
+// 最小值和最大值
+console.log(bst.min()); // 2
+console.log(bst.max()); // 8
+
+// 中序遍历(有序)
+console.log(bst.inorderTraversal()); // [2, 3, 4, 5, 6, 7, 8]
+
+// 范围查询
+console.log(bst.rangeSearch(3, 6)); // [3, 4, 5, 6]
+
+// 删除
+bst.delete(3);
+console.log(bst.inorderTraversal()); // [2, 4, 5, 6, 7, 8]
+```
+
+---
+
+## 四、复杂度分析
+
+### 时间复杂度
+
+<table>
+  <thead>
+    <tr>
+      <th>操作</th>
+      <th>平均情况</th>
+      <th>最坏情况</th>
+      <th>说明</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>查找</td>
+      <td>O(log n)</td>
+      <td>O(n)</td>
+      <td>退化成链表</td>
+    </tr>
+    <tr>
+      <td>插入</td>
+      <td>O(log n)</td>
+      <td>O(n)</td>
+      <td>退化成链表</td>
+    </tr>
+    <tr>
+      <td>删除</td>
+      <td>O(log n)</td>
+      <td>O(n)</td>
+      <td>退化成链表</td>
+    </tr>
+    <tr>
+      <td>最小/最大</td>
+      <td>O(log n)</td>
+      <td>O(n)</td>
+      <td>退化成链表</td>
+    </tr>
+    <tr>
+      <td>中序遍历</td>
+      <td>O(n)</td>
+      <td>O(n)</td>
+      <td>访问所有节点</td>
+    </tr>
+    <tr>
+      <td>范围查询</td>
+      <td>O(log n + k)</td>
+      <td>O(n)</td>
+      <td>k 为结果数量</td>
+    </tr>
+  </tbody>
+</table>
+
+### 空间复杂度
+
+- **存储**: O(n) - 存储 n 个节点
+- **递归栈**: O(h) - h 为树的高度
+- 平衡树: O(log n)
+- 退化树: O(n)
+
+### BST vs 其他数据结构
+
+<table>
+  <thead>
+    <tr>
+      <th>数据结构</th>
+      <th>查找</th>
+      <th>插入</th>
+      <th>删除</th>
+      <th>有序遍历</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>数组(无序)</td>
+      <td>O(n)</td>
+      <td>O(1)</td>
+      <td>O(n)</td>
+      <td>O(n log n)</td>
+    </tr>
+    <tr>
+      <td>数组(有序)</td>
+      <td>O(log n)</td>
+      <td>O(n)</td>
+      <td>O(n)</td>
+      <td>O(n)</td>
+    </tr>
+    <tr>
+      <td>链表</td>
+      <td>O(n)</td>
+      <td>O(1)</td>
+      <td>O(n)</td>
+      <td>O(n log n)</td>
+    </tr>
+    <tr>
+      <td>BST</td>
+      <td>O(log n)</td>
+      <td>O(log n)</td>
+      <td>O(log n)</td>
+      <td>O(n)</td>
+    </tr>
+    <tr>
+      <td>哈希表</td>
+      <td>O(1)</td>
+      <td>O(1)</td>
+      <td>O(1)</td>
+      <td>✗ 不支持</td>
+    </tr>
+  </tbody>
+</table>
+
+**BST 的优势**:
+- ✅ 支持高效的范围查询
+- ✅ 支持有序遍历
+- ✅ 支持前驱/后继查询
+- ✅ 动态维护有序数据
+
+---
+
+## 五、实战应用
+
+### 案例1: 自动完成系统
+
+```typescript
+/**
+* 自动完成系统
+* 使用 BST 存储单词,支持前缀搜索
+*/
+class AutoComplete {
+private bst: BinarySearchTree<string>;
+
+constructor() {
+  this.bst = new BinarySearchTree<string>();
+}
+
+/**
+  * 添加单词
+  */
+addWord(word: string): void {
+  this.bst.insert(word.toLowerCase());
+}
+
+/**
+  * 批量添加单词
+  */
+addWords(words: string[]): void {
+  words.forEach(word => this.addWord(word));
+}
+
+/**
+  * 前缀搜索
+  */
+searchPrefix(prefix: string): string[] {
+  prefix = prefix.toLowerCase();
+  const result: string[] = [];
+  
+  // 找到第一个 >= prefix 的单词
+  const startWord = prefix;
+  
+  // 找到第一个 > prefix 的单词(通过增加一个字符)
+  const endWord = prefix.slice(0, -1) + 
+    String.fromCharCode(prefix.charCodeAt(prefix.length - 1) + 1);
+  
+  // 范围查询
+  const matches = this.bst.rangeSearch(startWord, endWord);
+  
+  // 过滤出真正以 prefix 开头的单词
+  return matches.filter(word => word.startsWith(prefix));
+}
+
+/**
+  * 模糊搜索(编辑距离)
+  */
+fuzzySearch(query: string, maxDistance: number = 2): string[] {
+  const allWords = this.bst.inorderTraversal();
+  const result: string[] = [];
+  
+  for (const word of allWords) {
+    if (this.editDistance(query, word) <= maxDistance) {
+      result.push(word);
+    }
+  }
+  
+  return result;
+}
+
+/**
+  * 计算编辑距离(Levenshtein距离)
+  */
+private editDistance(s1: string, s2: string): number {
+  const m = s1.length;
+  const n = s2.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => 
+    Array(n + 1).fill(0)
+  );
+  
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (s1[i - 1] === s2[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1];
+      } else {
+        dp[i][j] = Math.min(
+          dp[i - 1][j] + 1,     // 删除
+          dp[i][j - 1] + 1,     // 插入
+          dp[i - 1][j - 1] + 1  // 替换
+        );
+      }
+    }
+  }
+  
+  return dp[m][n];
+}
+
+/**
+  * 获取建议(按频率排序)
+  */
+getSuggestions(prefix: string, limit: number = 10): string[] {
+  const matches = this.searchPrefix(prefix);
+  return matches.slice(0, limit);
+}
+}
+
+// 测试
+const autoComplete = new AutoComplete();
+
+autoComplete.addWords([
+'react', 'read', 'real', 'redux', 'reduce',
+'vue', 'vuex', 'angular', 'apple', 'application'
+]);
+
+console.log(autoComplete.searchPrefix('re'));
+// ['react', 'read', 'real', 'reduce', 'redux']
+
+console.log(autoComplete.searchPrefix('rea'));
+// ['react', 'read', 'real']
+
+console.log(autoComplete.fuzzySearch('raect', 1));
+// ['react'] (编辑距离为1)
+```
+
+---
+
+### 案例2: 排行榜系统
+
+```typescript
+/**
+* 排行榜系统
+* 使用 BST 维护分数排序
+*/
+interface Player {
+id: string;
+name: string;
+score: number;
+}
+
+class Leaderboard {
+private bst: BinarySearchTree<Player>;
+private playerMap: Map<string, Player>;
+
+constructor() {
+  // 按分数排序
+  this.bst = new BinarySearchTree<Player>((a, b) => {
+    if (a.score !== b.score) {
+      return b.score - a.score; // 降序
+    }
+    return a.id.localeCompare(b.id); // 分数相同按ID排序
+  });
+  
+  this.playerMap = new Map();
+}
+
+/**
+  * 添加或更新玩家分数
+  */
+updateScore(id: string, name: string, score: number): void {
+  // 如果玩家已存在,先删除旧记录
+  if (this.playerMap.has(id)) {
+    const oldPlayer = this.playerMap.get(id)!;
+    this.bst.delete(oldPlayer);
+  }
+  
+  // 添加新记录
+  const player: Player = { id, name, score };
+  this.bst.insert(player);
+  this.playerMap.set(id, player);
+}
+
+/**
+  * 获取玩家排名
+  */
+getRank(id: string): number {
+  const player = this.playerMap.get(id);
+  if (!player) return -1;
+  
+  const allPlayers = this.bst.inorderTraversal();
+  return allPlayers.findIndex(p => p.id === id) + 1;
+}
+
+/**
+  * 获取前K名
+  */
+getTopK(k: number): Player[] {
+  const allPlayers = this.bst.inorderTraversal();
+  return allPlayers.slice(0, k);
+}
+
+/**
+  * 获取分数范围内的玩家
+  */
+getPlayersInRange(minScore: number, maxScore: number): Player[] {
+  const dummyMin: Player = { id: '', name: '', score: minScore };
+  const dummyMax: Player = { id: '', name: '', score: maxScore };
+  
+  return this.bst.rangeSearch(dummyMax, dummyMin); // 注意顺序(降序)
+}
+
+/**
+  * 获取玩家信息
+  */
+getPlayer(id: string): Player | undefined {
+  return this.playerMap.get(id);
+}
+
+/**
+  * 打印排行榜
+  */
+printLeaderboard(limit: number = 10): void {
+  const topPlayers = this.getTopK(limit);
+  
+  console.log('\n🏆 排行榜 Top', limit);
+  console.log('─'.repeat(50));
+  
+  topPlayers.forEach((player, index) => {
+    const rank = index + 1;
+    const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '  ';
+    console.log(`${medal} ${rank}. ${player.name.padEnd(20)} ${player.score} 分`);
+  });
+  
+  console.log('─'.repeat(50));
+}
+}
+
+// 测试
+const leaderboard = new Leaderboard();
+
+// 添加玩家
+leaderboard.updateScore('p1', 'Alice', 1500);
+leaderboard.updateScore('p2', 'Bob', 1200);
+leaderboard.updateScore('p3', 'Charlie', 1800);
+leaderboard.updateScore('p4', 'David', 1600);
+leaderboard.updateScore('p5', 'Eve', 1400);
+
+// 打印排行榜
+leaderboard.printLeaderboard(5);
+// 🥇 1. Charlie             1800 分
+// 🥈 2. David               1600 分
+// 🥉 3. Alice               1500 分
+//    4. Eve                 1400 分
+//    5. Bob                 1200 分
+
+// 更新分数
+leaderboard.updateScore('p2', 'Bob', 2000);
+leaderboard.printLeaderboard(5);
+// 🥇 1. Bob                 2000 分
+// 🥈 2. Charlie             1800 分
+// ...
+
+// 获取排名
+console.log('Bob 的排名:', leaderboard.getRank('p2')); // 1
+
+// 范围查询
+const midRange = leaderboard.getPlayersInRange(1400, 1600);
+console.log('1400-1600分的玩家:', midRange.map(p => p.name));
+```
+
+---
+
+### 案例3: 区间调度问题
+
+```typescript
+/**
+* 会议室调度系统
+* 使用 BST 管理时间区间
+*/
+interface Meeting {
+id: string;
+title: string;
+start: number;  // 开始时间(时间戳)
+end: number;    // 结束时间
+}
+
+class MeetingScheduler {
+private bst: BinarySearchTree<Meeting>;
+
+constructor() {
+  // 按开始时间排序
+  this.bst = new BinarySearchTree<Meeting>((a, b) => a.start - b.start);
+}
+
+/**
+  * 预订会议
+  */
+book(meeting: Meeting): boolean {
+  // 检查是否有冲突
+  if (this.hasConflict(meeting.start, meeting.end)) {
+    console.log(`❌ 预订失败: ${meeting.title} (时间冲突)`);
+    return false;
+  }
+  
+  this.bst.insert(meeting);
+  console.log(`✅ 预订成功: ${meeting.title}`);
+  return true;
+}
+
+/**
+  * 检查时间冲突
+  */
+private hasConflict(start: number, end: number): boolean {
+  const allMeetings = this.bst.inorderTraversal();
+  
+  for (const meeting of allMeetings) {
+    // 检查是否有重叠
+    if (!(end <= meeting.start || start >= meeting.end)) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+/**
+  * 查找指定时间段的所有会议
+  */
+findMeetings(start: number, end: number): Meeting[] {
+  const allMeetings = this.bst.inorderTraversal();
+  
+  return allMeetings.filter(meeting => {
+    // 有重叠就返回
+    return !(end <= meeting.start || start >= meeting.end);
+  });
+}
+
+/**
+  * 查找空闲时间段
+  */
+findFreeSlots(start: number, end: number, duration: number): Array<{start: number, end: number}> {
+  const meetings = this.findMeetings(start, end);
+  const freeSlots: Array<{start: number, end: number}> = [];
+  
+  // 按开始时间排序
+  meetings.sort((a, b) => a.start - b.start);
+  
+  let currentTime = start;
+  
+  for (const meeting of meetings) {
+    if (meeting.start > currentTime) {
+      const slotDuration = meeting.start - currentTime;
+      if (slotDuration >= duration) {
+        freeSlots.push({
+          start: currentTime,
+          end: meeting.start
+        });
+      }
+    }
+    currentTime = Math.max(currentTime, meeting.end);
+  }
+  
+  // 检查最后一个时间段
+  if (end > currentTime && end - currentTime >= duration) {
+    freeSlots.push({
+      start: currentTime,
+      end: end
+    });
+  }
+  
+  return freeSlots;
+}
+
+/**
+  * 取消会议
+  */
+cancel(meetingId: string): boolean {
+  const allMeetings = this.bst.inorderTraversal();
+  const meeting = allMeetings.find(m => m.id === meetingId);
+  
+  if (!meeting) {
+    console.log(`❌ 取消失败: 会议不存在`);
+    return false;
+  }
+  
+  this.bst.delete(meeting);
+  console.log(`✅ 取消成功: ${meeting.title}`);
+  return true;
+}
+
+/**
+  * 打印日程表
+  */
+printSchedule(): void {
+  const meetings = this.bst.inorderTraversal();
+  
+  console.log('\n📅 会议日程');
+  console.log('─'.repeat(60));
+  
+  meetings.forEach(meeting => {
+    const startTime = new Date(meeting.start).toLocaleTimeString();
+    const endTime = new Date(meeting.end).toLocaleTimeString();
+    console.log(`${startTime} - ${endTime}  ${meeting.title}`);
+  });
+  
+  console.log('─'.repeat(60));
+}
+}
+
+// 测试
+const scheduler = new MeetingScheduler();
+
+const now = Date.now();
+const hour = 60 * 60 * 1000;
+
+scheduler.book({
+id: 'm1',
+title: '团队站会',
+start: now,
+end: now + hour
+});
+
+scheduler.book({
+id: 'm2',
+title: '项目评审',
+start: now + 2 * hour,
+end: now + 3 * hour
+});
+
+scheduler.book({
+id: 'm3',
+title: '客户会议',
+start: now + 0.5 * hour,  // 冲突!
+end: now + 1.5 * hour
+});
+// ❌ 预订失败: 客户会议 (时间冲突)
+
+scheduler.printSchedule();
+
+// 查找空闲时间
+const freeSlots = scheduler.findFreeSlots(now, now + 5 * hour, 0.5 * hour);
+console.log('\n🕐 空闲时间段:');
+freeSlots.forEach(slot => {
+const start = new Date(slot.start).toLocaleTimeString();
+const end = new Date(slot.end).toLocaleTimeString();
+console.log(`${start} - ${end}`);
+});
+```
+
+---
+
+### 案例4: 价格区间查询
+
+```typescript
+/**
+* 商品价格索引
+* 支持快速的价格范围查询
+*/
+interface Product {
+id: string;
+name: string;
+price: number;
+category: string;
+}
+
+class ProductPriceIndex {
+private bst: BinarySearchTree<Product>;
+private productMap: Map<string, Product>;
+
+constructor() {
+  // 按价格排序
+  this.bst = new BinarySearchTree<Product>((a, b) => {
+    if (a.price !== b.price) {
+      return a.price - b.price;
+    }
+    return a.id.localeCompare(b.id);
+  });
+  
+  this.productMap = new Map();
+}
+
+/**
+  * 添加商品
+  */
+addProduct(product: Product): void {
+  this.bst.insert(product);
+  this.productMap.set(product.id, product);
+}
+
+/**
+  * 批量添加
+  */
+addProducts(products: Product[]): void {
+  products.forEach(p => this.addProduct(p));
+}
+
+/**
+  * 价格范围查询
+  */
+findByPriceRange(minPrice: number, maxPrice: number): Product[] {
+  const dummyMin: Product = { id: '', name: '', price: minPrice, category: '' };
+  const dummyMax: Product = { id: '', name: '', price: maxPrice, category: '' };
+  
+  return this.bst.rangeSearch(dummyMin, dummyMax);
+}
+
+/**
+  * 查找最便宜的商品
+  */
+findCheapest(): Product | null {
+  const min = this.bst.min();
+  return min || null;
+}
+
+/**
+  * 查找最贵的商品
+  */
+findMostExpensive(): Product | null {
+  const max = this.bst.max();
+  return max || null;
+}
+
+/**
+  * 查找价格中位数
+  */
+findMedianPrice(): number {
+  const allProducts = this.bst.inorderTraversal();
+  const mid = Math.floor(allProducts.length / 2);
+  
+  if (allProducts.length % 2 === 0) {
+    return (allProducts[mid - 1].price + allProducts[mid].price) / 2;
+  }
+  
+  return allProducts[mid].price;
+}
+
+/**
+  * 统计价格分布
+  */
+getPriceDistribution(bucketSize: number): Map<string, number> {
+  const allProducts = this.bst.inorderTraversal();
+  const distribution = new Map<string, number>();
+  
+  for (const product of allProducts) {
+    const bucket = Math.floor(product.price / bucketSize) * bucketSize;
+    const key = `${bucket}-${bucket + bucketSize}`;
+    distribution.set(key, (distribution.get(key) || 0) + 1);
+  }
+  
+  return distribution;
+}
+
+/**
+  * 打印价格分布
+  */
+printPriceDistribution(bucketSize: number = 100): void {
+  const distribution = this.getPriceDistribution(bucketSize);
+  
+  console.log('\n💰 价格分布');
+  console.log('─'.repeat(50));
+  
+  Array.from(distribution.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .forEach(([range, count]) => {
+      const bar = '█'.repeat(count);
+      console.log(`${range.padEnd(15)} ${bar} (${count})`);
+    });
+  
+  console.log('─'.repeat(50));
+}
+}
+
+// 测试
+const priceIndex = new ProductPriceIndex();
+
+priceIndex.addProducts([
+{ id: 'p1', name: '键盘', price: 299, category: '电脑配件' },
+{ id: 'p2', name: '鼠标', price: 99, category: '电脑配件' },
+{ id: 'p3', name: '显示器', price: 1299, category: '电脑配件' },
+{ id: 'p4', name: '耳机', price: 199, category: '音频设备' },
+{ id: 'p5', name: 'U盘', price: 49, category: '存储设备' },
+{ id: 'p6', name: '移动硬盘', price: 599, category: '存储设备' },
+{ id: 'p7', name: '笔记本', price: 5999, category: '电脑' },
+{ id: 'p8', name: '平板', price: 2999, category: '电脑' }
+]);
+
+// 价格范围查询
+console.log('\n100-500元的商品:');
+const range = priceIndex.findByPriceRange(100, 500);
+range.forEach(p => console.log(`${p.name}: ¥${p.price}`));
+
+// 最便宜和最贵
+console.log('\n最便宜:', priceIndex.findCheapest()?.name);
+console.log('最贵:', priceIndex.findMostExpensive()?.name);
+
+// 中位数
+console.log('\n价格中位数: ¥', priceIndex.findMedianPrice());
+
+// 价格分布
+priceIndex.printPriceDistribution(1000);
+```
+
+---
+
+## 六、练习题
+
+### 题目1: 二叉搜索树中第K小的元素 (LeetCode 230)
+
+**难度**: 中等
+
+**题目描述**:
+给定一个二叉搜索树的根节点 root,和一个整数 k,返回 BST 中第 k 小的元素。
+
+```typescript
+/**
+* @param root - BST 根节点
+* @param k - 第 k 小
+* @return 第 k 小的元素值
+*/
+function kthSmallest(root: BSTNode<number> | null, k: number): number {
+// 在这里实现你的代码
+}
+
+// 测试用例
+// 输入:    3
+//        / \
+//       1   4
+//        \
+//         2
+// k = 1
+// 输出: 1
+```
+
+**提示**: 中序遍历的第 k 个元素就是答案
+
+<details>
+<summary>点击查看答案</summary>
+
+```typescript
+function kthSmallest(root: BSTNode<number> | null, k: number): number {
+let count = 0;
+let result = 0;
+
+function inorder(node: BSTNode<number> | null): boolean {
+  if (!node) return false;
+  
+  // 遍历左子树
+  if (inorder(node.left)) return true;
+  
+  // 访问当前节点
+  count++;
+  if (count === k) {
+    result = node.value;
+    return true;
+  }
+  
+  // 遍历右子树
+  return inorder(node.right);
+}
+
+inorder(root);
+return result;
+}
+```
+
+**时间复杂度**: O(k)  
+**空间复杂度**: O(h) - h 为树高
+</details>
+
+---
+
+### 题目2: 将有序数组转换为二叉搜索树 (LeetCode 108)
+
+**难度**: 简单
+
+**题目描述**:
+给你一个整数数组 nums,其中元素已经按升序排列,将其转换为一棵高度平衡的二叉搜索树。
+
+```typescript
+/**
+* @param nums - 有序数组
+* @return BST 根节点
+*/
+function sortedArrayToBST(nums: number[]): BSTNode<number> | null {
+// 在这里实现你的代码
+}
+
+// 测试用例
+// 输入: [-10, -3, 0, 5, 9]
+// 输出:      0
+//          / \
+//        -3   9
+//        /   /
+//      -10  5
+```
+
+**提示**: 选择中间元素作为根节点,递归构建左右子树
+
+---
+
+### 题目3: 恢复二叉搜索树 (LeetCode 99)
+
+**难度**: 中等
+
+**题目描述**:
+给你二叉搜索树的根节点 root,该树中的恰好两个节点的值被错误地交换。请在不改变其结构的情况下,恢复这棵树。
+
+```typescript
+/**
+* @param root - BST 根节点
+*/
+function recoverTree(root: BSTNode<number> | null): void {
+// 在这里实现你的代码
+}
+
+// 测试用例
+// 输入:  1        输出:  3
+//       /                /
+//      3                1
+//       \                \
+//        2                2
+```
+
+**提示**: 中序遍历找到两个逆序的节点,交换它们的值
+
+---
+
+## 七、总结与扩展
+
+### 核心要点
+
+1. **BST 的性质**:
+  - 左子树 < 根 < 右子树
+  - 中序遍历得到有序序列
+  - 支持高效的查找、插入、删除
+
+2. **基本操作**:
+  - 插入: 递归或迭代
+  - 查找: 二分查找思想
+  - 删除: 三种情况处理
+  - 遍历: 中序得到有序序列
+
+3. **实战应用**:
+  - 自动完成搜索
+  - 排行榜系统
+  - 区间调度
+  - 价格索引
+
+### BST 的优缺点
+
+**优点**:
+- ✅ 查找、插入、删除平均 O(log n)
+- ✅ 支持范围查询
+- ✅ 支持有序遍历
+- ✅ 动态维护有序数据
+
+**缺点**:
+- ❌ 最坏情况退化成链表 O(n)
+- ❌ 需要额外的指针空间
+- ❌ 不如哈希表快(查找)
+
+### 平衡二叉搜索树
+
+为了避免 BST 退化,引入了自平衡树:
+
+#### 1. AVL 树
+```
+特点:
+- 严格平衡: |左子树高度 - 右子树高度| ≤ 1
+- 通过旋转保持平衡
+- 查找效率高,但插入删除需要频繁旋转
+
+时间复杂度:
+- 查找: O(log n)
+- 插入: O(log n)
+- 删除: O(log n)
+```
+
+#### 2. 红黑树
+```
+特点:
+- 近似平衡: 最长路径 ≤ 2 * 最短路径
+- 通过颜色标记和旋转保持平衡
+- 插入删除效率高
+
+应用:
+- C++ STL 的 map/set
+- Java 的 TreeMap/TreeSet
+- Linux 内核的进程调度
+```
+
+#### 3. B树/B+树
+```
+特点:
+- 多路搜索树(不是二叉树)
+- 节点可以有多个子节点
+- 减少磁盘 I/O 次数
+
+应用:
+- 数据库索引 (MySQL InnoDB)
+- 文件系统 (NTFS, ext4)
+```
+
+### 常见陷阱
+
+1. **忘记处理相等的情况**:
+```typescript
+// ❌ 没有处理相等
+if (value < node.value) {
+// 插入左边
+} else {
+// 插入右边,相等的也会插入
+}
+
+// ✅ 正确处理
+if (value < node.value) {
+// 插入左边
+} else if (value > node.value) {
+// 插入右边
+} else {
+// 值已存在,不插入或更新
+}
+```
+
+2. **删除节点时忘记处理两个子节点的情况**:
+```typescript
+// 必须找到后继节点(右子树的最小节点)
+// 或前驱节点(左子树的最大节点)
+```
+
+3. **范围查询时没有剪枝**:
+```typescript
+// ❌ 遍历所有节点
+function rangeSearch(node, min, max) {
+if (!node) return;
+rangeSearch(node.left, min, max);
+if (node.value >= min && node.value <= max) {
+  result.push(node.value);
+}
+rangeSearch(node.right, min, max);
+}
+
+// ✅ 剪枝优化
+function rangeSearch(node, min, max) {
+if (!node) return;
+if (node.value > min) {
+  rangeSearch(node.left, min, max); // 只有可能在左边时才搜索
+}
+if (node.value >= min && node.value <= max) {
+  result.push(node.value);
+}
+if (node.value < max) {
+  rangeSearch(node.right, min, max); // 只有可能在右边时才搜索
+}
+}
+```
+
+### 性能优化建议
+
+- ✅ 对于频繁插入删除,使用红黑树代替 BST
+- ✅ 对于静态数据,可以从有序数组构建平衡 BST
+- ✅ 范围查询时注意剪枝
+- ✅ 考虑使用迭代代替递归(避免栈溢出)
+- ✅ 缓存常用查询结果
+
+### 进阶学习
+
+1. **AVL 树**: 下一篇详细讲解
+2. **红黑树**: 理解旋转和颜色调整
+3. **B树/B+树**: 数据库索引原理
+4. **Treap**: 树堆,随机化 BST
+5. **Splay Tree**: 自调整树
+
+---
+
+## 下期预告
+
+下一篇我们将学习**堆与优先队列**,探讨:
+- 最小堆/最大堆的实现
+- 优先队列的应用
+- Top K 问题
+- 任务调度系统
+---
+
+**相关资源**:
+- [LeetCode BST 题单](https://leetcode.cn/tag/binary-search-tree/)
+- [可视化 BST](https://visualgo.net/en/bst)
+- [本系列代码仓库](https://github.com/yourname/frontend-algorithms)
