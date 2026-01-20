@@ -16,14 +16,14 @@ const SectionNav = ({ mainLinks, smallLinks }: { mainLinks: LinkItem[]; smallLin
 
   return (
     <div className='prose m-auto'>
-      <nav className='nav-sub text-3xl'>
+      <nav className='nav-sub flex items-center gap-6 text-3xl'>
         {mainLinks.map((l) => (
           <NavLink key={l.to} to={l.to} className={() => (matchLen(l.to) === maxMatch && maxMatch > 0 ? 'active' : '')}>
             {l.label}
           </NavLink>
         ))}
       </nav>
-      <nav className='nav-small text-2xl'>
+      <nav className='nav-small flex items-center gap-4 text-2xl'>
         {smallLinks.map((l) => (
           <NavLink key={l.to} to={l.to} className={() => (matchLen(l.to) > 0 ? 'active' : '')}>
             {l.label}

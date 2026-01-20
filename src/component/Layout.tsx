@@ -10,7 +10,8 @@ const Layout = () => {
     location.pathname === '/posts/js_core' || 
     location.pathname === '/posts/english' ||
     location.pathname === '/posts/english/grammar' ||
-    location.pathname === '/posts/english/document'
+    location.pathname === '/posts/english/document'||
+    location.pathname === '/posts/algorithm'
   
   const showToc = isPostPage && !isIndexPage
 
