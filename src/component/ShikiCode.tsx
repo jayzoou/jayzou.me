@@ -116,7 +116,7 @@ const ShikiCode: React.FC<Props> = ({ className = '', children }) => {
 
   if (!html) {
     return (
-      <pre className={className}>
+      <pre className={`${className} shiki-loading`} data-shiki="loading">
         <code className={className}>{children}</code>
       </pre>
     )

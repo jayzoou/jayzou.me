@@ -89,6 +89,16 @@ export async function highlightAllCodeBlocks(root: ParentNode = document) {
       console.warn('[shikiClient] language pre-load failed', e)
     }
 
+    // Mark nodes as loading to apply minimal styling and avoid FOUC
+    for (const codeEl of nodes) {
+      const pre = codeEl.parentElement as HTMLElement | null
+      if (pre) {
+        pre.classList.add('shiki-loading')
+        // reserve vertical space to reduce layout shift
+        if (!pre.style.minHeight) pre.style.minHeight = pre.offsetHeight ? `${pre.offsetHeight}px` : '3rem'
+      }
+    }
+
     for (const codeEl of nodes) {
       const pre = codeEl.parentElement as HTMLElement | null
       if (!pre) continue
@@ -120,7 +130,9 @@ export async function highlightAllCodeBlocks(root: ParentNode = document) {
         // <pre> so we can inject inner content into the existing element.
         const inner = html.replace(/^<pre[^>]*>/i, '').replace(/<\/pre>$/i, '')
         pre.innerHTML = inner
-        pre.classList.add('shiki-wrapper')
+        pre.classList.remove('shiki-loading')
+        pre.classList.add('shiki-wrapper', 'shiki-done')
+        pre.style.minHeight = ''
       } catch (e) {
         console.error('[shikiClient] highlight failed for', lang, e)
       }
