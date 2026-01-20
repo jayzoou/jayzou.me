@@ -1,0 +1,439 @@
+<svg viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      /* =========================
+         时间轴（0-100%）
+         init: 0-10
+         step1(eq):   10-20  compare:12-18
+         step2(neq):  20-35  fastMove:20-24 compare:24-28 slowMove:28-30 copy:30-35
+         step3(eq):   35-45  fastMove:35-37 compare:37-43
+         step4(eq):   45-55  fastMove:45-47 compare:47-53
+         step5(neq):  55-70  fastMove:55-59 compare:59-63 slowMove:63-65 copy:65-70
+         step6(neq):  70-82  fastMove:70-72 compare:72-75 slowMove:75-77 copy:77-82
+         step7(eq):   82-90  fastMove:82-84 compare:84-88
+         step8(neq):  90-100 fastMove:90-92 compare:92-95 slowMove:95-97 copy:97-100
+         ========================= */
+
+      @keyframes moveFast {
+        0%, 20% { transform: translateX(100px); }
+        24%, 35% { transform: translateX(200px); }
+        37%, 45% { transform: translateX(300px); }
+        47%, 55% { transform: translateX(400px); }
+        59%, 70% { transform: translateX(500px); }
+        72%, 82% { transform: translateX(600px); }
+        84%, 90% { transform: translateX(700px); }
+        92%, 100% { transform: translateX(800px); }
+      }
+
+      @keyframes moveSlow {
+        0%, 28% { transform: translateX(0); }
+        30%, 63% { transform: translateX(100px); }
+        65%, 75% { transform: translateX(200px); }
+        77%, 95% { transform: translateX(300px); }
+        97%, 100% { transform: translateX(400px); }
+      }
+
+      @keyframes showValidArea {
+        0%, 29.9% { width: 100px; }
+        30%, 64.9% { width: 200px; }
+        65%, 76.9% { width: 300px; }
+        77%, 96.9% { width: 400px; }
+        97%, 100% { width: 500px; }
+      }
+
+      @keyframes highlight0 { 0%, 100% { fill:#c8e6c9; stroke:#4caf50; stroke-width:3; } }
+
+      @keyframes highlight1 {
+        0%, 11.9% { fill:#ffffff; stroke:#2196f3; stroke-width:3; }
+        12%, 18% { fill:#ffccbc; stroke:#ff5722; stroke-width:4; }
+        18.1%, 100% { fill:#c8e6c9; stroke:#4caf50; stroke-width:3; }
+      }
+
+      @keyframes highlight2 {
+        0%, 23.9% { fill:#ffffff; stroke:#2196f3; stroke-width:3; }
+        24%, 28% { fill:#fff9c4; stroke:#fbc02d; stroke-width:4; }
+        28.1%, 100% { fill:#c8e6c9; stroke:#4caf50; stroke-width:3; }
+      }
+
+      @keyframes highlight3 {
+        0%, 36.9% { fill:#ffffff; stroke:#2196f3; stroke-width:3; }
+        37%, 43% { fill:#ffccbc; stroke:#ff5722; stroke-width:4; }
+        43.1%, 100% { fill:#e0e0e0; stroke:#9e9e9e; stroke-width:2; }
+      }
+
+      @keyframes highlight4 {
+        0%, 46.9% { fill:#ffffff; stroke:#2196f3; stroke-width:3; }
+        47%, 53% { fill:#ffccbc; stroke:#ff5722; stroke-width:4; }
+        53.1%, 100% { fill:#e0e0e0; stroke:#9e9e9e; stroke-width:2; }
+      }
+
+      @keyframes highlight5 {
+        0%, 58.9% { fill:#ffffff; stroke:#2196f3; stroke-width:3; }
+        59%, 63% { fill:#fff9c4; stroke:#fbc02d; stroke-width:4; }
+        63.1%, 100% { fill:#c8e6c9; stroke:#4caf50; stroke-width:3; }
+      }
+
+      @keyframes highlight6 {
+        0%, 71.9% { fill:#ffffff; stroke:#2196f3; stroke-width:3; }
+        72%, 75% { fill:#fff9c4; stroke:#fbc02d; stroke-width:4; }
+        75.1%, 100% { fill:#c8e6c9; stroke:#4caf50; stroke-width:3; }
+      }
+
+      @keyframes highlight7 {
+        0%, 83.9% { fill:#ffffff; stroke:#2196f3; stroke-width:3; }
+        84%, 88% { fill:#ffccbc; stroke:#ff5722; stroke-width:4; }
+        88.1%, 100% { fill:#e0e0e0; stroke:#9e9e9e; stroke-width:2; }
+      }
+
+      @keyframes highlight8 {
+        0%, 91.9% { fill:#ffffff; stroke:#2196f3; stroke-width:3; }
+        92%, 95% { fill:#fff9c4; stroke:#fbc02d; stroke-width:4; }
+        95.1%, 100% { fill:#c8e6c9; stroke:#4caf50; stroke-width:3; }
+      }
+
+      /* 修改后的飞行动画：从弧线中间位置开始 */
+      
+      /* 数字2: 从中间位置开始飞到idx1(x=260) */
+      @keyframes flyNumber2 {
+        0%, 29.9% { opacity:0; transform: translate(-50px,-30px) scale(1.2); fill: #ff6b6b; }
+        30% { opacity:1; transform: translate(-50px,-30px) scale(1.2); fill: #ff6b6b; }
+        35% { opacity:1; transform: translate(-100px,0) scale(1); fill: #1565c0; }
+        100% { opacity:1; transform: translate(-100px,0) scale(1); fill: #1565c0; }
+      }
+
+      /* 数字3: 从中间位置开始飞到idx2(x=360) */
+      @keyframes flyNumber5 {
+        0%, 64.9% { opacity:0; transform: translate(-150px,-30px) scale(1.2); fill: #ff6b6b; }
+        65% { opacity:1; transform: translate(-150px,-30px) scale(1.2); fill: #ff6b6b; }
+        70% { opacity:1; transform: translate(-300px,0) scale(1); fill: #1565c0; }
+        100% { opacity:1; transform: translate(-300px,0) scale(1); fill: #1565c0; }
+      }
+
+      /* 数字4: 从中间位置开始飞到idx3(x=460) */
+      @keyframes flyNumber6 {
+        0%, 76.9% { opacity:0; transform: translate(-150px,-30px) scale(1.2); fill: #ff6b6b; }
+        77% { opacity:1; transform: translate(-150px,-30px) scale(1.2); fill: #ff6b6b; }
+        82% { opacity:1; transform: translate(-300px,0) scale(1); fill: #1565c0; }
+        100% { opacity:1; transform: translate(-300px,0) scale(1); fill: #1565c0; }
+      }
+
+      /* 数字5: 从中间位置开始飞到idx4(x=560) */
+      @keyframes flyNumber8 {
+        0%, 96.9% { opacity:0; transform: translate(-200px,-28px) scale(1.15); fill: #ff6b6b; }
+        97% { opacity:1; transform: translate(-200px,-28px) scale(1.15); fill: #ff6b6b; }
+        100% { opacity:1; transform: translate(-400px,0) scale(1); fill: #1565c0; }
+      }
+
+      @keyframes showCopyArrow2 { 0%, 29.9%{opacity:0;} 30%, 35%{opacity:1;} 35.1%, 100%{opacity:0;} }
+      @keyframes showCopyArrow5 { 0%, 64.9%{opacity:0;} 65%, 70%{opacity:1;} 70.1%, 100%{opacity:0;} }
+      @keyframes showCopyArrow6 { 0%, 76.9%{opacity:0;} 77%, 82%{opacity:1;} 82.1%, 100%{opacity:0;} }
+      @keyframes showCopyArrow8 { 0%, 96.9%{opacity:0;} 97%, 100%{opacity:1;} }
+
+      /* 旧值淡出 */
+      @keyframes fadeOut1 { 0%, 30%{opacity:1;} 32%{opacity:0;} 100%{opacity:0;} }
+      @keyframes fadeOut2 { 0%, 65%{opacity:1;} 67%{opacity:0;} 100%{opacity:0;} }
+      @keyframes fadeOut3 { 0%, 77%{opacity:1;} 79%{opacity:0;} 100%{opacity:0;} }
+      @keyframes fadeOut4 { 0%, 97%{opacity:1;} 98.5%{opacity:0;} 100%{opacity:0;} }
+
+      @keyframes fadeInOut0 { 0%, 10% { opacity: 1; } 12%, 100% { opacity: 0; } }
+      @keyframes fadeInOut1 { 0%, 10% { opacity: 0; } 10.1%, 20% { opacity: 1; } 20.1%, 100% { opacity: 0; } }
+      @keyframes fadeInOut2 { 0%, 20% { opacity: 0; } 20.1%, 35% { opacity: 1; } 35.1%, 100% { opacity: 0; } }
+      @keyframes fadeInOut3 { 0%, 35% { opacity: 0; } 35.1%, 45% { opacity: 1; } 45.1%, 100% { opacity: 0; } }
+      @keyframes fadeInOut4 { 0%, 45% { opacity: 0; } 45.1%, 55% { opacity: 1; } 55.1%, 100% { opacity: 0; } }
+      @keyframes fadeInOut5 { 0%, 55% { opacity: 0; } 55.1%, 70% { opacity: 1; } 70.1%, 100% { opacity: 0; } }
+      @keyframes fadeInOut6 { 0%, 70% { opacity: 0; } 70.1%, 82% { opacity: 1; } 82.1%, 100% { opacity: 0; } }
+      @keyframes fadeInOut7 { 0%, 82% { opacity: 0; } 82.1%, 90% { opacity: 1; } 90.1%, 100% { opacity: 0; } }
+      @keyframes fadeInOut8 { 0%, 90% { opacity: 0; } 90.1%, 100% { opacity: 1; } }
+
+      @keyframes showResult {
+        0%, 97% { opacity: 0; transform: scale(0.9); }
+        99%, 100% { opacity: 1; transform: scale(1); }
+      }
+
+      .array-box { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+      .box-0 { animation: highlight0 15s ease-in-out infinite; }
+      .box-1 { animation: highlight1 15s ease-in-out infinite; }
+      .box-2 { animation: highlight2 15s ease-in-out infinite; }
+      .box-3 { animation: highlight3 15s ease-in-out infinite; }
+      .box-4 { animation: highlight4 15s ease-in-out infinite; }
+      .box-5 { animation: highlight5 15s ease-in-out infinite; }
+      .box-6 { animation: highlight6 15s ease-in-out infinite; }
+      .box-7 { animation: highlight7 15s ease-in-out infinite; }
+      .box-8 { animation: highlight8 15s ease-in-out infinite; }
+
+      .array-text {
+        font-family: 'Courier New', monospace;
+        font-size: 32px;
+        font-weight: bold;
+        fill: #1565c0;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+
+      .fly-text {
+        font-family: 'Courier New', monospace;
+        font-size: 32px;
+        font-weight: bold;
+        text-anchor: middle;
+        dominant-baseline: middle;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+      }
+
+      .fly-2 { animation: flyNumber2 15s ease-in-out infinite; }
+      .fly-5 { animation: flyNumber5 15s ease-in-out infinite; }
+      .fly-6 { animation: flyNumber6 15s ease-in-out infinite; }
+      .fly-8 { animation: flyNumber8 15s ease-in-out infinite; }
+
+      .valid-area { fill: #4caf50; opacity: 0.2; animation: showValidArea 15s ease-in-out infinite; }
+
+      .pointer-slow { animation: moveSlow 15s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+      .pointer-fast { animation: moveFast 15s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+
+      .pointer-arrow-slow { fill: #2196f3; filter: drop-shadow(0 2px 4px rgba(33,150,243,0.4)); }
+      .pointer-arrow-fast { fill: #9c27b0; filter: drop-shadow(0 2px 4px rgba(156,39,176,0.4)); }
+      .pointer-label { font-family: 'Arial', sans-serif; font-size: 18px; font-weight: bold; text-anchor: middle; }
+
+      .copy-arrow {
+        animation-duration: 15s;
+        animation-iteration-count: infinite;
+        fill: none;
+        stroke: #ff9800;
+        stroke-width: 3;
+        stroke-dasharray: 5,5;
+        marker-end: url(#arrowhead-copy);
+      }
+      .copy-arrow-2 { animation-name: showCopyArrow2; }
+      .copy-arrow-5 { animation-name: showCopyArrow5; }
+      .copy-arrow-6 { animation-name: showCopyArrow6; }
+      .copy-arrow-8 { animation-name: showCopyArrow8; }
+
+      .copy-label-bg {
+        fill: #fff;
+        stroke: #ff9800;
+        stroke-width: 1;
+        rx: 4;
+        animation-duration: 15s;
+        animation-iteration-count: infinite;
+      }
+      .copy-label-bg-2 { animation-name: showCopyArrow2; }
+      .copy-label-bg-5 { animation-name: showCopyArrow5; }
+      .copy-label-bg-6 { animation-name: showCopyArrow6; }
+      .copy-label-bg-8 { animation-name: showCopyArrow8; }
+
+      .copy-label {
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        fill: #e65100;
+        font-weight: 700;
+        animation-duration: 15s;
+        animation-iteration-count: infinite;
+        text-anchor: middle;
+      }
+      .copy-label-2 { animation-name: showCopyArrow2; }
+      .copy-label-5 { animation-name: showCopyArrow5; }
+      .copy-label-6 { animation-name: showCopyArrow6; }
+      .copy-label-8 { animation-name: showCopyArrow8; }
+
+      .text-1-old { animation: fadeOut1 15s ease-in-out infinite; }
+      .text-2-old { animation: fadeOut2 15s ease-in-out infinite; }
+      .text-3-old { animation: fadeOut3 15s ease-in-out infinite; }
+      .text-4-old { animation: fadeOut4 15s ease-in-out infinite; }
+
+      .step-text { font-family: 'Arial', sans-serif; font-size: 14px; font-weight: 600; text-anchor: start; animation-duration: 15s; animation-iteration-count: infinite; }
+      .step0 { animation-name: fadeInOut0; fill: #1976d2; }
+      .step1 { animation-name: fadeInOut1; fill: #ff5722; }
+      .step2 { animation-name: fadeInOut2; fill: #4caf50; }
+      .step3 { animation-name: fadeInOut3; fill: #ff5722; }
+      .step4 { animation-name: fadeInOut4; fill: #ff5722; }
+      .step5 { animation-name: fadeInOut5; fill: #4caf50; }
+      .step6 { animation-name: fadeInOut6; fill: #4caf50; }
+      .step7 { animation-name: fadeInOut7; fill: #ff5722; }
+      .step8 { animation-name: fadeInOut8; fill: #4caf50; }
+
+      .title { font-family: 'Arial', sans-serif; font-size: 32px; fill: #1565c0; font-weight: bold; text-anchor: middle; }
+      .subtitle { font-family: 'Arial', sans-serif; font-size: 16px; fill: #757575; text-anchor: middle; }
+      .code-text { font-family: 'Courier New', monospace; font-size: 11px; fill: #424242; }
+      .counter { font-family: 'Arial', sans-serif; font-size: 14px; fill: #666; text-anchor: middle; }
+      .info-box { fill: #e3f2fd; stroke: #2196f3; stroke-width: 2; rx: 8; }
+      .legend-box { fill: #f5f5f5; stroke: #e0e0e0; stroke-width: 2; rx: 6; }
+      .legend-text { font-family: 'Arial', sans-serif; font-size: 13px; fill: #424242; }
+      .result-box { fill: #e8f5e9; stroke: #4caf50; stroke-width: 3; rx: 8; animation: showResult 15s ease-in-out infinite; }
+      .result-text { font-family: 'Arial', sans-serif; font-size: 20px; fill: #2e7d32; font-weight: bold; text-anchor: middle; animation: showResult 15s ease-in-out infinite; }
+      .concept-box { fill: #e8eaf6; stroke: #5c6bc0; stroke-width: 2; rx: 6; }
+      .concept-text { font-family: 'Arial', sans-serif; font-size: 14px; fill: #283593; font-weight: 600; }
+    </style>
+
+    <marker id="arrowhead-copy" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#ff9800" />
+    </marker>
+
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e1f5fe;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="900" fill="url(#bgGradient)"/>
+
+  <text x="600" y="40" class="title">快慢指针 - 原地去重</text>
+  <text x="600" y="65" class="subtitle">Slow-Fast Pointers - Remove Duplicates In-Place</text>
+
+  <rect x="200" y="85" width="800" height="30" class="info-box"/>
+  <text x="600" y="105" class="subtitle" style="font-weight: 600; fill: #1565c0;">
+    输入: [1, 1, 2, 2, 2, 3, 4, 4, 5] → 输出: 5 (去重后: [1, 2, 3, 4, 5])
+  </text>
+
+  <!-- 索引 -->
+  <text x="160" y="155" class="counter">0</text>
+  <text x="260" y="155" class="counter">1</text>
+  <text x="360" y="155" class="counter">2</text>
+  <text x="460" y="155" class="counter">3</text>
+  <text x="560" y="155" class="counter">4</text>
+  <text x="660" y="155" class="counter">5</text>
+  <text x="760" y="155" class="counter">6</text>
+  <text x="860" y="155" class="counter">7</text>
+  <text x="960" y="155" class="counter">8</text>
+
+  <!-- 有效区 -->
+  <rect x="120" y="175" class="valid-area" height="75" rx="6"/>
+  <text x="20" y="212" class="subtitle" style="font-size: 14px; fill: #2e7d32; font-weight: 600;">有效区</text>
+
+  <!-- 数组 -->
+  <g id="array">
+    <rect x="120" y="175" width="80" height="75" rx="8" class="array-box box-0"/>
+    <text x="160" y="212" class="array-text">1</text>
+
+    <rect x="220" y="175" width="80" height="75" rx="8" class="array-box box-1"/>
+    <text x="260" y="212" class="array-text text-1-old">1</text>
+
+    <rect x="320" y="175" width="80" height="75" rx="8" class="array-box box-2"/>
+    <text x="360" y="212" class="array-text text-2-old">2</text>
+
+    <rect x="420" y="175" width="80" height="75" rx="8" class="array-box box-3"/>
+    <text x="460" y="212" class="array-text text-3-old">2</text>
+
+    <rect x="520" y="175" width="80" height="75" rx="8" class="array-box box-4"/>
+    <text x="560" y="212" class="array-text text-4-old">2</text>
+
+    <rect x="620" y="175" width="80" height="75" rx="8" class="array-box box-5"/>
+    <text x="660" y="212" class="array-text">3</text>
+
+    <rect x="720" y="175" width="80" height="75" rx="8" class="array-box box-6"/>
+    <text x="760" y="212" class="array-text">4</text>
+
+    <rect x="820" y="175" width="80" height="75" rx="8" class="array-box box-7"/>
+    <text x="860" y="212" class="array-text">4</text>
+
+    <rect x="920" y="175" width="80" height="75" rx="8" class="array-box box-8"/>
+    <text x="960" y="212" class="array-text">5</text>
+  </g>
+
+  <!-- 飞行数字（定位在fast指针对应的源位置） -->
+  <text x="360" y="212" class="fly-text fly-2">2</text>
+  <text x="660" y="212" class="fly-text fly-5">3</text>
+  <text x="760" y="212" class="fly-text fly-6">4</text>
+  <text x="960" y="212" class="fly-text fly-8">5</text>
+
+  <!-- slow -->
+  <g class="pointer-slow">
+    <polygon points="160,265 150,285 170,285" class="pointer-arrow-slow"/>
+    <line x1="160" y1="255" x2="160" y2="265" stroke="#2196f3" stroke-width="3"/>
+    <text x="160" y="305" class="pointer-label" fill="#2196f3">slow</text>
+  </g>
+
+  <!-- fast -->
+  <g class="pointer-fast">
+    <polygon points="160,330 150,350 170,350" class="pointer-arrow-fast"/>
+    <line x1="160" y1="320" x2="160" y2="330" stroke="#9c27b0" stroke-width="3"/>
+    <text x="160" y="370" class="pointer-label" fill="#9c27b0">fast</text>
+  </g>
+
+  <!-- copy arrows -->
+  <path d="M 360 140 Q 360 115 260 115 Q 260 140 260 165" class="copy-arrow copy-arrow-2"/>
+  <rect x="280" y="98" width="90" height="22" class="copy-label-bg copy-label-bg-2"/>
+  <text x="325" y="112" class="copy-label copy-label-2">[1]=[2]</text>
+
+  <path d="M 660 140 Q 660 105 360 105 Q 360 130 360 165" class="copy-arrow copy-arrow-5"/>
+  <rect x="480" y="83" width="90" height="22" class="copy-label-bg copy-label-bg-5"/>
+  <text x="525" y="97" class="copy-label copy-label-5">[2]=[5]</text>
+
+  <path d="M 760 140 Q 760 95 460 95 Q 460 120 460 165" class="copy-arrow copy-arrow-6"/>
+  <rect x="580" y="73" width="90" height="22" class="copy-label-bg copy-label-bg-6"/>
+  <text x="625" y="87" class="copy-label copy-label-6">[3]=[6]</text>
+
+  <path d="M 960 140 Q 960 85 560 85 Q 560 110 560 165" class="copy-arrow copy-arrow-8"/>
+  <rect x="730" y="63" width="90" height="22" class="copy-label-bg copy-label-bg-8"/>
+  <text x="775" y="77" class="copy-label copy-label-8">[4]=[8]</text>
+
+  <!-- steps -->
+  <g transform="translate(80, 400)">
+    <rect x="0" y="0" width="1040" height="45" rx="8" fill="#ffffff" stroke="#e0e0e0" stroke-width="2"/>
+    <text x="20" y="28" class="step-text step0">初始化: slow=0, fast=1, nums[0]=1 是第一个唯一元素</text>
+    <text x="20" y="28" class="step-text step1">步骤1: fast=1, nums[1]=1 == nums[0]=1, 相等跳过</text>
+    <text x="20" y="28" class="step-text step2">步骤2: fast=2, nums[2]=2 ≠ nums[0]=1 → slow++ → nums[1]=nums[2]=2</text>
+    <text x="20" y="28" class="step-text step3">步骤3: fast=3, nums[3]=2 == nums[1]=2, 相等跳过</text>
+    <text x="20" y="28" class="step-text step4">步骤4: fast=4, nums[4]=2 == nums[1]=2, 相等跳过</text>
+    <text x="20" y="28" class="step-text step5">步骤5: fast=5, nums[5]=3 ≠ nums[1]=2 → slow++ → nums[2]=nums[5]=3</text>
+    <text x="20" y="28" class="step-text step6">步骤6: fast=6, nums[6]=4 ≠ nums[2]=3 → slow++ → nums[3]=nums[6]=4</text>
+    <text x="20" y="28" class="step-text step7">步骤7: fast=7, nums[7]=4 == nums[3]=4, 相等跳过</text>
+    <text x="20" y="28" class="step-text step8">步骤8: fast=8, nums[8]=5 ≠ nums[3]=4 → slow++ → nums[4]=nums[8]=5</text>
+  </g>
+
+  <!-- concept -->
+  <g transform="translate(80, 465)">
+    <rect x="0" y="0" width="1040" height="120" class="concept-box"/>
+    <text x="520" y="30" class="concept-text" text-anchor="middle" style="font-size: 16px;">核心思想: 快指针探路，慢指针维护有效区域</text>
+    <text x="30" y="55" class="concept-text">• slow 指针: 始终指向去重后数组的最后一个有效元素</text>
+    <text x="30" y="75" class="concept-text">• fast 指针: 遍历整个数组，寻找与 nums[slow] 不同的新元素</text>
+    <text x="30" y="95" class="concept-text">• 当 nums[fast] ≠ nums[slow] 时: 先执行 slow++，再执行 nums[slow] = nums[fast]</text>
+    <text x="30" y="115" class="concept-text">• 复杂度: 时间 O(n)，空间 O(1)，原地修改无需额外空间</text>
+  </g>
+
+  <!-- result -->
+  <g transform="translate(80, 605)">
+    <rect x="0" y="0" width="1040" height="60" class="result-box"/>
+    <text x="520" y="38" class="result-text">最终结果: [1, 2, 3, 4, 5, ...] 新长度 = slow + 1 = 5</text>
+  </g>
+
+  <!-- legend -->
+  <g transform="translate(80, 685)">
+    <rect x="0" y="0" width="1040" height="60" class="legend-box"/>
+    <text x="20" y="25" class="legend-text" style="font-weight: 600;">图例说明:</text>
+
+    <rect x="120" y="10" width="40" height="25" rx="4" fill="#c8e6c9" stroke="#4caf50" stroke-width="2"/>
+    <text x="170" y="27" class="legend-text">有效元素</text>
+
+    <rect x="260" y="10" width="40" height="25" rx="4" fill="#fff9c4" stroke="#fbc02d" stroke-width="2"/>
+    <text x="310" y="27" class="legend-text">不等(触发复制)</text>
+
+    <rect x="410" y="10" width="40" height="25" rx="4" fill="#ffccbc" stroke="#ff5722" stroke-width="2"/>
+    <text x="460" y="27" class="legend-text">相等(跳过)</text>
+
+    <rect x="560" y="10" width="40" height="25" rx="4" fill="#e0e0e0" stroke="#9e9e9e" stroke-width="2"/>
+    <text x="610" y="27" class="legend-text">已跳过</text>
+
+    <rect x="690" y="10" width="60" height="25" rx="4" fill="#4caf50" opacity="0.2"/>
+    <text x="760" y="27" class="legend-text">有效区域</text>
+  </g>
+
+  <!-- code -->
+  <g transform="translate(80, 765)">
+    <rect x="0" y="0" width="1040" height="115" rx="8" fill="#f5f5f5" stroke="#e0e0e0" stroke-width="2"/>
+    <text x="20" y="20" class="code-text" fill="#d32f2f">function</text>
+    <text x="90" y="20" class="code-text">removeDuplicates(nums: number[]): number {</text>
+    <text x="40" y="38" class="code-text" fill="#d32f2f">if</text>
+    <text x="60" y="38" class="code-text">(nums.length === 0) </text>
+    <text x="200" y="38" class="code-text" fill="#d32f2f">return</text>
+    <text x="250" y="38" class="code-text">0;</text>
+
+    <text x="40" y="56" class="code-text">let slow = 0;</text>
+    <text x="180" y="56" class="code-text" fill="#757575">// slow 指向有效区末尾</text>
+
+    <text x="40" y="74" class="code-text" fill="#d32f2f">for</text>
+    <text x="70" y="74" class="code-text">(let fast = 1; fast &lt; nums.length; fast++) {</text>
+    <text x="60" y="92" class="code-text" fill="#d32f2f">if</text>
+    <text x="80" y="92" class="code-text">(nums[fast] !== nums[slow]) {</text>
+    <text x="80" y="110" class="code-text">slow++; nums[slow] = nums[fast]; }</text>
+    <text x="400" y="110" class="code-text" fill="#757575">// 先 slow++，再赋值</text>
+  </g>
+</svg>

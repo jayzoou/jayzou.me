@@ -1,0 +1,341 @@
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @keyframes moveSlow {
+        0%, 14% { transform: translateX(0); }
+        18%, 32% { transform: translateX(100px); }
+        36%, 50% { transform: translateX(200px); }
+        54%, 68% { transform: translateX(200px); }
+        72%, 86% { transform: translateX(300px); }
+        90%, 100% { transform: translateX(400px); }
+      }
+      @keyframes moveFast {
+        0%, 14% { transform: translateX(0); }
+        18%, 32% { transform: translateX(100px); }
+        36%, 50% { transform: translateX(200px); }
+        54%, 68% { transform: translateX(300px); }
+        72%, 86% { transform: translateX(400px); }
+        90%, 100% { transform: translateX(500px); }
+      }
+      @keyframes highlight0 {
+        0%, 14% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+        18%, 100% { fill: #c8e6c9; stroke: #4caf50; stroke-width: 3; }
+      }
+      @keyframes highlight1 {
+        0%, 16% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        18%, 32% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+        34%, 100% { fill: #c8e6c9; stroke: #4caf50; stroke-width: 3; }
+      }
+      @keyframes highlight2 {
+        0%, 34% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        36%, 50% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+        52%, 100% { fill: #c8e6c9; stroke: #4caf50; stroke-width: 3; }
+      }
+      @keyframes highlight3 {
+        0%, 52% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        54%, 68% { fill: #ffccbc; stroke: #ff5722; stroke-width: 4; }
+        70%, 100% { fill: #e0e0e0; stroke: #9e9e9e; stroke-width: 2; }
+      }
+      @keyframes highlight4 {
+        0%, 70% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        72%, 86% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+        88%, 100% { fill: #c8e6c9; stroke: #4caf50; stroke-width: 3; }
+      }
+      @keyframes highlight5 {
+        0%, 88% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        90%, 100% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+      }
+      @keyframes fadeInOut0 {
+        0%, 14% { opacity: 1; }
+        16%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut1 {
+        0%, 16% { opacity: 0; }
+        18%, 32% { opacity: 1; }
+        34%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut2 {
+        0%, 34% { opacity: 0; }
+        36%, 50% { opacity: 1; }
+        52%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut3 {
+        0%, 52% { opacity: 0; }
+        54%, 68% { opacity: 1; }
+        70%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut4 {
+        0%, 70% { opacity: 0; }
+        72%, 86% { opacity: 1; }
+        88%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut5 {
+        0%, 88% { opacity: 0; }
+        90%, 100% { opacity: 1; }
+      }
+      @keyframes showValidArea0 {
+        0%, 14% { width: 100px; opacity: 0.3; }
+        18%, 32% { width: 200px; opacity: 0.3; }
+        36%, 50% { width: 300px; opacity: 0.3; }
+        54%, 68% { width: 300px; opacity: 0.3; }
+        72%, 86% { width: 400px; opacity: 0.3; }
+        90%, 100% { width: 500px; opacity: 0.3; }
+      }
+      @keyframes showResult {
+        0%, 88% { opacity: 0; }
+        90%, 100% { opacity: 1; }
+      }
+      .array-box {
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        transition: all 0.3s ease;
+      }
+      .box-0 { animation: highlight0 11s ease-in-out infinite; }
+      .box-1 { animation: highlight1 11s ease-in-out infinite; }
+      .box-2 { animation: highlight2 11s ease-in-out infinite; }
+      .box-3 { animation: highlight3 11s ease-in-out infinite; }
+      .box-4 { animation: highlight4 11s ease-in-out infinite; }
+      .box-5 { animation: highlight5 11s ease-in-out infinite; }
+      .array-text {
+        font-family: 'Courier New', monospace;
+        font-size: 32px;
+        font-weight: bold;
+        fill: #1565c0;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+      .valid-area {
+        fill: #4caf50;
+        animation: showValidArea0 11s ease-in-out infinite;
+      }
+      .pointer-slow {
+        animation: moveSlow 11s ease-in-out infinite;
+      }
+      .pointer-fast {
+        animation: moveFast 11s ease-in-out infinite;
+      }
+      .pointer-arrow-slow {
+        fill: #2196f3;
+        filter: drop-shadow(0 2px 4px rgba(33,150,243,0.4));
+      }
+      .pointer-arrow-fast {
+        fill: #9c27b0;
+        filter: drop-shadow(0 2px 4px rgba(156,39,176,0.4));
+      }
+      .pointer-label {
+        font-family: 'Arial', sans-serif;
+        font-size: 18px;
+        font-weight: bold;
+        text-anchor: middle;
+      }
+      .step-text {
+        font-family: 'Arial', sans-serif;
+        font-size: 17px;
+        font-weight: 600;
+        text-anchor: start;
+        animation-duration: 11s;
+        animation-iteration-count: infinite;
+      }
+      .step0 { animation-name: fadeInOut0; fill: #1976d2; }
+      .step1 { animation-name: fadeInOut1; fill: #4caf50; }
+      .step2 { animation-name: fadeInOut2; fill: #4caf50; }
+      .step3 { animation-name: fadeInOut3; fill: #ff5722; }
+      .step4 { animation-name: fadeInOut4; fill: #4caf50; }
+      .step5 { animation-name: fadeInOut5; fill: #4caf50; }
+      .title {
+        font-family: 'Arial', sans-serif;
+        font-size: 32px;
+        fill: #1565c0;
+        font-weight: bold;
+        text-anchor: middle;
+      }
+      .subtitle {
+        font-family: 'Arial', sans-serif;
+        font-size: 16px;
+        fill: #757575;
+        text-anchor: middle;
+      }
+      .code-text {
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        fill: #424242;
+      }
+      .counter {
+        font-family: 'Arial', sans-serif;
+        font-size: 14px;
+        fill: #666;
+        text-anchor: middle;
+      }
+      .info-box {
+        fill: #e3f2fd;
+        stroke: #2196f3;
+        stroke-width: 2;
+        rx: 8;
+      }
+      .legend-box {
+        fill: #f5f5f5;
+        stroke: #e0e0e0;
+        stroke-width: 2;
+        rx: 6;
+      }
+      .legend-text {
+        font-family: 'Arial', sans-serif;
+        font-size: 13px;
+        fill: #424242;
+      }
+      .result-box {
+        fill: #e8f5e9;
+        stroke: #4caf50;
+        stroke-width: 3;
+        rx: 8;
+        animation: showResult 11s ease-in-out infinite;
+      }
+      .result-text {
+        font-family: 'Arial', sans-serif;
+        font-size: 16px;
+        fill: #2e7d32;
+        font-weight: 600;
+        text-anchor: middle;
+        animation: showResult 11s ease-in-out infinite;
+      }
+      .concept-box {
+        fill: #fff3e0;
+        stroke: #ff9800;
+        stroke-width: 2;
+        rx: 6;
+      }
+      .concept-text {
+        font-family: 'Arial', sans-serif;
+        font-size: 14px;
+        fill: #e65100;
+        font-weight: 600;
+      }
+    </style>
+  </defs>
+  
+  <!-- 背景渐变 -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e1f5fe;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bgGradient)"/>
+  
+  <!-- 标题区域 -->
+  <text x="600" y="40" class="title">快慢指针 - 删除重复元素</text>
+  <text x="600" y="65" class="subtitle">Slow-Fast Pointers - Remove Duplicates</text>
+  
+  <!-- 问题描述 -->
+  <rect x="200" y="85" width="800" height="30" class="info-box"/>
+  <text x="600" y="105" class="subtitle" style="font-weight: 600; fill: #1565c0;">
+    原地删除排序数组中的重复元素,返回新长度 (LeetCode 26)
+  </text>
+  
+  <!-- 数组索引 -->
+  <text x="260" y="155" class="counter">0</text>
+  <text x="360" y="155" class="counter">1</text>
+  <text x="460" y="155" class="counter">2</text>
+  <text x="560" y="155" class="counter">3</text>
+  <text x="660" y="155" class="counter">4</text>
+  <text x="760" y="155" class="counter">5</text>
+  
+  <!-- 有效区域标识 -->
+  <rect x="220" y="175" class="valid-area" height="75" rx="6"/>
+  <text x="120" y="212" class="subtitle" style="font-size: 14px; fill: #2e7d32; font-weight: 600;">有效区域</text>
+  
+  <!-- 数组元素 (间距100px) -->
+  <g id="array">
+    <rect x="220" y="175" width="80" height="75" rx="8" class="array-box box-0"/>
+    <text x="260" y="212" class="array-text">0</text>
+    
+    <rect x="320" y="175" width="80" height="75" rx="8" class="array-box box-1"/>
+    <text x="360" y="212" class="array-text">1</text>
+    
+    <rect x="420" y="175" width="80" height="75" rx="8" class="array-box box-2"/>
+    <text x="460" y="212" class="array-text">2</text>
+    
+    <rect x="520" y="175" width="80" height="75" rx="8" class="array-box box-3"/>
+    <text x="560" y="212" class="array-text">2</text>
+    
+    <rect x="620" y="175" width="80" height="75" rx="8" class="array-box box-4"/>
+    <text x="660" y="212" class="array-text">3</text>
+    
+    <rect x="720" y="175" width="80" height="75" rx="8" class="array-box box-5"/>
+    <text x="760" y="212" class="array-text">4</text>
+  </g>
+  
+  <!-- 慢指针 -->
+  <g class="pointer-slow">
+    <polygon points="260,265 250,285 270,285" class="pointer-arrow-slow"/>
+    <line x1="260" y1="255" x2="260" y2="265" stroke="#2196f3" stroke-width="3"/>
+    <text x="260" y="305" class="pointer-label" fill="#2196f3">slow</text>
+  </g>
+  
+  <!-- 快指针 -->
+  <g class="pointer-fast">
+    <polygon points="260,330 250,350 270,350" class="pointer-arrow-fast"/>
+    <line x1="260" y1="320" x2="260" y2="330" stroke="#9c27b0" stroke-width="3"/>
+    <text x="260" y="370" class="pointer-label" fill="#9c27b0">fast</text>
+  </g>
+  
+  <!-- 操作步骤说明 -->
+  <g transform="translate(120, 400)">
+    <rect x="0" y="0" width="960" height="45" rx="8" fill="#ffffff" stroke="#e0e0e0" stroke-width="2"/>
+    <text x="20" y="28" class="step-text step0">初始化: slow=0, fast=0, nums[0]=0 是第一个唯一元素</text>
+    <text x="20" y="28" class="step-text step1">步骤1: fast=1, nums[1]=1 ≠ nums[0], slow++, nums[1]→nums[1]</text>
+    <text x="20" y="28" class="step-text step2">步骤2: fast=2, nums[2]=2 ≠ nums[1], slow++, nums[2]→nums[2]</text>
+    <text x="20" y="28" class="step-text step3">步骤3: fast=3, nums[3]=2 = nums[2], 跳过重复元素!</text>
+    <text x="20" y="28" class="step-text step4">步骤4: fast=4, nums[4]=3 ≠ nums[2], slow++, nums[4]→nums[3]</text>
+    <text x="20" y="28" class="step-text step5">步骤5: fast=5, nums[5]=4 ≠ nums[3], slow++, nums[5]→nums[4], 完成!</text>
+  </g>
+  
+  <!-- 核心思想 -->
+  <g transform="translate(120, 465)">
+    <rect x="0" y="0" width="960" height="100" class="concept-box"/>
+    <text x="480" y="30" class="concept-text" text-anchor="middle" style="font-size: 16px;">核心思想</text>
+    <text x="30" y="55" class="concept-text">• slow 指针: 维护有效区域的边界 (不含重复元素)</text>
+    <text x="30" y="75" class="concept-text">• fast 指针: 探索整个数组,寻找新的唯一元素</text>
+    <text x="30" y="95" class="concept-text">• 当 nums[fast] ≠ nums[slow] 时,将 nums[fast] 复制到 nums[++slow]</text>
+  </g>
+  
+  <!-- 最终结果 -->
+  <g transform="translate(120, 585)">
+    <rect x="0" y="0" width="960" height="50" class="result-box"/>
+    <text x="480" y="32" class="result-text" style="font-size: 20px;">
+      最终结果: [0, 1, 2, 3, 4, ...] 新长度 = 5
+    </text>
+  </g>
+  
+  <!-- 图例 -->
+  <g transform="translate(120, 655)">
+    <rect x="0" y="0" width="960" height="60" class="legend-box"/>
+    <text x="20" y="25" class="legend-text" style="font-weight: 600;">图例说明:</text>
+    
+    <rect x="120" y="10" width="40" height="25" rx="4" fill="#c8e6c9" stroke="#4caf50" stroke-width="2"/>
+    <text x="170" y="27" class="legend-text">有效元素</text>
+    
+    <rect x="260" y="10" width="40" height="25" rx="4" fill="#fff9c4" stroke="#fbc02d" stroke-width="2"/>
+    <text x="310" y="27" class="legend-text">当前处理</text>
+    
+    <rect x="400" y="10" width="40" height="25" rx="4" fill="#ffccbc" stroke="#ff5722" stroke-width="2"/>
+    <text x="450" y="27" class="legend-text">重复元素</text>
+    
+    <rect x="550" y="10" width="40" height="25" rx="4" fill="#e0e0e0" stroke="#9e9e9e" stroke-width="2"/>
+    <text x="600" y="27" class="legend-text">已跳过</text>
+    
+    <rect x="680" y="10" width="60" height="25" rx="4" fill="#4caf50" opacity="0.3"/>
+    <text x="750" y="27" class="legend-text">有效区域</text>
+  </g>
+  
+  <!-- 代码示例框 -->
+  <g transform="translate(120, 735)">
+    <rect x="0" y="0" width="960" height="50" rx="8" fill="#f5f5f5" stroke="#e0e0e0" stroke-width="2"/>
+    <text x="20" y="20" class="code-text" fill="#d32f2f">function</text>
+    <text x="90" y="20" class="code-text">removeDuplicates(nums: number[]): number {</text>
+    <text x="40" y="35" class="code-text">let slow = 0;</text>
+    <text x="150" y="35" class="code-text" fill="#d32f2f">for</text>
+    <text x="180" y="35" class="code-text">(let fast = 1; fast &lt; nums.length; fast++)</text>
+    <text x="60" y="50" class="code-text" fill="#d32f2f">if</text>
+    <text x="80" y="50" class="code-text">(nums[fast] !== nums[slow]) nums[++slow] = nums[fast];</text>
+  </g>
+</svg>

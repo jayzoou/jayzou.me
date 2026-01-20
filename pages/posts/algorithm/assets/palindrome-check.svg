@@ -1,0 +1,464 @@
+<svg viewBox="0 0 1200 850" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @keyframes moveLeft {
+        0%, 14% { transform: translateX(0); }
+        18%, 32% { transform: translateX(100px); }
+        36%, 50% { transform: translateX(200px); }
+        54%, 68% { transform: translateX(300px); }
+        72%, 86% { transform: translateX(400px); }
+        90%, 100% { transform: translateX(500px); }
+      }
+      @keyframes moveRight {
+        0%, 14% { transform: translateX(1100px); }
+        18%, 32% { transform: translateX(1000px); }
+        36%, 50% { transform: translateX(900px); }
+        54%, 68% { transform: translateX(800px); }
+        72%, 86% { transform: translateX(700px); }
+        90%, 100% { transform: translateX(600px); }
+      }
+      @keyframes highlight0 {
+        0%, 12% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+        14%, 100% { fill: #c8e6c9; stroke: #4caf50; stroke-width: 3; }
+      }
+      @keyframes highlight1 {
+        0%, 16% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        18%, 30% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+        32%, 100% { fill: #c8e6c9; stroke: #4caf50; stroke-width: 3; }
+      }
+      @keyframes highlight2 {
+        0%, 34% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        36%, 48% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+        50%, 100% { fill: #c8e6c9; stroke: #4caf50; stroke-width: 3; }
+      }
+      @keyframes highlight3 {
+        0%, 52% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        54%, 66% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+        68%, 100% { fill: #c8e6c9; stroke: #4caf50; stroke-width: 3; }
+      }
+      @keyframes highlight4 {
+        0%, 70% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        72%, 84% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+        86%, 100% { fill: #c8e6c9; stroke: #4caf50; stroke-width: 3; }
+      }
+      @keyframes highlight5 {
+        0%, 88% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        90%, 100% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+      }
+      @keyframes highlight6 {
+        0%, 70% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        72%, 84% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+        86%, 100% { fill: #c8e6c9; stroke: #4caf50; stroke-width: 3; }
+      }
+      @keyframes highlight7 {
+        0%, 52% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        54%, 66% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+        68%, 100% { fill: #c8e6c9; stroke: #4caf50; stroke-width: 3; }
+      }
+      @keyframes highlight8 {
+        0%, 34% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        36%, 48% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+        50%, 100% { fill: #c8e6c9; stroke: #4caf50; stroke-width: 3; }
+      }
+      @keyframes highlight9 {
+        0%, 16% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        18%, 30% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+        32%, 100% { fill: #c8e6c9; stroke: #4caf50; stroke-width: 3; }
+      }
+      @keyframes highlight10 {
+        0%, 12% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+        14%, 100% { fill: #c8e6c9; stroke: #4caf50; stroke-width: 3; }
+      }
+      @keyframes fadeInOut0 {
+        0%, 12% { opacity: 1; }
+        14%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut1 {
+        0%, 16% { opacity: 0; }
+        18%, 30% { opacity: 1; }
+        32%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut2 {
+        0%, 34% { opacity: 0; }
+        36%, 48% { opacity: 1; }
+        50%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut3 {
+        0%, 52% { opacity: 0; }
+        54%, 66% { opacity: 1; }
+        68%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut4 {
+        0%, 70% { opacity: 0; }
+        72%, 84% { opacity: 1; }
+        86%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut5 {
+        0%, 88% { opacity: 0; }
+        90%, 100% { opacity: 1; }
+      }
+      @keyframes showResult {
+        0%, 88% { opacity: 0; transform: scale(0.8); }
+        90%, 92% { opacity: 1; transform: scale(1.1); }
+        94%, 100% { opacity: 1; transform: scale(1); }
+      }
+      @keyframes showCompare {
+        0%, 12% { opacity: 1; }
+        14%, 16% { opacity: 0; }
+        18%, 30% { opacity: 1; }
+        32%, 34% { opacity: 0; }
+        36%, 48% { opacity: 1; }
+        50%, 52% { opacity: 0; }
+        54%, 66% { opacity: 1; }
+        68%, 70% { opacity: 0; }
+        72%, 84% { opacity: 1; }
+        86%, 88% { opacity: 0; }
+        90%, 100% { opacity: 1; }
+      }
+      @keyframes checkmark0 {
+        0%, 12% { opacity: 1; }
+        14%, 100% { opacity: 0; }
+      }
+      @keyframes checkmark1 {
+        0%, 16% { opacity: 0; }
+        18%, 30% { opacity: 1; }
+        32%, 100% { opacity: 0; }
+      }
+      @keyframes checkmark2 {
+        0%, 34% { opacity: 0; }
+        36%, 48% { opacity: 1; }
+        50%, 100% { opacity: 0; }
+      }
+      @keyframes checkmark3 {
+        0%, 52% { opacity: 0; }
+        54%, 66% { opacity: 1; }
+        68%, 100% { opacity: 0; }
+      }
+      @keyframes checkmark4 {
+        0%, 70% { opacity: 0; }
+        72%, 84% { opacity: 1; }
+        86%, 100% { opacity: 0; }
+      }
+      @keyframes checkmark5 {
+        0%, 88% { opacity: 0; }
+        90%, 100% { opacity: 1; }
+      }
+      .array-box {
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        transition: all 0.3s ease;
+      }
+      .box-0 { animation: highlight0 12s ease-in-out infinite; }
+      .box-1 { animation: highlight1 12s ease-in-out infinite; }
+      .box-2 { animation: highlight2 12s ease-in-out infinite; }
+      .box-3 { animation: highlight3 12s ease-in-out infinite; }
+      .box-4 { animation: highlight4 12s ease-in-out infinite; }
+      .box-5 { animation: highlight5 12s ease-in-out infinite; }
+      .box-6 { animation: highlight6 12s ease-in-out infinite; }
+      .box-7 { animation: highlight7 12s ease-in-out infinite; }
+      .box-8 { animation: highlight8 12s ease-in-out infinite; }
+      .box-9 { animation: highlight9 12s ease-in-out infinite; }
+      .box-10 { animation: highlight10 12s ease-in-out infinite; }
+      .array-text {
+        font-family: 'Courier New', monospace;
+        font-size: 32px;
+        font-weight: bold;
+        fill: #1565c0;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+      .pointer-left {
+        animation: moveLeft 12s ease-in-out infinite;
+      }
+      .pointer-right {
+        animation: moveRight 12s ease-in-out infinite;
+      }
+      .pointer-arrow-left {
+        fill: #ff5252;
+        filter: drop-shadow(0 2px 4px rgba(255,82,82,0.4));
+      }
+      .pointer-arrow-right {
+        fill: #9c27b0;
+        filter: drop-shadow(0 2px 4px rgba(156,39,176,0.4));
+      }
+      .pointer-label {
+        font-family: 'Arial', sans-serif;
+        font-size: 18px;
+        font-weight: bold;
+        text-anchor: middle;
+      }
+      .step-text {
+        font-family: 'Arial', sans-serif;
+        font-size: 16px;
+        font-weight: 600;
+        text-anchor: start;
+        animation-duration: 12s;
+        animation-iteration-count: infinite;
+      }
+      .step0 { animation-name: fadeInOut0; fill: #4caf50; }
+      .step1 { animation-name: fadeInOut1; fill: #4caf50; }
+      .step2 { animation-name: fadeInOut2; fill: #4caf50; }
+      .step3 { animation-name: fadeInOut3; fill: #4caf50; }
+      .step4 { animation-name: fadeInOut4; fill: #4caf50; }
+      .step5 { animation-name: fadeInOut5; fill: #4caf50; }
+      .title {
+        font-family: 'Arial', sans-serif;
+        font-size: 32px;
+        fill: #1565c0;
+        font-weight: bold;
+        text-anchor: middle;
+      }
+      .subtitle {
+        font-family: 'Arial', sans-serif;
+        font-size: 16px;
+        fill: #757575;
+        text-anchor: middle;
+      }
+      .code-text {
+        font-family: 'Courier New', monospace;
+        font-size: 11px;
+        fill: #424242;
+      }
+      .counter {
+        font-family: 'Arial', sans-serif;
+        font-size: 14px;
+        fill: #666;
+        text-anchor: middle;
+      }
+      .info-box {
+        fill: #e3f2fd;
+        stroke: #2196f3;
+        stroke-width: 2;
+        rx: 8;
+      }
+      .legend-box {
+        fill: #f5f5f5;
+        stroke: #e0e0e0;
+        stroke-width: 2;
+        rx: 6;
+      }
+      .legend-text {
+        font-family: 'Arial', sans-serif;
+        font-size: 13px;
+        fill: #424242;
+      }
+      .result-box {
+        fill: #e8f5e9;
+        stroke: #4caf50;
+        stroke-width: 3;
+        rx: 8;
+        animation: showResult 12s ease-in-out infinite;
+      }
+      .result-text {
+        font-family: 'Arial', sans-serif;
+        font-size: 24px;
+        fill: #2e7d32;
+        font-weight: bold;
+        text-anchor: middle;
+        animation: showResult 12s ease-in-out infinite;
+      }
+      .concept-box {
+        fill: #e8eaf6;
+        stroke: #5c6bc0;
+        stroke-width: 2;
+        rx: 6;
+      }
+      .concept-text {
+        font-family: 'Arial', sans-serif;
+        font-size: 14px;
+        fill: #283593;
+        font-weight: 600;
+      }
+      .compare-box {
+        fill: #fff3e0;
+        stroke: #ff9800;
+        stroke-width: 2;
+        rx: 6;
+        animation: showCompare 12s ease-in-out infinite;
+      }
+      .compare-text {
+        font-family: 'Courier New', monospace;
+        font-size: 20px;
+        fill: #e65100;
+        font-weight: bold;
+        text-anchor: middle;
+        animation: showCompare 12s ease-in-out infinite;
+      }
+      .checkmark {
+        fill: none;
+        stroke: #4caf50;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .check0 { animation: checkmark0 12s ease-in-out infinite; }
+      .check1 { animation: checkmark1 12s ease-in-out infinite; }
+      .check2 { animation: checkmark2 12s ease-in-out infinite; }
+      .check3 { animation: checkmark3 12s ease-in-out infinite; }
+      .check4 { animation: checkmark4 12s ease-in-out infinite; }
+      .check5 { animation: checkmark5 12s ease-in-out infinite; }
+    </style>
+  </defs>
+  
+  <!-- 背景渐变 -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e8eaf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="850" fill="url(#bgGradient)"/>
+  
+  <!-- 标题区域 -->
+  <text x="600" y="40" class="title">对撞指针 - 回文判断</text>
+  <text x="600" y="65" class="subtitle">Two Pointers Collision - Palindrome Check</text>
+  
+  <!-- 问题描述 -->
+  <rect x="150" y="85" width="900" height="30" class="info-box"/>
+  <text x="600" y="105" class="subtitle" style="font-weight: 600; fill: #1565c0;">
+    输入: "amanaplanacanalpanama" (预处理后) → 输出: true (是回文)
+  </text>
+  
+  <!-- 原始字符串 -->
+  <text x="100" y="145" class="subtitle" style="font-size: 14px; fill: #757575; text-anchor: start;">原始:</text>
+  <text x="160" y="145" class="subtitle" style="font-size: 14px; fill: #424242; text-anchor: start; font-family: 'Courier New';">"A man, a plan, a canal: Panama"</text>
+  
+  <!-- 数组索引 -->
+  <text x="60" y="195" class="counter">0</text>
+  <text x="160" y="195" class="counter">1</text>
+  <text x="260" y="195" class="counter">2</text>
+  <text x="360" y="195" class="counter">3</text>
+  <text x="460" y="195" class="counter">4</text>
+  <text x="560" y="195" class="counter">5</text>
+  <text x="660" y="195" class="counter">6</text>
+  <text x="760" y="195" class="counter">7</text>
+  <text x="860" y="195" class="counter">8</text>
+  <text x="960" y="195" class="counter">9</text>
+  <text x="1060" y="195" class="counter">10</text>
+  
+  <!-- 数组元素 -->
+  <g id="array">
+    <rect x="20" y="210" width="80" height="80" rx="8" class="array-box box-0"/>
+    <text x="60" y="250" class="array-text">a</text>
+    
+    <rect x="120" y="210" width="80" height="80" rx="8" class="array-box box-1"/>
+    <text x="160" y="250" class="array-text">m</text>
+    
+    <rect x="220" y="210" width="80" height="80" rx="8" class="array-box box-2"/>
+    <text x="260" y="250" class="array-text">a</text>
+    
+    <rect x="320" y="210" width="80" height="80" rx="8" class="array-box box-3"/>
+    <text x="360" y="250" class="array-text">n</text>
+    
+    <rect x="420" y="210" width="80" height="80" rx="8" class="array-box box-4"/>
+    <text x="460" y="250" class="array-text">a</text>
+    
+    <rect x="520" y="210" width="80" height="80" rx="8" class="array-box box-5"/>
+    <text x="560" y="250" class="array-text">p</text>
+    
+    <rect x="620" y="210" width="80" height="80" rx="8" class="array-box box-6"/>
+    <text x="660" y="250" class="array-text">a</text>
+    
+    <rect x="720" y="210" width="80" height="80" rx="8" class="array-box box-7"/>
+    <text x="760" y="250" class="array-text">n</text>
+    
+    <rect x="820" y="210" width="80" height="80" rx="8" class="array-box box-8"/>
+    <text x="860" y="250" class="array-text">a</text>
+    
+    <rect x="920" y="210" width="80" height="80" rx="8" class="array-box box-9"/>
+    <text x="960" y="250" class="array-text">m</text>
+    
+    <rect x="1020" y="210" width="80" height="80" rx="8" class="array-box box-10"/>
+    <text x="1060" y="250" class="array-text">a</text>
+  </g>
+  
+  <!-- 左指针 -->
+  <g class="pointer-left">
+    <polygon points="60,305 50,325 70,325" class="pointer-arrow-left"/>
+    <line x1="60" y1="295" x2="60" y2="305" stroke="#ff5252" stroke-width="3"/>
+    <text x="60" y="345" class="pointer-label" fill="#ff5252">left</text>
+  </g>
+  
+  <!-- 右指针 -->
+  <g class="pointer-right">
+    <polygon points="60,305 50,325 70,325" class="pointer-arrow-right"/>
+    <line x1="60" y1="295" x2="60" y2="305" stroke="#9c27b0" stroke-width="3"/>
+    <text x="60" y="345" class="pointer-label" fill="#9c27b0">right</text>
+  </g>
+  
+  <!-- 比较结果显示 -->
+  <g transform="translate(400, 370)">
+    <rect x="0" y="0" width="400" height="70" class="compare-box"/>
+    <text x="200" y="30" style="font-size: 14px; fill: #e65100; text-anchor: middle; font-weight: 600;">当前比较</text>
+    <text x="200" y="55" class="compare-text">a == a ✓</text>
+    <!-- 对勾标记 -->
+    <path d="M 340 35 L 355 50 L 380 25" class="checkmark check0"/>
+    <path d="M 340 35 L 355 50 L 380 25" class="checkmark check1"/>
+    <path d="M 340 35 L 355 50 L 380 25" class="checkmark check2"/>
+    <path d="M 340 35 L 355 50 L 380 25" class="checkmark check3"/>
+    <path d="M 340 35 L 355 50 L 380 25" class="checkmark check4"/>
+    <path d="M 340 35 L 355 50 L 380 25" class="checkmark check5"/>
+  </g>
+  
+  <!-- 操作步骤说明 -->
+  <g transform="translate(100, 460)">
+    <rect x="0" y="0" width="1000" height="40" rx="8" fill="#ffffff" stroke="#e0e0e0" stroke-width="2"/>
+    <text x="20" y="25" class="step-text step0">步骤1: left=0, right=10, 比较 'a' == 'a' ✓ 匹配,继续</text>
+    <text x="20" y="25" class="step-text step1">步骤2: left=1, right=9, 比较 'm' == 'm' ✓ 匹配,继续</text>
+    <text x="20" y="25" class="step-text step2">步骤3: left=2, right=8, 比较 'a' == 'a' ✓ 匹配,继续</text>
+    <text x="20" y="25" class="step-text step3">步骤4: left=3, right=7, 比较 'n' == 'n' ✓ 匹配,继续</text>
+    <text x="20" y="25" class="step-text step4">步骤5: left=4, right=6, 比较 'a' == 'a' ✓ 匹配,继续</text>
+    <text x="20" y="25" class="step-text step5">步骤6: left=5, right=5, 比较 'p' == 'p' ✓ left >= right, 完成!</text>
+  </g>
+  
+  <!-- 核心思想 -->
+  <g transform="translate(100, 520)">
+    <rect x="0" y="0" width="1000" height="100" class="concept-box"/>
+    <text x="500" y="30" class="concept-text" text-anchor="middle" style="font-size: 16px;">核心思想: 从两端向中间对撞</text>
+    <text x="30" y="55" class="concept-text">• 左指针 (left): 从字符串开头向右移动</text>
+    <text x="30" y="75" class="concept-text">• 右指针 (right): 从字符串末尾向左移动</text>
+    <text x="30" y="95" class="concept-text">• 每次比较两个指针指向的字符,不相等则返回 false,相等则继续收缩</text>
+  </g>
+  
+  <!-- 最终结果 -->
+  <g transform="translate(350, 640)">
+    <rect x="0" y="0" width="500" height="70" class="result-box"/>
+    <text x="250" y="45" class="result-text">
+      ✓ 是回文 (Palindrome)
+    </text>
+  </g>
+  
+  <!-- 图例 -->
+  <g transform="translate(100, 730)">
+    <rect x="0" y="0" width="1000" height="60" class="legend-box"/>
+    <text x="20" y="25" class="legend-text" style="font-weight: 600;">图例说明:</text>
+    
+    <rect x="120" y="10" width="40" height="25" rx="4" fill="#c8e6c9" stroke="#4caf50" stroke-width="2"/>
+    <text x="170" y="27" class="legend-text">已验证匹配</text>
+    
+    <rect x="280" y="10" width="40" height="25" rx="4" fill="#fff9c4" stroke="#fbc02d" stroke-width="2"/>
+    <text x="330" y="27" class="legend-text">当前比较</text>
+    
+    <rect x="440" y="10" width="40" height="25" rx="4" fill="#ffffff" stroke="#2196f3" stroke-width="2"/>
+    <text x="490" y="27" class="legend-text">待验证</text>
+    
+    <line x1="600" y1="15" x2="640" y2="15" stroke="#ff5252" stroke-width="3"/>
+    <polygon points="640,15 630,10 630,20" fill="#ff5252"/>
+    <text x="650" y="27" class="legend-text">左指针</text>
+    
+    <line x1="750" y1="15" x2="790" y2="15" stroke="#9c27b0" stroke-width="3"/>
+    <polygon points="790,15 780,10 780,20" fill="#9c27b0"/>
+    <text x="800" y="27" class="legend-text">右指针</text>
+  </g>
+  
+  <!-- 代码示例框 -->
+  <g transform="translate(100, 810)">
+    <rect x="0" y="0" width="1000" height="30" rx="8" fill="#f5f5f5" stroke="#e0e0e0" stroke-width="2"/>
+    <text x="20" y="20" class="code-text">let left = 0, right = s.length - 1;</text>
+    <text x="350" y="20" class="code-text" fill="#d32f2f">while</text>
+    <text x="400" y="20" class="code-text">(left &lt; right) { </text>
+    <text x="520" y="20" class="code-text" fill="#d32f2f">if</text>
+    <text x="545" y="20" class="code-text">(s[left++] !== s[right--]) </text>
+    <text x="750" y="20" class="code-text" fill="#d32f2f">return false</text>
+    <text x="850" y="20" class="code-text">; }</text>
+  </g>
+</svg>

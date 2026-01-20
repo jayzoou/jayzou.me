@@ -1,0 +1,213 @@
+<svg viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @keyframes moveLeft {
+        0%, 30% { transform: translateX(0); }
+        45%, 75% { transform: translateX(120px); }
+        90%, 100% { transform: translateX(240px); }
+      }
+      @keyframes moveRight {
+        0%, 30% { transform: translateX(0); }
+        45%, 75% { transform: translateX(-120px); }
+        90%, 100% { transform: translateX(-240px); }
+      }
+      @keyframes fadeInOut1 {
+        0%, 28% { opacity: 1; }
+        30%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut2 {
+        0%, 43% { opacity: 0; }
+        45%, 73% { opacity: 1; }
+        75%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut3 {
+        0%, 88% { opacity: 0; }
+        90%, 100% { opacity: 1; }
+      }
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+      }
+      .array-box {
+        fill: #ffffff;
+        stroke: #2196f3;
+        stroke-width: 3;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+      }
+      .array-text {
+        font-family: 'Arial', sans-serif;
+        font-size: 32px;
+        font-weight: bold;
+        fill: #1565c0;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+      .pointer-left {
+        animation: moveLeft 6s ease-in-out infinite;
+      }
+      .pointer-right {
+        animation: moveRight 6s ease-in-out infinite;
+      }
+      .pointer-arrow-left {
+        fill: #ff5252;
+        filter: drop-shadow(0 2px 4px rgba(255,82,82,0.4));
+      }
+      .pointer-arrow-right {
+        fill: #4caf50;
+        filter: drop-shadow(0 2px 4px rgba(76,175,80,0.4));
+      }
+      .pointer-label {
+        font-family: 'Arial', sans-serif;
+        font-size: 18px;
+        font-weight: bold;
+        text-anchor: middle;
+      }
+      .pointer-label-left {
+        fill: #ff5252;
+      }
+      .pointer-label-right {
+        fill: #4caf50;
+      }
+      .stage-box {
+        fill: #f5f5f5;
+        stroke: #e0e0e0;
+        stroke-width: 2;
+        rx: 8;
+      }
+      .stage-text {
+        font-family: 'Arial', sans-serif;
+        font-size: 20px;
+        font-weight: 600;
+        text-anchor: middle;
+        dominant-baseline: middle;
+        animation-duration: 6s;
+        animation-iteration-count: infinite;
+      }
+      .stage1 { 
+        animation-name: fadeInOut1;
+        fill: #ff5252;
+      }
+      .stage2 { 
+        animation-name: fadeInOut2;
+        fill: #ff9800;
+      }
+      .stage3 { 
+        animation-name: fadeInOut3;
+        fill: #4caf50;
+      }
+      .title {
+        font-family: 'Arial', sans-serif;
+        font-size: 32px;
+        fill: #1565c0;
+        font-weight: bold;
+        text-anchor: middle;
+      }
+      .subtitle {
+        font-family: 'Arial', sans-serif;
+        font-size: 16px;
+        fill: #757575;
+        text-anchor: middle;
+      }
+      .timeline-line {
+        stroke: #bdbdbd;
+        stroke-width: 3;
+        stroke-linecap: round;
+      }
+      .timeline-dot {
+        animation: pulse 2s ease-in-out infinite;
+      }
+      .timeline-label {
+        font-family: 'Arial', sans-serif;
+        font-size: 14px;
+        fill: #616161;
+        text-anchor: middle;
+      }
+      .index-label {
+        font-family: 'Arial', sans-serif;
+        font-size: 14px;
+        fill: #9e9e9e;
+        text-anchor: middle;
+      }
+    </style>
+  </defs>
+  
+  <!-- 背景渐变 -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e3f2fd;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="900" height="500" fill="url(#bgGradient)"/>
+  
+  <!-- 标题区域 -->
+  <text x="450" y="40" class="title">对撞指针算法演示</text>
+  <text x="450" y="65" class="subtitle">Two Pointers - Collision Approach</text>
+  
+  <!-- 数组索引 -->
+  <text x="190" y="95" class="index-label">0</text>
+  <text x="310" y="95" class="index-label">1</text>
+  <text x="430" y="95" class="index-label">2</text>
+  <text x="550" y="95" class="index-label">3</text>
+  <text x="670" y="95" class="index-label">4</text>
+  
+  <!-- 数组元素 (间距120px) -->
+  <g id="array">
+    <rect x="150" y="110" width="80" height="80" rx="8" class="array-box"/>
+    <text x="190" y="150" class="array-text">1</text>
+    
+    <rect x="270" y="110" width="80" height="80" rx="8" class="array-box"/>
+    <text x="310" y="150" class="array-text">2</text>
+    
+    <rect x="390" y="110" width="80" height="80" rx="8" class="array-box"/>
+    <text x="430" y="150" class="array-text">3</text>
+    
+    <rect x="510" y="110" width="80" height="80" rx="8" class="array-box"/>
+    <text x="550" y="150" class="array-text">4</text>
+    
+    <rect x="630" y="110" width="80" height="80" rx="8" class="array-box"/>
+    <text x="670" y="150" class="array-text">5</text>
+  </g>
+  
+  <!-- 左指针 (从190开始,移动到310, 430) -->
+  <g class="pointer-left">
+    <polygon points="190,230 180,250 200,250" class="pointer-arrow-left"/>
+    <line x1="190" y1="195" x2="190" y2="230" stroke="#ff5252" stroke-width="2"/>
+    <text x="190" y="270" class="pointer-label pointer-label-left">left</text>
+  </g>
+  
+  <!-- 右指针 (从670开始,移动到550, 430) -->
+  <g class="pointer-right">
+    <polygon points="670,105 660,85 680,85" class="pointer-arrow-right"/>
+    <line x1="670" y1="105" x2="670" y2="110" stroke="#4caf50" stroke-width="2"/>
+    <text x="670" y="70" class="pointer-label pointer-label-right">right</text>
+  </g>
+  
+  <!-- 阶段说明框 -->
+  <rect x="200" y="310" width="500" height="50" class="stage-box"/>
+  
+  <text x="450" y="335" class="stage-text stage1">阶段 1: 初始状态 - 指针分别在数组两端 [0] 和 [4]</text>
+  <text x="450" y="335" class="stage-text stage2">阶段 2: 向中间移动 - left→[1], right→[3]</text>
+  <text x="450" y="335" class="stage-text stage3">阶段 3: 指针相遇 - 都指向 [2],完成遍历</text>
+  
+  <!-- 核心思想 -->
+  <g transform="translate(450, 390)">
+    <text x="0" y="0" class="subtitle" style="font-size: 18px; fill: #424242;">
+      💡 核心思想: 从两端向中间收缩,每次移动排除不可能的情况
+    </text>
+  </g>
+  
+  <!-- 时间轴 -->
+  <g transform="translate(250, 440)">
+    <line x1="0" y1="0" x2="400" y2="0" class="timeline-line"/>
+    
+    <circle cx="0" cy="0" r="6" fill="#ff5252" class="timeline-dot"/>
+    <text x="0" y="25" class="timeline-label">开始 [0,4]</text>
+    
+    <circle cx="200" cy="0" r="6" fill="#ff9800" class="timeline-dot"/>
+    <text x="200" y="25" class="timeline-label">移动 [1,3]</text>
+    
+    <circle cx="400" cy="0" r="6" fill="#4caf50" class="timeline-dot"/>
+    <text x="400" y="25" class="timeline-label">相遇 [2,2]</text>
+  </g>
+</svg>

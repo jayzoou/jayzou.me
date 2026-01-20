@@ -1,0 +1,442 @@
+<svg viewBox="0 0 1200 850" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @keyframes moveLeft {
+        0%, 12% { transform: translateX(0); }
+        16%, 28% { transform: translateX(0); }
+        32%, 44% { transform: translateX(0); }
+        48%, 60% { transform: translateX(100px); }
+        64%, 76% { transform: translateX(200px); }
+        80%, 92% { transform: translateX(300px); }
+        96%, 100% { transform: translateX(300px); }
+      }
+      @keyframes moveRight {
+        0%, 12% { transform: translateX(0); }
+        16%, 28% { transform: translateX(100px); }
+        32%, 44% { transform: translateX(200px); }
+        48%, 60% { transform: translateX(300px); }
+        64%, 76% { transform: translateX(400px); }
+        80%, 92% { transform: translateX(500px); }
+        96%, 100% { transform: translateX(600px); }
+      }
+      @keyframes windowWidth {
+        0%, 12% { width: 100px; }
+        16%, 28% { width: 200px; }
+        32%, 44% { width: 300px; }
+        48%, 60% { width: 300px; }
+        64%, 76% { width: 300px; }
+        80%, 92% { width: 300px; }
+        96%, 100% { width: 400px; }
+      }
+      @keyframes highlight0 {
+        0%, 10% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+        12%, 100% { fill: #c8e6c9; stroke: #4caf50; stroke-width: 3; }
+      }
+      @keyframes highlight1 {
+        0%, 14% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        16%, 26% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+        28%, 100% { fill: #c8e6c9; stroke: #4caf50; stroke-width: 3; }
+      }
+      @keyframes highlight2 {
+        0%, 30% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        32%, 42% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+        44%, 100% { fill: #c8e6c9; stroke: #4caf50; stroke-width: 3; }
+      }
+      @keyframes highlight3 {
+        0%, 46% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        48%, 58% { fill: #ffccbc; stroke: #ff5722; stroke-width: 4; }
+        60%, 100% { fill: #e0e0e0; stroke: #9e9e9e; stroke-width: 2; }
+      }
+      @keyframes highlight4 {
+        0%, 62% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        64%, 74% { fill: #ffccbc; stroke: #ff5722; stroke-width: 4; }
+        76%, 100% { fill: #e0e0e0; stroke: #9e9e9e; stroke-width: 2; }
+      }
+      @keyframes highlight5 {
+        0%, 78% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        80%, 90% { fill: #ffccbc; stroke: #ff5722; stroke-width: 4; }
+        92%, 100% { fill: #e0e0e0; stroke: #9e9e9e; stroke-width: 2; }
+      }
+      @keyframes highlight6 {
+        0%, 94% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+        96%, 100% { fill: #fff9c4; stroke: #fbc02d; stroke-width: 4; }
+      }
+      @keyframes highlight7 {
+        0%, 100% { fill: #ffffff; stroke: #2196f3; stroke-width: 3; }
+      }
+      @keyframes fadeInOut0 {
+        0%, 10% { opacity: 1; }
+        12%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut1 {
+        0%, 14% { opacity: 0; }
+        16%, 26% { opacity: 1; }
+        28%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut2 {
+        0%, 30% { opacity: 0; }
+        32%, 42% { opacity: 1; }
+        44%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut3 {
+        0%, 46% { opacity: 0; }
+        48%, 58% { opacity: 1; }
+        60%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut4 {
+        0%, 62% { opacity: 0; }
+        64%, 74% { opacity: 1; }
+        76%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut5 {
+        0%, 78% { opacity: 0; }
+        80%, 90% { opacity: 1; }
+        92%, 100% { opacity: 0; }
+      }
+      @keyframes fadeInOut6 {
+        0%, 94% { opacity: 0; }
+        96%, 100% { opacity: 1; }
+      }
+      @keyframes showSet0 {
+        0%, 10% { opacity: 1; }
+        12%, 100% { opacity: 0; }
+      }
+      @keyframes showSet1 {
+        0%, 14% { opacity: 0; }
+        16%, 26% { opacity: 1; }
+        28%, 100% { opacity: 0; }
+      }
+      @keyframes showSet2 {
+        0%, 30% { opacity: 0; }
+        32%, 42% { opacity: 1; }
+        44%, 100% { opacity: 0; }
+      }
+      @keyframes showSet3 {
+        0%, 46% { opacity: 0; }
+        48%, 58% { opacity: 1; }
+        60%, 100% { opacity: 0; }
+      }
+      @keyframes showSet4 {
+        0%, 62% { opacity: 0; }
+        64%, 74% { opacity: 1; }
+        76%, 100% { opacity: 0; }
+      }
+      @keyframes showSet5 {
+        0%, 78% { opacity: 0; }
+        80%, 90% { opacity: 1; }
+        92%, 100% { opacity: 0; }
+      }
+      @keyframes showSet6 {
+        0%, 94% { opacity: 0; }
+        96%, 100% { opacity: 1; }
+      }
+      @keyframes maxLengthPulse {
+        0%, 42% { transform: scale(1); opacity: 1; }
+        44%, 46% { transform: scale(1.1); opacity: 1; }
+        48%, 100% { transform: scale(1); opacity: 0.5; }
+      }
+      .array-box {
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        transition: all 0.3s ease;
+      }
+      .box-0 { animation: highlight0 14s ease-in-out infinite; }
+      .box-1 { animation: highlight1 14s ease-in-out infinite; }
+      .box-2 { animation: highlight2 14s ease-in-out infinite; }
+      .box-3 { animation: highlight3 14s ease-in-out infinite; }
+      .box-4 { animation: highlight4 14s ease-in-out infinite; }
+      .box-5 { animation: highlight5 14s ease-in-out infinite; }
+      .box-6 { animation: highlight6 14s ease-in-out infinite; }
+      .box-7 { animation: highlight7 14s ease-in-out infinite; }
+      .array-text {
+        font-family: 'Courier New', monospace;
+        font-size: 32px;
+        font-weight: bold;
+        fill: #1565c0;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+      .window-area {
+        fill: #bbdefb;
+        opacity: 0.4;
+        stroke: #2196f3;
+        stroke-width: 3;
+        stroke-dasharray: 5,5;
+        animation: windowWidth 14s ease-in-out infinite;
+      }
+      .pointer-left {
+        animation: moveLeft 14s ease-in-out infinite;
+      }
+      .pointer-right {
+        animation: moveRight 14s ease-in-out infinite;
+      }
+      .pointer-arrow-left {
+        fill: #ff5252;
+        filter: drop-shadow(0 2px 4px rgba(255,82,82,0.4));
+      }
+      .pointer-arrow-right {
+        fill: #9c27b0;
+        filter: drop-shadow(0 2px 4px rgba(156,39,176,0.4));
+      }
+      .pointer-label {
+        font-family: 'Arial', sans-serif;
+        font-size: 18px;
+        font-weight: bold;
+        text-anchor: middle;
+      }
+      .step-text {
+        font-family: 'Arial', sans-serif;
+        font-size: 16px;
+        font-weight: 600;
+        text-anchor: start;
+        animation-duration: 14s;
+        animation-iteration-count: infinite;
+      }
+      .step0 { animation-name: fadeInOut0; fill: #4caf50; }
+      .step1 { animation-name: fadeInOut1; fill: #4caf50; }
+      .step2 { animation-name: fadeInOut2; fill: #4caf50; }
+      .step3 { animation-name: fadeInOut3; fill: #ff5722; }
+      .step4 { animation-name: fadeInOut4; fill: #ff5722; }
+      .step5 { animation-name: fadeInOut5; fill: #ff5722; }
+      .step6 { animation-name: fadeInOut6; fill: #4caf50; }
+      .title {
+        font-family: 'Arial', sans-serif;
+        font-size: 32px;
+        fill: #1565c0;
+        font-weight: bold;
+        text-anchor: middle;
+      }
+      .subtitle {
+        font-family: 'Arial', sans-serif;
+        font-size: 16px;
+        fill: #757575;
+        text-anchor: middle;
+      }
+      .code-text {
+        font-family: 'Courier New', monospace;
+        font-size: 11px;
+        fill: #424242;
+      }
+      .counter {
+        font-family: 'Arial', sans-serif;
+        font-size: 14px;
+        fill: #666;
+        text-anchor: middle;
+      }
+      .info-box {
+        fill: #e3f2fd;
+        stroke: #2196f3;
+        stroke-width: 2;
+        rx: 8;
+      }
+      .legend-box {
+        fill: #f5f5f5;
+        stroke: #e0e0e0;
+        stroke-width: 2;
+        rx: 6;
+      }
+      .legend-text {
+        font-family: 'Arial', sans-serif;
+        font-size: 13px;
+        fill: #424242;
+      }
+      .set-box {
+        fill: #fff3e0;
+        stroke: #ff9800;
+        stroke-width: 2;
+        rx: 6;
+      }
+      .set-text {
+        font-family: 'Courier New', monospace;
+        font-size: 16px;
+        fill: #e65100;
+        font-weight: 600;
+        text-anchor: middle;
+        animation-duration: 14s;
+        animation-iteration-count: infinite;
+      }
+      .set0 { animation-name: showSet0; }
+      .set1 { animation-name: showSet1; }
+      .set2 { animation-name: showSet2; }
+      .set3 { animation-name: showSet3; }
+      .set4 { animation-name: showSet4; }
+      .set5 { animation-name: showSet5; }
+      .set6 { animation-name: showSet6; }
+      .max-box {
+        fill: #e8f5e9;
+        stroke: #4caf50;
+        stroke-width: 3;
+        rx: 8;
+      }
+      .max-text {
+        font-family: 'Arial', sans-serif;
+        font-size: 24px;
+        fill: #2e7d32;
+        font-weight: bold;
+        text-anchor: middle;
+        animation: maxLengthPulse 14s ease-in-out infinite;
+      }
+      .concept-box {
+        fill: #e8eaf6;
+        stroke: #5c6bc0;
+        stroke-width: 2;
+        rx: 6;
+      }
+      .concept-text {
+        font-family: 'Arial', sans-serif;
+        font-size: 14px;
+        fill: #283593;
+        font-weight: 600;
+      }
+    </style>
+  </defs>
+  
+  <!-- 背景渐变 -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e1f5fe;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="850" fill="url(#bgGradient)"/>
+  
+  <!-- 标题区域 -->
+  <text x="600" y="40" class="title">滑动窗口 - 最长不重复子串</text>
+  <text x="600" y="65" class="subtitle">Sliding Window - Longest Substring Without Repeating Characters</text>
+  
+  <!-- 问题描述 -->
+  <rect x="200" y="85" width="800" height="30" class="info-box"/>
+  <text x="600" y="105" class="subtitle" style="font-weight: 600; fill: #1565c0;">
+    输入: "abcabcbb" → 输出: 3 (最长不重复子串为 "abc")
+  </text>
+  
+  <!-- 数组索引 -->
+  <text x="210" y="155" class="counter">0</text>
+  <text x="310" y="155" class="counter">1</text>
+  <text x="410" y="155" class="counter">2</text>
+  <text x="510" y="155" class="counter">3</text>
+  <text x="610" y="155" class="counter">4</text>
+  <text x="710" y="155" class="counter">5</text>
+  <text x="810" y="155" class="counter">6</text>
+  <text x="910" y="155" class="counter">7</text>
+  
+  <!-- 滑动窗口区域 -->
+  <rect x="170" y="170" class="window-area" height="80" rx="8"/>
+  <text x="70" y="210" class="subtitle" style="font-size: 14px; fill: #1976d2; font-weight: 600;">窗口</text>
+  
+  <!-- 数组元素 -->
+  <g id="array">
+    <rect x="170" y="170" width="80" height="80" rx="8" class="array-box box-0"/>
+    <text x="210" y="210" class="array-text">a</text>
+    
+    <rect x="270" y="170" width="80" height="80" rx="8" class="array-box box-1"/>
+    <text x="310" y="210" class="array-text">b</text>
+    
+    <rect x="370" y="170" width="80" height="80" rx="8" class="array-box box-2"/>
+    <text x="410" y="210" class="array-text">c</text>
+    
+    <rect x="470" y="170" width="80" height="80" rx="8" class="array-box box-3"/>
+    <text x="510" y="210" class="array-text">a</text>
+    
+    <rect x="570" y="170" width="80" height="80" rx="8" class="array-box box-4"/>
+    <text x="610" y="210" class="array-text">b</text>
+    
+    <rect x="670" y="170" width="80" height="80" rx="8" class="array-box box-5"/>
+    <text x="710" y="210" class="array-text">c</text>
+    
+    <rect x="770" y="170" width="80" height="80" rx="8" class="array-box box-6"/>
+    <text x="810" y="210" class="array-text">b</text>
+    
+    <rect x="870" y="170" width="80" height="80" rx="8" class="array-box box-7"/>
+    <text x="910" y="210" class="array-text">b</text>
+  </g>
+  
+  <!-- 左指针 (left) -->
+  <g class="pointer-left">
+    <polygon points="210,280 200,300 220,300" class="pointer-arrow-left"/>
+    <line x1="210" y1="255" x2="210" y2="280" stroke="#ff5252" stroke-width="3"/>
+    <text x="210" y="320" class="pointer-label" fill="#ff5252">left</text>
+  </g>
+  
+  <!-- 右指针 (right) -->
+  <g class="pointer-right">
+    <polygon points="210,280 200,300 220,300" class="pointer-arrow-right"/>
+    <line x1="210" y1="255" x2="210" y2="280" stroke="#9c27b0" stroke-width="3"/>
+    <text x="210" y="320" class="pointer-label" fill="#9c27b0">right</text>
+  </g>
+  
+  <!-- Set 内容显示 -->
+  <g transform="translate(100, 350)">
+    <rect x="0" y="0" width="400" height="70" class="set-box"/>
+    <text x="200" y="25" style="font-size: 14px; fill: #e65100; text-anchor: middle; font-weight: 600;">窗口内字符集合 (Set)</text>
+    <text x="200" y="50" class="set-text set0">{a}</text>
+    <text x="200" y="50" class="set-text set1">{a, b}</text>
+    <text x="200" y="50" class="set-text set2">{a, b, c}</text>
+    <text x="200" y="50" class="set-text set3">{b, c}</text>
+    <text x="200" y="50" class="set-text set4">{c}</text>
+    <text x="200" y="50" class="set-text set5">{c, a}</text>
+    <text x="200" y="50" class="set-text set6">{c, a, b}</text>
+  </g>
+  
+  <!-- 当前最大长度 -->
+  <g transform="translate(520, 350)">
+    <rect x="0" y="0" width="200" height="70" class="max-box"/>
+    <text x="100" y="25" style="font-size: 14px; fill: #2e7d32; text-anchor: middle; font-weight: 600;">最大长度</text>
+    <text x="100" y="55" class="max-text">3</text>
+  </g>
+  
+  <!-- 操作步骤说明 -->
+  <g transform="translate(100, 440)">
+    <rect x="0" y="0" width="1000" height="40" rx="8" fill="#ffffff" stroke="#e0e0e0" stroke-width="2"/>
+    <text x="20" y="25" class="step-text step0">步骤1: right=0, 添加'a', 窗口="a", 长度=1</text>
+    <text x="20" y="25" class="step-text step1">步骤2: right=1, 添加'b', 窗口="ab", 长度=2</text>
+    <text x="20" y="25" class="step-text step2">步骤3: right=2, 添加'c', 窗口="abc", 长度=3 ✨ 最大!</text>
+    <text x="20" y="25" class="step-text step3">步骤4: right=3, 遇到重复'a'! 收缩窗口: 移除'a', left++</text>
+    <text x="20" y="25" class="step-text step4">步骤5: right=4, 遇到重复'b'! 收缩窗口: 移除'b', left++</text>
+    <text x="20" y="25" class="step-text step5">步骤6: right=5, 遇到重复'c'! 收缩窗口: 移除'c', left++</text>
+    <text x="20" y="25" class="step-text step6">步骤7: right=6, 添加'b', 窗口="cab", 长度=3</text>
+  </g>
+  
+  <!-- 核心思想 -->
+  <g transform="translate(100, 500)">
+    <rect x="0" y="0" width="1000" height="110" class="concept-box"/>
+    <text x="500" y="30" class="concept-text" text-anchor="middle" style="font-size: 16px;">核心思想: 动态调整窗口大小</text>
+    <text x="30" y="55" class="concept-text">• 右指针 (right): 不断向右扩展窗口,尝试加入新字符</text>
+    <text x="30" y="75" class="concept-text">• 左指针 (left): 当遇到重复字符时,收缩窗口,移除左边字符直到无重复</text>
+    <text x="30" y="95" class="concept-text">• 使用 Set 维护窗口内字符的唯一性,快速检测重复 O(1)</text>
+  </g>
+  
+  <!-- 图例 -->
+  <g transform="translate(100, 630)">
+    <rect x="0" y="0" width="1000" height="60" class="legend-box"/>
+    <text x="20" y="25" class="legend-text" style="font-weight: 600;">图例说明:</text>
+    
+    <rect x="120" y="10" width="40" height="25" rx="4" fill="#c8e6c9" stroke="#4caf50" stroke-width="2"/>
+    <text x="170" y="27" class="legend-text">窗口内字符</text>
+    
+    <rect x="280" y="10" width="40" height="25" rx="4" fill="#fff9c4" stroke="#fbc02d" stroke-width="2"/>
+    <text x="330" y="27" class="legend-text">当前处理</text>
+    
+    <rect x="440" y="10" width="40" height="25" rx="4" fill="#ffccbc" stroke="#ff5722" stroke-width="2"/>
+    <text x="490" y="27" class="legend-text">重复字符</text>
+    
+    <rect x="600" y="10" width="40" height="25" rx="4" fill="#e0e0e0" stroke="#9e9e9e" stroke-width="2"/>
+    <text x="650" y="27" class="legend-text">已移出</text>
+    
+    <rect x="740" y="10" width="60" height="25" rx="4" fill="#bbdefb" stroke="#2196f3" stroke-width="2" stroke-dasharray="3,3"/>
+    <text x="810" y="27" class="legend-text">滑动窗口</text>
+  </g>
+  
+  <!-- 代码示例框 -->
+  <g transform="translate(100, 710)">
+    <rect x="0" y="0" width="1000" height="120" rx="8" fill="#f5f5f5" stroke="#e0e0e0" stroke-width="2"/>
+    <text x="20" y="20" class="code-text" fill="#d32f2f">function</text>
+    <text x="90" y="20" class="code-text">lengthOfLongestSubstring(s: string): number {</text>
+    <text x="40" y="38" class="code-text">const charSet = new Set&lt;string&gt;();</text>
+    <text x="40" y="56" class="code-text">let left = 0, maxLen = 0;</text>
+    <text x="40" y="74" class="code-text" fill="#d32f2f">for</text>
+    <text x="75" y="74" class="code-text">(let right = 0; right &lt; s.length; right++) {</text>
+    <text x="60" y="92" class="code-text" fill="#d32f2f">while</text>
+    <text x="110" y="92" class="code-text">(charSet.has(s[right])) { charSet.delete(s[left]); left++; }</text>
+    <text x="60" y="110" class="code-text">charSet.add(s[right]); maxLen = Math.max(maxLen, right - left + 1);</text>
+  </g>
+</svg>
