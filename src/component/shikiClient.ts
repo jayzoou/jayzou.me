@@ -114,9 +114,13 @@ export async function highlightAllCodeBlocks(root: ParentNode = document) {
           }
         }
 
-        const wrapper = document.createElement('div')
-        wrapper.innerHTML = html
-        pre.replaceWith(wrapper)
+        // Insert highlighted HTML into the existing <pre> to avoid
+        // replacing DOM nodes that React may manage (prevents removeChild errors).
+        // The highlighter returns a full <pre>...</pre> string; strip the outer
+        // <pre> so we can inject inner content into the existing element.
+        const inner = html.replace(/^<pre[^>]*>/i, '').replace(/<\/pre>$/i, '')
+        pre.innerHTML = inner
+        pre.classList.add('shiki-wrapper')
       } catch (e) {
         console.error('[shikiClient] highlight failed for', lang, e)
       }

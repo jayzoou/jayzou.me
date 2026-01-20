@@ -193,3 +193,51 @@ table,
     padding: 0.5rem 0.6rem;
   }
 }
+
+/* Code block visual improvements */
+.shiki-wrapper {
+  margin: 1.25rem 0;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+}
+
+.shiki-wrapper pre {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Segoe UI Mono', 'Courier New', monospace;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* If we injected highlighted HTML into the existing <pre>, the pre will
+   receive the `shiki-wrapper` class. Style that case as well. */
+pre.shiki-wrapper {
+  margin: 1.25rem 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+}
+
+pre.shiki-wrapper code {
+  display: block;
+  padding: 1rem 1.25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Segoe UI Mono', 'Courier New', monospace;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Fallback for plain pre/code blocks not yet highlighted */
+pre {
+  margin: 1.25rem 0;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+  overflow: auto;
+}
+
+pre code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Segoe UI Mono', 'Courier New', monospace;
+  font-size: 0.95rem;
+}
