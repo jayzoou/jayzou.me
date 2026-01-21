@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 
 // Module loaded
 
@@ -9,6 +9,7 @@ interface Props {
 
 const ShikiCode: React.FC<Props> = ({ className = '', children }) => {
   const [html, setHtml] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   // immediate mount log
   useEffect(() => {
@@ -39,6 +40,16 @@ const ShikiCode: React.FC<Props> = ({ className = '', children }) => {
       : Array.isArray(children)
       ? children.join('')
       : String(children || '')
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(code.trim())
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy code:', err)
+    }
+  }, [code])
 
   useEffect(() => {
     let mounted = true
@@ -114,15 +125,43 @@ const ShikiCode: React.FC<Props> = ({ className = '', children }) => {
     }
   }, [code, language])
 
+  const CopyButton = (
+    <button
+      onClick={handleCopy}
+      className="shiki-copy-btn"
+      title={copied ? '已复制!' : '复制代码'}
+      aria-label={copied ? '已复制!' : '复制代码'}
+    >
+      {copied ? (
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      ) : (
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      )}
+    </button>
+  )
+
   if (!html) {
     return (
-      <pre className={`${className} shiki-loading`} data-shiki="loading">
-        <code className={className}>{children}</code>
-      </pre>
+      <div className="shiki-container">
+        {CopyButton}
+        <pre className={`${className} shiki-loading`} data-shiki="loading">
+          <code className={className}>{children}</code>
+        </pre>
+      </div>
     )
   }
 
-  return <div className="shiki-wrapper" dangerouslySetInnerHTML={{ __html: html }} />
+  return (
+    <div className="shiki-container">
+      {CopyButton}
+      <div className="shiki-wrapper" dangerouslySetInnerHTML={{ __html: html }} />
+    </div>
+  )
 }
 
 export default ShikiCode
