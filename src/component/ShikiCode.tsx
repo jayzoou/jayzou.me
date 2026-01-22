@@ -148,18 +148,22 @@ const ShikiCode: React.FC<Props> = ({ className = '', children }) => {
   if (!html) {
     return (
       <div className="shiki-container">
-        {CopyButton}
-        <pre className={`${className} shiki-loading`} data-shiki="loading">
-          <code className={className}>{children}</code>
-        </pre>
+        <div className="shiki-wrapper-outer">
+          {CopyButton}
+          <pre className={`${className} shiki-loading`} data-shiki="loading">
+            <code className={className}>{children}</code>
+          </pre>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="shiki-container">
-      {CopyButton}
-      <div className="shiki-wrapper" dangerouslySetInnerHTML={{ __html: html }} />
+      <div className="shiki-wrapper-outer">
+        {CopyButton}
+        <div className="shiki-wrapper" dangerouslySetInnerHTML={{ __html: html }} />
+      </div>
     </div>
   )
 }

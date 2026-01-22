@@ -171,7 +171,7 @@ export async function highlightAllCodeBlocks(root: ParentNode = document) {
               pre.style.position = 'relative'
             }
 
-            // Position the button absolute inside the pre so it sticks to top-right
+            // Position the button absolute inside the pre
             btn.style.position = 'absolute'
             btn.style.top = '4px'
             btn.style.right = '4px'
