@@ -146,6 +146,26 @@
   transform: translateY(-2px);
 }
 
+/* MDX-friendly del component: keep KaTeX children intact */
+del.md-del {
+  display: inline-block;
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+}
+
+del.md-del::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1.2px;
+  background: rgba(255,255,255,0.35);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
 .text-3xl {
   font-size: 1.875rem;
 }
