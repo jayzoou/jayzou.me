@@ -3,6 +3,7 @@ import Layout from './component/Layout.tsx'
 import 'virtual:uno.css'
 import './index.css'
 import './App.css'
+import 'katex/dist/katex.min.css'
 
 const modules = import.meta.glob(
   [

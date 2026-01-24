@@ -1,7 +1,7 @@
 import PageList from '../../../PageList'
 
 const grammarPages = [
-  { path: '/posts/english/grammar/introduction', title: '学语法，就要快', desc: '告别“玄学”，重建你的英语底层逻辑' },
+  { path: '/posts/english/grammar/introduction', title: '花一个星期把语法学会', desc: '爱情应该是“长跑”，而语法不是' },
   { path: '/posts/english/grammar/element', title: '成分', desc: '主语、谓语、宾语、定语、状语、补语' },
   { path: '/posts/english/grammar/part-of-speech', title: '词性', desc: '名词、动词、形容词、副词等' },
   { path: '/posts/english/grammar/basic-sentence-patterns', title: '基本句型', desc: '五种基本句型结构' },
