@@ -1,0 +1,171 @@
+import renderPipeline from './assets/render-pipeline.svg'
+import deferAsync from './assets/defer-async.svg'
+
+# 浏览器渲染机制与流程
+
+浏览器把“URL/HTML/CSS/JS”变成你看到的页面，大体经历 **解析 → 计算 → 生成树 → 布局 → 绘制 → 合成/显示** 的流水线。理解这条流水线，能直接指导你优化首屏、减少卡顿、避免布局抖动。
+
+---
+
+## 1. 总体渲染流水线（需要记住的主干）
+
+1. **解析 HTML** → 生成 **DOM Tree**
+2. **解析 CSS** → 生成 **CSSOM Tree**
+3. DOM + CSSOM → 生成 **Render Tree（渲染树）**
+4. **Layout（回流/重排）**：计算元素几何信息（大小、位置）
+5. **Paint（绘制）**：把边框/背景/文字/阴影等画到位图层
+6. **Composite（合成）**：GPU/合成线程把多个层按顺序合成，显示到屏幕
+
+> 核心：**DOM 决定结构，CSSOM 决定样式，RenderTree 决定“要画什么”，Layout 决定“画在哪”，Paint 决定“画成什么像素”，Composite 决定“怎么叠起来显示”。**
+
+---
+
+## 2. DOM、CSSOM、Render Tree：三棵树的区别
+
+### DOM（Document Object Model）
+- HTML 解析后的节点树（元素、文本、注释等）
+- JS 通过 DOM API 读写它
+
+### CSSOM（CSS Object Model）
+- CSS 解析后的样式规则树
+- 用于计算每个节点的最终样式（Computed Style）
+
+### Render Tree（渲染树）
+- 用于“可视化绘制”的树
+- **不包含**：`display: none` 的节点（完全不参与渲染）
+- **包含**：可见节点及其伪元素等（不同引擎细节略有差异）
+
+---
+
+## 3. 关键阶段：Style / Layout / Paint / Composite
+
+### 3.1 Style（样式计算）
+- 依据 CSS 选择器匹配规则，计算每个节点的最终样式（继承、层叠、优先级）
+- 影响：选择器越复杂、范围越大，样式计算成本越高（现代浏览器已高度优化，但仍应避免极端写法）
+
+### 3.2 Layout（回流/重排）
+- 计算盒模型：宽高、位置、换行、滚动等
+- **触发因素**：影响几何信息的变更，如 `width/height/margin/padding/top/left/display/font-size` 等
+- 代价：通常比 Paint/Composite 更重，因为可能影响大量节点
+
+### 3.3 Paint（重绘）
+- 将可视属性绘制成像素：颜色、阴影、边框、文字等
+- **触发因素**：不改变几何但改变外观，如 `color/background/box-shadow` 等
+
+### 3.4 Composite（合成）
+- 把多个“绘制好的层”按顺序合成到屏幕
+- 典型优化：让动画尽量只走合成（避免 Layout/Paint）
+- 常见“合成友好”属性：`transform`、`opacity`
+
+> 记忆法：  
+> **Layout** 改“尺寸位置”，**Paint** 改“像素外观”，**Composite** 改“层的组合方式”。
+
+---
+
+## 4. HTML/CSS/JS 的阻塞关系（渲染为什么会等）
+
+### 4.1 CSS 为什么会“阻塞渲染”
+- 浏览器需要 CSSOM 才能构建 Render Tree
+- 因此 **外链 CSS** 通常会阻塞首屏渲染（更准确说：阻塞渲染树构建/首次绘制）
+
+### 4.2 JS 为什么会“阻塞解析”
+- 默认情况下遇到 `<script>`：
+  - HTML 解析暂停
+  - 下载/执行 JS
+  - 执行完再继续解析
+- 因为 JS 可能会 `document.write`、读取/修改 DOM（需要保证顺序一致）
+
+### 4.3 `defer` 与 `async`
+- `defer`：并行下载，**等 HTML 解析完成后**按顺序执行（更适合依赖 DOM 的脚本）
+- `async`：并行下载，**下载完立刻执行**（不保证顺序，可能打断解析）
+
+---
+
+## 5. 性能与工程实践：把“卡顿/抖动”变少的关键点
+
+### 5.1 减少 Layout（回流）成本
+- 批量读写 DOM：避免“读-写-读-写”交错（会触发强制同步布局）
+- 动画优先用 `transform`/`opacity`
+- 大改动用“离线处理”：先在文档流外处理（如 `display:none` 或 `documentFragment`），再一次性插入
+
+### 5.2 避免布局抖动（CLS）
+- 图片/视频等媒体元素预设宽高（或使用 `aspect-ratio`）
+- 异步内容（广告/推荐流）预留占位空间
+- 字体加载合理配置（例如 `font-display: swap` 及尺寸兜底）
+
+### 5.3 降低 Paint 压力
+- 谨慎使用大面积阴影、模糊、复杂渐变
+- 尽量减少大区域频繁重绘（尤其滚动时）
+
+### 5.4 合成层（Layer）不要滥用
+- 合成层有利于把动画限制在 Composite，但层过多会增加内存和合成开销
+- 以“能解决问题”为准，不要为加速而无脑创建层
+
+---
+
+## 6. 一张流程图（SVG）：从请求到屏幕显示
+
+{/* 插图:  */}
+<div style={{margin: '1rem 0'}}>
+  <img src={renderPipeline} alt="renderPipeline" style={{maxWidth: '100%'}} />
+</div>
+
+---
+
+##  常见“触发回流（Layout/Reflow）”的属性/操作清单（工程上够用版）
+
+> 只要改变**几何信息**（尺寸、位置、文档流、字体排版），通常就会触发 Layout；读取某些布局信息也可能触发“布局刷新”。
+
+### 2.1 修改这些 CSS 属性：高概率触发 Layout
+**尺寸/盒模型**
+- `width / height`
+- `margin / padding / border-width`
+- `box-sizing`（会改变尺寸计算方式）
+- `min-width / max-width / min-height / max-height`
+
+**定位与几何**
+- `top / right / bottom / left`（尤其定位元素移动）
+- `position`（static/relative/absolute/fixed/sticky 的切换）
+- `display`（例如 none ↔ block）
+- `float / clear`
+- `overflow`（某些场景会影响布局与滚动盒计算）
+
+**排版与文本（影响行盒/换行）**
+- `font-size / font-family / font-weight`
+- `line-height`
+- `letter-spacing / word-spacing`
+- `white-space`
+- `text-align`（可能改变行内布局）
+
+**布局系统相关**
+- Flex：`flex`、`flex-basis`、`flex-direction`、`justify-content`、`align-items`（影响子项几何）
+- Grid：`grid-template-*`、`grid-auto-*`、`gap`
+- `content`（伪元素内容变化会影响布局）
+
+### 2.2 DOM 操作：也常触发 Layout
+- 增删节点、改变层级
+- 改变元素 class（如果 class 影响布局属性）
+- 改变 `style` 内联样式（同上）
+- 修改会影响文本流的内容（`textContent/innerText`）
+
+### 2.3 读取这些属性：可能触发“强制布局刷新”
+- `offset*` / `client*` / `scroll*`
+- `getBoundingClientRect()`
+- `getComputedStyle()`（尤其读取几何相关样式）
+- `window.getComputedStyle(document.body).height` 这类“读几何”的访问
+
+> 经验规则：**在同一帧里，先写再读布局属性，最容易被迫 Layout。**
+
+---
+
+##  “defer/async 时序图”（SVG）：下载/解析/执行与阻塞关系
+
+你可以把下面 SVG 直接放进博客，用来解释为什么 `async` 会“打断解析”，而 `defer` 通常更适合依赖 DOM 的脚本。
+
+{/* 插图:  */}
+<div style={{margin: '1rem 0'}}>
+  <img src={deferAsync} alt="deferAsync" style={{maxWidth: '100%'}} />
+</div>
+
+---
+
