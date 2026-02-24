@@ -1,0 +1,133 @@
+# 前端开发 JS 设计模式：装饰器模式（Decorator）入门与实战
+
+## 1）用一个需求引入：我只想“加点功能”，不想改原代码
+你在做前端业务时，经常会遇到这种场景：
+
+- 已有一个函数 `request()` 很稳定，很多地方在用  
+- 现在产品说：**所有请求要自动加 loading、统计耗时、失败上报、权限校验**  
+- 你不想（也不敢）到处改 `request()` 的内部实现，更不想复制粘贴出 `requestWithLoading()`、`requestWithLog()`、`requestWithAuth()` 一堆变体
+
+这时你需要一种方式：**在不修改原有对象/函数的前提下，为它“叠加”额外能力**。  
+这就是**装饰器模式（Decorator）**要解决的问题。
+
+---
+
+## 2）装饰器模式的关键点（简洁版）
+装饰器模式核心就三句话：
+
+1. **不改原实现**：原对象/函数保持不变（遵循开闭原则：对扩展开放、对修改关闭）
+2. **包装（wrap）**：用一个“装饰器”把原对象/函数包起来
+3. **可组合**：多个装饰器可以像搭积木一样叠加，顺序不同效果可能不同
+
+在 JS 里，装饰器模式最常见的体现就是：**高阶函数**（函数接收函数，返回新函数）或 **包装对象**。
+
+---
+
+## 3）简单代码例子：用高阶函数装饰一个函数
+
+### 例子：给一个函数加“耗时统计”和“异常捕获”
+假设我们有个核心函数：
+
+````js
+function fetchUser(id) {
+  // 模拟业务逻辑
+  if (!id) throw new Error('id is required');
+  return { id, name: 'Alice' };
+}
+````
+
+现在我们希望“装饰”它，而不是改它：
+
+#### 装饰器 1：统计耗时
+````js
+function withTiming(fn, label = fn.name) {
+  return function (...args) {
+    const start = performance.now();
+    try {
+      return fn.apply(this, args);
+    } finally {
+      const cost = performance.now() - start;
+      console.log(`[timing] ${label}: ${cost.toFixed(2)}ms`);
+    }
+  };
+}
+````
+
+#### 装饰器 2：异常捕获并上报
+````js
+function withErrorReport(fn, report = console.error) {
+  return function (...args) {
+    try {
+      return fn.apply(this, args);
+    } catch (err) {
+      report('[error]', err);
+      throw err; // 是否继续抛出取决于你的业务策略
+    }
+  };
+}
+````
+
+#### 组合使用（装饰 = 包一层再包一层）
+````js
+const safeFetchUser = withErrorReport(withTiming(fetchUser, 'fetchUser'));
+
+safeFetchUser(1);   // 正常：打印耗时
+safeFetchUser();    // 异常：上报 + 抛出 + 打印耗时
+````
+
+你会发现：
+- `fetchUser` 本身完全没动
+- 新增能力通过包装完成
+- 可以继续叠更多装饰器（缓存、鉴权、埋点……）
+
+> 注意：装饰器的**顺序**会影响行为，比如先捕获异常还是先统计耗时，输出就可能不同。
+
+---
+
+## 4）常见应用场景（前端很常用）
+
+### 场景 A：接口请求增强（最典型）
+- 自动加 token
+- 请求/响应日志
+- loading 管理
+- 重试机制
+- 限流/防抖/节流
+- 统一错误处理
+
+### 场景 B：事件处理函数增强
+- 点击埋点
+- 防重复点击（节流）
+- 权限校验（没权限直接 return）
+- 自动 `stopPropagation` / `preventDefault`（谨慎使用）
+
+### 场景 C：组件能力增强（思路一致）
+在 React/Vue 生态里常见“包装增强”：
+- React 的 HOC（高阶组件）本质上就是装饰器思想
+- Vue 中对方法/生命周期进行统一增强（比如 mixin、插件机制）也有类似目的
+
+### 场景 D：业务函数的横切能力（AOP 风格）
+- 统一参数校验
+- 统一日志、审计
+- 性能统计
+- 监控报警
+
+---
+
+## 5）注意事项（踩坑提醒）
+
+1. **装饰器别改变原函数语义**
+   - 最好只做“横切关注点”（日志、计时、埋点），不要偷偷改返回值结构，否则很难排查问题。
+
+2. **注意 this 与参数透传**
+   - 用 `fn.apply(this, args)`，否则被装饰函数依赖 `this` 时会出 bug。
+
+3. **装饰链太长会降低可读性**
+   - 过度包装会让调试栈变深、定位变难。必要时把多个装饰器合并成一个“组合装饰器”。
+
+4. **异步函数要特别处理**
+   - 如果被装饰函数返回 Promise，计时/异常捕获要能处理 `await` 场景（例如在装饰器里 `await fn(...)` 再计时/捕获）。
+
+5. **装饰顺序很关键**
+   - 例如：`withAuth(withCache(fn))` 与 `withCache(withAuth(fn))` 的安全性/命中率可能完全不同。
+
+---

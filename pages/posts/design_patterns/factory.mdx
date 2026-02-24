@@ -1,0 +1,178 @@
+## 工厂模式（Factory Pattern）——从“创建对象太乱”说起
+
+### 1）用一个问题/需求引入：对象创建开始失控了
+你可能遇到过这种需求：
+
+> 页面上有多种“弹窗/消息提示”：成功、失败、警告、信息……  
+> 它们**结构类似**，但**文案、图标、颜色、行为**略有差异。  
+> 你一开始这样写：
+
+- `new SuccessToast(...)`
+- `new ErrorToast(...)`
+- `new WarningToast(...)`
+- 或者一堆 `if/else` / `switch` 在业务里拼对象
+
+很快代码就会变成：
+- 业务代码里充满“怎么创建”的细节（难维护）
+- 新增一种类型要改很多地方（不易扩展）
+- 创建逻辑分散在各处（不一致、容易出错）
+
+这时就适合引入：**工厂模式**。
+
+---
+
+### 2）工厂模式的关键：把“创建”从“使用”中抽离
+**核心思想：**  
+> 用一个“工厂”来**统一负责对象创建**，调用方只管“要什么”，不关心“怎么 new、怎么组装”。
+
+**它解决的关键问题：**
+- **解耦**：使用方不依赖具体类/具体创建细节
+- **集中管理创建逻辑**：默认值、参数校验、兼容处理都放在工厂里
+- **易扩展**：新增类型时，尽量只改工厂或注册表，而不是改所有调用点
+
+在前端 JS 里，工厂通常表现为：
+- 一个函数 `createXxx(type, options)`
+- 或一个“注册表 + 创建器”的组合（更易扩展）
+
+---
+
+### 3）简单代码示例：以“消息提示 Toast”举例
+
+#### 3.1 不使用工厂：业务里到处是创建细节
+````js
+function showToast(type, message) {
+  if (type === 'success') {
+    return {
+      icon: '✅',
+      color: 'green',
+      message,
+      duration: 2000,
+    }
+  }
+  if (type === 'error') {
+    return {
+      icon: '❌',
+      color: 'red',
+      message,
+      duration: 4000,
+    }
+  }
+  // ...更多类型继续堆
+}
+````
+问题：类型一多，`if/else` 膨胀；默认值散落；调用方可能还会自己拼对象导致不一致。
+
+#### 3.2 使用简单工厂：统一创建入口
+````js
+function createToast(type, options = {}) {
+  const base = {
+    message: '',
+    duration: 2000,
+  }
+
+  switch (type) {
+    case 'success':
+      return { ...base, icon: '✅', color: 'green', ...options }
+    case 'error':
+      return { ...base, icon: '❌', color: 'red', duration: 4000, ...options }
+    case 'warning':
+      return { ...base, icon: '⚠️', color: 'orange', ...options }
+    default:
+      throw new Error(`Unknown toast type: ${type}`)
+  }
+}
+
+// 使用方只表达“我要什么”
+const toast = createToast('success', { message: '保存成功' })
+````
+好处：创建逻辑集中、默认值统一、调用方式一致。
+
+#### 3.3 更可扩展的写法：注册表（减少改动）
+当类型经常新增（插件化、业务线多）时，可以避免频繁改 `switch`：
+````js
+const toastFactory = (() => {
+  const creators = new Map()
+
+  function register(type, creator) {
+    creators.set(type, creator)
+  }
+
+  function create(type, options) {
+    const creator = creators.get(type)
+    if (!creator) throw new Error(`Unknown toast type: ${type}`)
+    return creator(options)
+  }
+
+  return { register, create }
+})()
+
+toastFactory.register('success', (options = {}) => ({
+  icon: '✅',
+  color: 'green',
+  duration: 2000,
+  message: '',
+  ...options,
+}))
+
+toastFactory.register('error', (options = {}) => ({
+  icon: '❌',
+  color: 'red',
+  duration: 4000,
+  message: '',
+  ...options,
+}))
+
+// 使用
+const toast = toastFactory.create('error', { message: '网络异常，请重试' })
+````
+新增类型：只需要 `register` 一次，不用动原有分支逻辑。
+
+---
+
+### 4）常见应用场景（前端很常见）
+工厂模式在 JS/前端里通常用于**“同一类对象/组件/配置的多变体创建”**：
+
+1. **UI 组件实例创建**
+   - Toast、Modal、Notification、Dialog（不同类型/风格/策略）
+2. **表单控件/渲染器创建**
+   - 根据字段类型创建不同控件：`text/select/date/upload`
+3. **请求客户端封装**
+   - 根据环境创建不同实例：`createHttpClient('fetch')` / `createHttpClient('axios')`
+4. **策略/算法对象创建**
+   - 根据业务类型选择不同校验器、格式化器、价格计算器
+5. **解析器/处理器**
+   - 根据文件类型创建 parser：JSON / CSV / XML
+6. **跨平台适配**
+   - H5/小程序/桌面端：创建不同的 API 适配层实现
+
+---
+
+### 5）注意事项：别把工厂变成“巨型 switch”
+工厂模式很好用，但也容易用“过头”或“用歪”：
+
+- **避免工厂函数无限膨胀**  
+  类型太多时，`switch` 会变成“上帝函数”。这时考虑：
+  - 用“注册表”替代分支
+  - 按模块拆分 creators（按业务域分目录）
+
+- **别为了工厂而工厂（过度抽象）**  
+  如果只有 1-2 种类型、变化不大，直接写清楚可能更简单。
+
+- **明确边界：工厂负责“创建”，不是负责“业务流程”**  
+  工厂里适合做：默认值、参数标准化、兼容处理、实例组装  
+  不适合塞：接口调用、状态管理、复杂业务判断
+
+- **错误处理要一致**  
+  对未知类型：抛错、返回默认实现、或降级策略要统一，否则调用方难排查。
+
+- **注意可测试性**  
+  将 creators 设计成纯函数（输入 options 输出对象）更容易单测。
+
+---
+
+## 小结
+工厂模式在前端 JS 中的价值可以概括为一句话：
+
+> **把创建对象/实例的细节集中到一个入口，让业务代码只关心“要什么”。**
+
+当你发现：对象创建逻辑重复、分支太多、类型不断增加、调用方式不统一——工厂模式往往就是那个“让代码重新变干净”的切入点。

@@ -1,0 +1,158 @@
+## 单例模式（Singleton）
+
+### 1）从“问题/需求”引入：为什么我们需要单例？
+在前端开发里，你可能遇到过这些需求：
+
+- **全站只需要一个实例**：比如全局弹窗管理器、全局事件总线、埋点上报器、WebSocket 连接。
+- **避免重复创建带来副作用或性能浪费**：重复 new 会导致多次绑定事件、多个定时器、重复网络连接、状态不一致。
+- **希望全局共享状态**：比如统一的配置中心、缓存中心。
+
+这类问题的共同点是：**某个对象在应用生命周期内，只应该存在一个，并且到处都能拿到同一个实例**。  
+这就是单例模式要解决的核心。
+
+---
+
+### 2）单例模式的关键是什么？（简洁版）
+单例模式的关键点可以用一句话概括：
+
+> **控制实例化：无论调用多少次，都只返回同一个实例。**
+
+通常包含三件事：
+
+1. **私有化/隐藏创建过程**（不让外部随意 new 出多个）
+2. **持有唯一实例的引用**（缓存起来）
+3. **提供统一获取实例的入口**（如 `getInstance()`）
+
+---
+
+### 3）简单代码例子说明（JS 常用写法）
+
+#### 示例 A：最经典的 `getInstance()`（适合理解原理）
+````js
+class Logger {
+  constructor() {
+    this.logs = [];
+  }
+
+  log(message) {
+    const item = { message, time: Date.now() };
+    this.logs.push(item);
+    console.log(message);
+  }
+
+  static getInstance() {
+    if (!Logger._instance) {
+      Logger._instance = new Logger();
+    }
+    return Logger._instance;
+  }
+}
+
+// 使用
+const a = Logger.getInstance();
+const b = Logger.getInstance();
+
+a.log("hello");
+console.log(a === b); // true
+````
+
+**要点**：实例缓存到了 `Logger._instance`，之后永远复用。
+
+---
+
+#### 示例 B：利用闭包实现“私有实例”（更贴近函数式风格）
+````js
+const createModalManager = (() => {
+  let instance = null;
+
+  class ModalManager {
+    constructor() {
+      this.queue = [];
+    }
+    open(content) {
+      this.queue.push(content);
+      console.log("open:", content);
+    }
+  }
+
+  return function getInstance() {
+    if (!instance) instance = new ModalManager();
+    return instance;
+  };
+})();
+
+// 使用
+const m1 = createModalManager();
+const m2 = createModalManager();
+console.log(m1 === m2); // true
+m1.open("登录弹窗");
+````
+
+**要点**：`instance` 被闭包保护，不会被外界随意修改（更“单例”一点）。
+
+---
+
+#### 示例 C：ES Module 天生“单例”（前端工程里最常见）
+在实际项目（Vite/Webpack）中，一个模块只会被初始化一次（在同一运行环境下），因此**模块导出的对象天然就是单例**。
+
+````js
+// store.js
+export const store = {
+  user: null,
+  setUser(u) {
+    this.user = u;
+  }
+};
+````
+
+````js
+// a.js
+import { store } from "./store.js";
+store.setUser({ name: "Alice" });
+````
+
+````js
+// b.js
+import { store } from "./store.js";
+console.log(store.user); // { name: "Alice" }
+````
+
+**要点**：工程化开发里，“模块单例”往往是最干净、最易维护的单例方式。
+
+---
+
+### 4）常见应用场景（前端高频）
+单例不是为了“炫技”，而是为了解决“全局唯一”的真实需求，常见场景包括：
+
+1. **全局弹窗/Toast/Loading 管理器**
+   - 全站一个队列、统一层级、避免重复渲染和互相覆盖。
+2. **全局配置中心**
+   - `config.get('apiBaseUrl')`，统一读取环境配置/灰度参数。
+3. **埋点/日志上报 SDK**
+   - 防止重复初始化、重复监听路由/点击事件。
+4. **WebSocket/长连接管理器**
+   - 页面内共享一个连接，统一重连策略和消息分发。
+5. **全局缓存（内存级）**
+   - 请求结果缓存、图片预加载缓存等，避免重复请求。
+
+---
+
+### 5）注意事项与坑（务必看）
+单例好用，但也容易被滥用或带来隐患：
+
+1. **“全局状态”会降低可测试性**
+   - 单例往往是共享状态，单测时容易互相污染。建议提供 `reset()` 或允许注入替身（mock）。
+2. **隐藏依赖，增加耦合**
+   - 代码里到处 `getInstance()`，会让依赖关系不清晰。更推荐在业务层通过参数传递或依赖注入来管理。
+3. **不要把所有工具类都做成单例**
+   - 无状态的纯函数工具（如日期格式化）没必要单例；单例适用于“需要共享状态/资源”的对象。
+4. **注意多环境/多标签页并不共享**
+   - 单例只在当前 JS 运行上下文生效：不同浏览器标签页、iframe、Web Worker 各是各的实例。
+5. **初始化时机要可控**
+   - 避免 import 就立刻做重操作（如建立连接、绑定全局事件）。可用“懒加载”方式：用到再初始化。
+
+---
+
+## 小结
+单例模式的本质是：**保证某个对象全局唯一，并提供统一访问点**。在前端中，它特别适合管理**全局唯一资源（连接、弹窗、上报器、配置、缓存）**。  
+实践上，优先考虑 **ES Module 导出对象的“模块单例”**，需要更严格控制时再使用 `getInstance()` 或闭包版本。

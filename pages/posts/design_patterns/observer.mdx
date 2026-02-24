@@ -1,0 +1,160 @@
+# 前端开发 JS 设计模式：发布-订阅（Pub/Sub）模式入门
+
+## 1）从问题/需求引入：为什么需要它？
+
+你可能遇到过这些场景：
+
+- 页面里多个组件都想“知道”某个事件发生了：用户登录成功、主题切换、语言切换、购物车数量变化……
+- 你不希望 A 组件直接 `import` B 组件然后手动调用 B 的方法（耦合越来越重）
+- 你只想“发出一个消息”，至于谁来处理、处理多少个、以后会不会新增处理者，你不想管
+
+这时，一个自然的需求就是：**让消息发送者和接收者解耦**。发布-订阅模式就是为这种“广播式通知”和“模块解耦”而生的。
+
+---
+
+## 2）关键概念：发布-订阅模式到底是什么？
+
+发布-订阅（Publish-Subscribe）模式的核心角色：
+
+- **发布者（Publisher）**：只负责发布消息（事件），不关心谁来处理
+- **订阅者（Subscriber）**：订阅某类消息（事件），当消息发生时执行回调
+- **事件中心 / 消息总线（Event Bus / Broker）**：负责维护事件与回调列表的映射，并在发布时通知订阅者
+
+关键点（简洁版）：
+
+1. **解耦**：发布者不直接调用订阅者
+2. **一对多**：同一事件可被多个订阅者响应
+3. **可动态增减**：订阅者可随时订阅/取消订阅
+
+> 常见易混点：  
+> **观察者模式**通常是“被观察者”直接维护观察者列表（更紧密一些）。  
+> **发布-订阅**多了一个“事件中心/中介”，发布者和订阅者彼此不知道对方（更解耦）。
+
+---
+
+## 3）用最小代码例子说明（手写一个 Pub/Sub）
+
+下面实现一个简单事件中心，支持：
+
+- `on(event, handler)` 订阅
+- `emit(event, data)` 发布
+- `off(event, handler)` 取消订阅
+
+````js
+class EventBus {
+  constructor() {
+    this.events = new Map(); // eventName => Set<handler>
+  }
+
+  on(eventName, handler) {
+    if (!this.events.has(eventName)) {
+      this.events.set(eventName, new Set());
+    }
+    this.events.get(eventName).add(handler);
+
+    // 可选：返回取消订阅函数，便于清理
+    return () => this.off(eventName, handler);
+  }
+
+  off(eventName, handler) {
+    const set = this.events.get(eventName);
+    if (!set) return;
+
+    set.delete(handler);
+    if (set.size === 0) this.events.delete(eventName);
+  }
+
+  emit(eventName, payload) {
+    const set = this.events.get(eventName);
+    if (!set) return;
+
+    // 拷贝一份，避免回调中 off/on 导致遍历异常
+    [...set].forEach((handler) => {
+      try {
+        handler(payload);
+      } catch (err) {
+        // 真实项目里建议统一上报/日志
+        console.error(`[EventBus] handler error on "${eventName}"`, err);
+      }
+    });
+  }
+}
+
+// ===== 使用示例 =====
+const bus = new EventBus();
+
+// 订阅者 A：更新 UI
+const unsubscribeA = bus.on("theme:change", (theme) => {
+  console.log("A 收到主题变更：", theme);
+});
+
+// 订阅者 B：持久化设置
+bus.on("theme:change", (theme) => {
+  console.log("B 保存主题到 localStorage：", theme);
+  localStorage.setItem("theme", theme);
+});
+
+// 发布者：某个地方触发主题切换
+bus.emit("theme:change", "dark");
+
+// 取消订阅（避免内存泄漏）
+unsubscribeA();
+bus.emit("theme:change", "light");
+````
+
+你会发现：发布方只管 `emit`，订阅方只管 `on`，彼此不需要引用对方模块。
+
+---
+
+## 4）常见应用场景（前端特别常见）
+
+### 4.1 跨组件/跨模块通信（尤其非父子关系）
+例如：Header 的登录状态变化，需要通知 Sidebar、UserCard、CartIcon 更新。
+
+### 4.2 全局事件：主题、语言、权限、网络状态
+- `i18n:change`
+- `auth:login` / `auth:logout`
+- `network:offline` / `network:online`
+
+### 4.3 异步流程编排与解耦
+比如：上传完成后，不同模块要做不同事情（刷新列表、提示 toast、埋点上报）。
+
+### 4.4 埋点/日志/监控
+业务代码只发布 `track:event`，具体由埋点模块订阅处理，实现“零侵入”。
+
+### 4.5 微前端/插件化架构
+子应用或插件通过消息总线沟通，避免硬依赖彼此实现细节。
+
+---
+
+## 5）注意事项（踩坑提醒）
+
+1. **记得取消订阅（避免内存泄漏）**  
+   在单页应用里，组件卸载但订阅没清理，会导致回调一直存在、重复执行、内存增长。  
+   建议 `on` 返回 `unsubscribe`，在卸载时调用。
+
+2. **避免“全局事件泛滥”**  
+   事件名太随意、到处 `emit` 会变成“隐式依赖”，排查问题困难。  
+   建议：
+   - 事件命名空间化：`module:action`（如 `auth:login`）
+   - 统一维护事件常量/文档
+
+3. **谨慎处理同步/异步时序**  
+   `emit` 默认同步执行订阅回调，若回调里有耗时逻辑会阻塞。  
+   可考虑：
+   - 回调内部自行异步（如 `queueMicrotask` / `setTimeout`）
+   - 或在 bus 中提供 `emitAsync`
+
+4. **错误隔离**  
+   一个订阅者抛错不应影响其他订阅者执行（上面示例用 `try/catch` 做了隔离）。
+
+5. **数据结构选择**  
+   用 `Set` 存回调可避免重复订阅同一个函数；遍历时建议拷贝，避免边遍历边修改。
+
+---
+
+## 小结
+
+发布-订阅模式解决的核心痛点是：**模块之间需要通信，但不想互相强耦合**。  
+通过事件中心把“谁发消息”和“谁处理消息”隔开，你能更轻松地扩展功能、替换模块、复用逻辑。
+

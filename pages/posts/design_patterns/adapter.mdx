@@ -1,0 +1,132 @@
+## 前端开发 JS 设计模式：适配器模式（Adapter Pattern）
+
+### 1）通过问题/需求引入概念：接口不一致，但我不想“全改”
+你可能遇到过这些真实场景：
+
+- **接入第三方 SDK**：对方回调参数结构和你项目内部约定不一致。
+- **替换基础库**：从 `axios` 换成 `fetch`，但业务代码里已经写死了 `http.get/post`。
+- **后端字段变更**：接口返回从 `user_name` 变成 `userName`，页面组件依赖旧字段导致大量改动。
+- **兼容老代码**：新模块使用新接口，但老模块只能接受旧格式。
+
+此时你想要的是：**不改（或少改）已有业务代码，只在“接入处”做一次转换**。  
+这就是适配器模式要解决的问题：**把一个对象/接口转换成另一个目标接口，让原本不兼容的代码能够协作**。
+
+---
+
+### 2）关键点简洁说明：适配器模式的本质
+适配器模式可以用一句话概括：
+
+> **在调用方和被调用方之间加一层“翻译器”，让调用方继续用自己习惯的接口。**
+
+它通常包含三类角色（不必死记名词，理解职责更重要）：
+
+- **Client（调用方）**：业务代码，期望使用某种固定接口（例如 `get(url)` 返回 `{ code, data }`）。
+- **Adaptee（被适配者）**：现有实现/第三方库/旧接口（例如 `fetch` 的 Response、第三方 SDK 返回结构）。
+- **Adapter（适配器）**：负责“转换”，对外暴露 Client 期望的接口，对内调用 Adaptee。
+
+适配器模式的目标不是“新增功能”，而是**消除接口差异**，降低改动范围。
+
+---
+
+### 3）简单代码例子：把 fetch 适配成项目统一的 http.get/http.post
+
+假设你的老项目统一约定：
+
+- `http.get(url)` 返回形如：`{ code: 0, data, message }`
+- `code === 0` 表示成功
+
+但现在你想用原生 `fetch`（返回的是 `Response`，还要 `json()`，错误处理也不同）。
+
+#### 3.1 业务方期望的用法（尽量不动）
+````js
+// 业务代码（不想改）
+async function loadUser() {
+  const res = await http.get('/api/user');
+  if (res.code !== 0) throw new Error(res.message);
+  return res.data;
+}
+````
+
+#### 3.2 适配器实现：对外保持旧接口，对内使用 fetch
+````js
+// Adapter：把 fetch 适配成 http.get/http.post
+const http = {
+  async get(url, options = {}) {
+    return requestAdapter(url, { ...options, method: 'GET' });
+  },
+
+  async post(url, body, options = {}) {
+    return requestAdapter(url, {
+      ...options,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+      },
+      body: JSON.stringify(body),
+    });
+  },
+};
+
+async function requestAdapter(url, options) {
+  try {
+    const resp = await fetch(url, options);
+
+    // 这里假设后端返回结构是 { success: boolean, payload, msg }
+    // 但业务方要的是 { code, data, message }
+    const json = await resp.json();
+
+    // 统一适配：协议转换 + 错误规约
+    if (!resp.ok) {
+      return {
+        code: resp.status,
+        data: null,
+        message: json?.msg || resp.statusText || 'Network Error',
+      };
+    }
+
+    return {
+      code: json.success ? 0 : 1,
+      data: json.payload,
+      message: json.msg || '',
+    };
+  } catch (e) {
+    return { code: -1, data: null, message: e?.message || 'Request Failed' };
+  }
+}
+````
+
+这样你就把差异“关”在适配器里：
+
+- 业务方继续使用 `http.get/post`
+- 替换底层实现（fetch/axios/小程序请求）时，只改适配器
+
+---
+
+### 4）常见应用场景（前端很常用）
+1. **第三方 SDK 接入适配**  
+   - 埋点 SDK：把 `track(eventName, payload)` 适配到你内部的 `report(type, data)`。
+   - 地图/支付/登录：第三方返回结构不同，用适配器转换为项目统一结构。
+
+2. **网络请求层统一**  
+   - `axios/fetch/uni.request` 适配为统一 `request(options)`，并统一注入 token、重试、错误码处理。
+
+3. **数据结构字段转换**  
+   - 后端字段命名风格不同（`snake_case` vs `camelCase`），适配器集中做转换，避免 UI 层到处判断。
+
+4. **组件 API 兼容**  
+   - 替换 UI 组件库时，把新组件包装成旧 props 形式，逐步迁移而不是一次性重构。
+
+5. **多端差异抹平（Web / 小程序 / RN）**  
+   - 用适配器把平台差异封装为统一接口，例如 `storage.get/set`、`clipboard.copy`。
+
+---
+
+### 5）注意事项：适配器别变成“垃圾桶”
+- **边界要清晰**：适配器负责“接口转换”，不要把大量业务逻辑也塞进去，否则会变成难维护的“万能层”。
+- **统一错误模型**：适配器要定义清楚成功/失败、错误码、异常与返回值的关系，避免调用方到处 `try/catch + if` 混用。
+- **避免过度包装**：如果系统内只有一处调用，不一定值得抽适配器；适配器适合“多处复用 + 稳定对外接口”。
+- **兼容性要可测试**：适配器是系统边界，建议加单测/契约测试，避免第三方接口变动导致全站问题。
+- **命名体现意图**：例如 `createAxiosAdapter()`、`mapUserDTOToVO()`，让读代码的人一眼知道“在转换”。
+
+---

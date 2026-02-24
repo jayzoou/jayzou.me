@@ -6,7 +6,8 @@ export const mainLinks: LinkItem[] = [
 ]
 
 export const postSmallLinks: LinkItem[] = [
-  { to: '/posts/js_core', label: 'JavaScript Core' },
+  { to: '/posts/js_core', label: 'JS核心' },
+  { to: '/posts/design_patterns', label: '设计模式' },
   { to: '/posts/algorithm', label: '算法' },
 ]
 
