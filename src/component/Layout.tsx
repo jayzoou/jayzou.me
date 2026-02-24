@@ -36,7 +36,8 @@ const Layout = () => {
     location.pathname === '/posts/english/grammar' ||
     location.pathname === '/posts/english/document'||
     location.pathname === '/posts/algorithm' ||
-    location.pathname === '/posts/design_patterns'
+    location.pathname === '/posts/design_patterns' ||
+    location.pathname === '/posts/frontend'
   
   const showToc = isPostPage && !isIndexPage
 
