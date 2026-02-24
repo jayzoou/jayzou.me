@@ -1,0 +1,399 @@
+# JavaScript 值与类型
+
+本文系统梳理 JavaScript 的**数据类型体系**与**隐式类型转换**规则，覆盖工程高频场景：`typeof` 判断、`+` 运算、`==` 宽松相等、关系比较，以及对象参与运算时的 `ToPrimitive` 行为，并给出一组经典预测题与工程建议。
+
+---
+
+## 1. JavaScript 数据类型全景
+
+### 1.1 原始类型（Primitive，7 种）
+- `undefined`
+- `null`
+- `boolean`
+- `number`（包含 `NaN`、`Infinity`、`-0`）
+- `string`
+- `symbol`
+- `bigint`
+
+特点：
+- 原始值语义上“按值”使用
+- 不可变（例如字符串操作会创建新字符串）
+
+### 1.2 对象类型（Object，1 大类）
+- `object`：普通对象、数组、函数、日期、正则、Map/Set 等
+
+特点：
+- 变量保存的是**引用**
+- 多个变量可指向同一对象，修改彼此可见
+
+---
+
+## 2. 类型检测：`typeof` / `instanceof` / 更可靠的方式
+
+### 2.1 `typeof` 常见输出与坑
+````js
+typeof undefined         // "undefined"
+typeof null              // "object"（历史遗留）
+typeof 123               // "number"
+typeof NaN               // "number"
+typeof 1n                // "bigint"
+typeof "x"               // "string"
+typeof true              // "boolean"
+typeof Symbol("s")       // "symbol"
+typeof function() {}     // "function"
+typeof []                // "object"
+typeof {}                // "object"
+````
+
+### 2.2 区分数组/日期等：推荐
+````js
+Array.isArray([]) // true
+
+Object.prototype.toString.call([])       // "[object Array]"
+Object.prototype.toString.call(new Date) // "[object Date]"
+````
+
+### 2.3 `instanceof` 的语义
+`a instanceof B` 判断的是：**`B.prototype` 是否出现在 `a` 的原型链上**。它不是通用“类型判断”，跨 iframe/realm 时可能失效。
+
+---
+
+## 3. 隐式转换：会在什么场景发生？
+
+常见触发点：
+
+- `+`（可能拼接，也可能加法）
+- `- * / % **`（一般走数值运算）
+- `==`（宽松相等）
+- `< > <= >=`（关系比较）
+- 条件判断：`if (x)`、`while (x)`、`?:`（ToBoolean）
+- 字符串上下文：`` `${x}` ``、`"a" + x`（ToString/ToPrimitive）
+
+规范抽象操作可归纳为：
+- **ToBoolean**
+- **ToNumber**
+- **ToString**
+- **ToPrimitive**（对象转原始值）
+
+---
+
+## 4. ToBoolean：哪些值会被当作 false？
+
+只有以下值是 falsy，其余全部 truthy：
+
+- `false`
+- `0`、`-0`
+- `0n`
+- `""`
+- `null`
+- `undefined`
+- `NaN`
+
+````js
+Boolean([])   // true
+Boolean({})   // true
+Boolean("0")  // true
+Boolean(" ")  // true
+````
+
+---
+
+## 5. ToNumber：常见输入的数值转换结果
+
+````js
+Number("42")          // 42
+Number("42px")        // NaN
+Number("")            // 0
+Number(" ")           // 0
+Number(null)          // 0
+Number(undefined)     // NaN
+Number(true)          // 1
+Number(false)         // 0
+Number([])            // 0
+Number([1])           // 1
+Number([1,2])         // NaN
+Number({})            // NaN
+````
+
+### `Number` vs `parseInt/parseFloat`
+- `Number("42px")` → `NaN`
+- `parseInt("42px", 10)` → `42`（从头解析，遇到非法字符停止）
+
+````js
+parseInt("08", 10) // 8（建议总是写 radix=10）
+````
+
+---
+
+## 6. ToString：常见输入的字符串转换结果
+
+````js
+String(123)         // "123"
+String(null)        // "null"
+String(undefined)   // "undefined"
+String([1,2,3])     // "1,2,3"
+String({})          // "[object Object]"
+String(Symbol("x")) // "Symbol(x)"（显式转换允许）
+````
+
+注意：`Symbol` 不能被**隐式**转成字符串：
+````js
+Symbol("x") + "" // TypeError
+````
+
+---
+
+## 7. ToPrimitive：对象如何变成原始值（理解怪异比较的关键）
+
+对象参与 `+`、`==`、`<` 等运算时，会先执行 `ToPrimitive`：
+
+1. 若存在 `obj[Symbol.toPrimitive]`，优先调用（传入 hint）
+2. 否则按 hint 决定顺序（概念化记法）：
+   - hint `"number"`：先 `valueOf()`，再 `toString()`
+   - hint `"string"`：先 `toString()`，再 `valueOf()`
+   - hint `"default"`：多数对象接近 `"number"`；**Date 更偏 `"string"`**
+
+````js
+const d = new Date("2020-01-01")
+
+String(d) // 日期字符串
+Number(d) // 时间戳数值（有效日期时）
+````
+
+---
+
+## 8. 运算符的隐式转换规则（最高频）
+
+### 8.1 `+`：拼接与加法的分水岭
+- 若任一侧在转换后走字符串路径，则执行**字符串拼接**
+- 否则执行**数值相加**
+
+````js
+1 + "2"        // "12"
+"1" + 2        // "12"
+1 + 2 + "3"    // "33"
+"1" + 2 + 3    // "123"
+````
+
+### 8.2 其他算术运算：通常转数字
+````js
+"6" * "7"   // 42
+"10" - 1    // 9
+"10" / 2    // 5
+"2" ** 3    // 8
+````
+
+---
+
+## 9. `==`（宽松相等）：速查表与结论
+
+工程上建议：优先 `===` / `!==`。但读代码、排查问题时必须懂 `==`。
+
+### 9.1 最重要的特例：`null` / `undefined`
+| 表达式 | 结果 |
+|---|---:|
+| `null == undefined` | `true` |
+| `null == 0` | `false` |
+| `undefined == 0` | `false` |
+
+结论：`null` 只在 `==` 下与 `undefined` 相等。
+
+### 9.2 有 `boolean`：先转数字
+- `true → 1`
+- `false → 0`
+
+````js
+false == "0" // true（false->0, "0"->0）
+````
+
+### 9.3 `number` vs `string`：字符串转数字
+````js
+"0" == 0 // true
+""  == 0 // true
+" " == 0 // true
+````
+
+### 9.4 有 `object`：对象先 ToPrimitive
+````js
+[] == ""     // true（[] -> ""）
+[] == 0      // true（[] -> "" -> 0）
+[1] == 1     // true（[1] -> "1" -> 1）
+[1,2] == "1,2" // true（[1,2] -> "1,2"）
+````
+
+### 9.5 对象字面量的语法坑
+直接写 `{}` 在表达式位置可能被当作代码块。比较对象字面量请加括号：
+````js
+({}) == "[object Object]" // true（通常会 ToPrimitive 成该字符串）
+````
+
+---
+
+## 10. 关系比较 `< > <= >=`：字符串字典序 vs 数值比较
+
+- 两边都是字符串：按**字典序**
+- 否则：通常转为数值比较
+
+````js
+"2" > "10" // true（字典序）
+"2" > 10   // false（"2" -> 2）
+````
+
+---
+
+## 11. BigInt 与 Symbol：隐式转换的限制
+
+### 11.1 BigInt 不能与 Number 混合运算
+````js
+1n + 1 // TypeError
+````
+
+显式统一类型：
+````js
+1n + 1n           // 2n
+Number(1n) + 1    // 2
+BigInt(1) + 1n    // 2n
+````
+
+### 11.2 Symbol 不能被隐式转成字符串/数字
+````js
+Symbol("x") + "" // TypeError
+String(Symbol("x")) // "Symbol(x)"（显式转换可以）
+````
+
+---
+
+## 12. 预测输出：20 道经典题（含最简解析）
+
+> 解析只给关键转换路径，便于你自行复盘。
+
+1.
+````js
+0 == ""
+````
+**true**（`"" -> 0`）
+
+2.
+````js
+0 == "0"
+````
+**true**（`"0" -> 0`）
+
+3.
+````js
+"" == "0"
+````
+**false**（同为字符串直接比）
+
+4.
+````js
+false == 0
+````
+**true**（`false -> 0`）
+
+5.
+````js
+false == "0"
+````
+**true**（`false -> 0`，`"0" -> 0`）
+
+6.
+````js
+false == ""
+````
+**true**（`false -> 0`，`"" -> 0`）
+
+7.
+````js
+null == undefined
+````
+**true**（特例）
+
+8.
+````js
+null == 0
+````
+**false**（特例）
+
+9.
+````js
+undefined == 0
+````
+**false**（特例）
+
+10.
+````js
+[] == ""
+````
+**true**（`[] -> ""`）
+
+11.
+````js
+[] == 0
+````
+**true**（`[] -> "" -> 0`）
+
+12.
+````js
+[0] == 0
+````
+**true**（`[0] -> "0" -> 0`）
+
+13.
+````js
+[1] == 1
+````
+**true**（`[1] -> "1" -> 1`）
+
+14.
+````js
+[1,2] == "1,2"
+````
+**true**（`[1,2] -> "1,2"`）
+
+15.
+````js
+({}) == "[object Object]"
+````
+**true**（对象 ToPrimitive 后比较）
+
+16.
+````js
+"2" > "10"
+````
+**true**（字典序）
+
+17.
+````js
+"2" > 10
+````
+**false**（`"2" -> 2`）
+
+18.
+````js
+"" + 1 + 2
+````
+**"12"**（先拼接 `"1"`，再拼接 `"2"`）
+
+19.
+````js
+1 + 2 + ""
+````
+**"3"**（先算数值 3，再拼接）
+
+20.
+````js
+"5" - "2" + "1"
+````
+**"31"**（`"5"-"2" -> 3`，`3 + "1"` 拼接）
+
+---
+
+## 13. 工程实践建议（直接减少线上坑）
+
+1. **默认使用 `===` / `!==`**，避免 `==` 的隐式路径
+2. 输入数据（表单、URL 参数、localStorage）默认当字符串：需要数值就**显式 `Number()`**
+3. 少让“可能是数字也可能是字符串”的变量直接参与 `+`
+4. 只想判断 `null/undefined` 时，`x == null` 是一个可读且常见的写法
+5. 整数解析使用 `parseInt(str, 10)`；需要严格数值校验用 `Number()` + `Number.isNaN`
+6. BigInt 与 Number 不混算；Symbol 避免隐式拼接

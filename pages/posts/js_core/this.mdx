@@ -1,0 +1,241 @@
+# 彻底搞懂 JavaScript `this`：从“谁在打电话”说起
+
+`this` 是 JS 里最像“口头禅”的东西：写的时候顺手，用的时候迷糊。很多 bug 不是你逻辑错了，而是 **`this` 指向变了**。
+
+这篇不背规则表，我们用一个类比讲清楚：**`this` 就是“电话里说的‘我’”——关键不在“我是谁”，而在“谁打来的这通电话”。**
+
+---
+
+## 1. 为什么 `this` 这么让人头疼？
+
+因为 `this` **不是在函数定义时决定的**，而是大多在**调用时决定**：
+
+- 同一个函数，放在不同地方调用，`this` 可能完全不同
+- 一旦函数被“拎出来”单独调用，`this` 很容易丢
+
+所以理解 `this` 的关键是：**看调用形式（call-site）**。
+
+---
+
+## 2. 类比：打电话时的“我”是谁？
+
+你在电话里说“我现在很忙”。
+
+- 如果是你妈打来的，“我”是你
+- 如果你把手机给朋友接着说，“我”就变成朋友了
+- 如果你开了免提让 Siri 代接，“我”可能又不是人类了
+
+JS 也是一样：函数里写的 `this`，要看“是谁用什么方式调用了它”。
+
+---
+
+## 3. 4 条核心规则：`this` 到底指向谁？
+
+把复杂问题压缩成 4 条优先级规则（从高到低）：
+
+### 规则 1：`new` 调用（`this` 指向新对象）
+````js
+function Person(name) {
+  this.name = name
+}
+const p = new Person('Alice')
+console.log(p.name) // Alice
+````
+
+`new` 做了几件事：创建新对象、绑定原型、把 `this` 指向这个新对象、执行函数、返回对象。
+
+---
+
+### 规则 2：显式绑定 `call/apply/bind`
+````js
+function say() {
+  console.log(this.name)
+}
+
+const obj = { name: 'Bob' }
+
+say.call(obj)  // Bob
+say.apply(obj) // Bob
+
+const fn = say.bind(obj)
+fn() // Bob
+````
+
+- `call(thisArg, ...args)`：立刻调用
+- `apply(thisArg, argsArray)`：立刻调用（参数数组）
+- `bind(thisArg, ...args)`：返回一个“绑定了 this 的新函数”
+
+---
+
+### 规则 3：隐式绑定（“点”左边是谁，`this` 就是谁）
+````js
+const obj = {
+  name: 'Cindy',
+  say() {
+    console.log(this.name)
+  },
+}
+
+obj.say() // Cindy
+````
+
+注意：这条最容易“丢”。
+
+#### 隐式丢失经典坑
+````js
+const obj = {
+  name: 'Cindy',
+  say() {
+    console.log(this.name)
+  },
+}
+
+const f = obj.say
+f() // this 丢了：非严格模式可能是 window/globalThis，严格模式是 undefined
+````
+
+因为调用点变成了 `f()`，已经不是 `obj.say()` 了。
+
+---
+
+### 规则 4：默认绑定（没人管时 `this` 是谁？）
+- **严格模式**：`this === undefined`
+- **非严格模式**：`this === globalThis`（浏览器里通常是 `window`）
+
+````js
+'use strict'
+function foo() {
+  console.log(this)
+}
+foo() // undefined
+````
+
+---
+
+## 4. 箭头函数：它压根没有自己的 `this`
+
+箭头函数的 `this` 不是调用时绑定，而是**定义时从外层继承**（词法 `this`）。
+
+````js
+const obj = {
+  name: 'Daisy',
+  say: function () {
+    const inner = () => {
+      console.log(this.name)
+    }
+    inner()
+  },
+}
+
+obj.say() // Daisy
+````
+
+如果 `inner` 是普通函数，`inner()` 默认绑定会让 `this` 丢；箭头函数则会“抓住外层的 this”。
+
+### 箭头函数的一个误区：不能拿来当方法
+````js
+const obj = {
+  name: 'Evan',
+  say: () => {
+    console.log(this.name)
+  },
+}
+
+obj.say() // 通常是 undefined（因为箭头函数 this 来自定义时的外层，而不是 obj）
+````
+
+结论：**对象方法尽量用普通函数；需要继承外层 this 时再用箭头函数。**
+
+---
+
+## 5. DOM 事件里的 `this`：你以为是你，其实是元素
+
+````js
+button.addEventListener('click', function () {
+  console.log(this) // button 元素
+})
+````
+
+因为监听器回调是由浏览器以“元素作为调用者”触发的。
+
+但如果你写箭头函数：
+
+````js
+button.addEventListener('click', () => {
+  console.log(this) // 外层 this（通常不是 button）
+})
+````
+
+想在事件里用元素本身，更通用的方式是用事件对象：
+
+````js
+button.addEventListener('click', (e) => {
+  console.log(e.currentTarget) // 总是当前绑定监听的元素
+})
+````
+
+---
+
+## 6. 类（class）里最常见的 `this` 坑：方法被当回调传走
+
+````js
+class Counter {
+  constructor() {
+    this.count = 0
+  }
+  inc() {
+    this.count++
+  }
+}
+
+const c = new Counter()
+setTimeout(c.inc, 0) // this 丢了
+````
+
+修正方式：
+
+### A. 构造器里 bind（最传统）
+````js
+class Counter {
+  constructor() {
+    this.count = 0
+    this.inc = this.inc.bind(this)
+  }
+  inc() {
+    this.count++
+  }
+}
+````
+
+### B. 用箭头函数类字段（更常见）
+````js
+class Counter {
+  count = 0
+  inc = () => {
+    this.count++
+  }
+}
+````
+
+---
+
+## 7. 一眼定位 `this` 的实用步骤（排查法）
+
+遇到 `this` 不对，按这个顺序看：
+
+1. 这次调用是不是 `new`？
+2. 有没有 `call/apply/bind` 显式指定？
+3. 调用点是不是 `obj.fn()` 这种“点调用”？点左边是谁？
+4. 都不是：默认绑定（严格模式 undefined / 非严格 globalThis）
+5. 如果是箭头函数：跳过以上规则，直接看它定义时外层的 `this`
+
+---
+
+## 总结：`this` 不是“我是谁”，是“谁在调用我”
+
+把 `this` 牢记成一句话：
+
+- **普通函数：`this` 看调用点**
+- **箭头函数：`this` 看定义点（继承外层）**
+- **最容易出事：方法当回调传走导致隐式丢失**
+- **最稳的解决：bind 或箭头函数类字段 / 在事件里用 `currentTarget`**

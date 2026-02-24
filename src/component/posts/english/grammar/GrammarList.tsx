@@ -5,6 +5,8 @@ const grammarPages = [
   { path: '/posts/english/grammar/element', title: '成分', desc: '主语、谓语、宾语、定语、状语、补语' },
   { path: '/posts/english/grammar/part-of-speech', title: '词性', desc: '名词、动词、形容词、副词等' },
   { path: '/posts/english/grammar/noun-phrase', title: '名词短语', desc: '英文里“名词”几乎从不单独出现' },
+  { path: '/posts/english/grammar/adjective', title: '形容词', desc: '形容词修饰名词' },
+  { path: '/posts/english/grammar/adverb', title: '副词', desc: '副词修饰动词、形容词或其他副词' },
   { path: '/posts/english/grammar/basic-sentence-patterns', title: '基本句型', desc: '五种基本句型结构' },
   { path: '/posts/english/grammar/noun-clause', title: '名词性从句', desc: '主语从句、宾语从句、表语从句、同位语从句' },
   { path: '/posts/english/grammar/adj-clause', title: '定语从句', desc: '形容词性从句' },

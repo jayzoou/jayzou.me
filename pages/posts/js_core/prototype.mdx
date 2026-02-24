@@ -1,0 +1,218 @@
+# 彻底搞懂 JavaScript 原型链：从“找人盖章”说起
+
+原型链（Prototype Chain）是 JS 面向对象的“底层规则”。你可以不用 class 也能写出继承；你也可以写了 class 却被它坑——根源往往都在原型链。
+
+这篇不背概念，用一个生活类比讲清楚：**原型链就像办事“找人盖章”**。
+
+---
+
+## 1. 为什么需要原型链？
+
+想象你有 10000 个对象，它们都需要同一个方法：
+
+- 如果每个对象自己存一份方法：内存爆炸
+- 如果有一份“公共方法库”，大家都能用：节省、统一、易维护
+
+JS 的做法是：把公共属性/方法放到“上级部门”（原型）里；对象自己找不到就去上级找，这条向上查找的路径就是**原型链**。
+
+---
+
+## 2. 类比：办事找人盖章
+
+你去办手续，需要一个“同意”章：
+
+1. 先问 **窗口柜员**（对象本身）：“你能盖吗？”
+2. 柜员说没有权限，就问 **柜员的主管**（对象的原型）
+3. 主管还不行，就再往上问 **科长/局长**（原型的原型）
+4. 直到找到能盖章的人，或者一路问到“最高层也没人管”（`null`），宣布办不了
+
+对应到 JS：
+
+- 对象自己的属性：自己就能“盖章”
+- 原型上的属性：上级能“盖章”
+- 一路向上查找：原型链
+- 顶层：`Object.prototype`
+- 再往上：`null`（链的尽头）
+
+---
+
+## 3. 三个核心角色：`[[Prototype]]`、`__proto__`、`prototype`
+
+这块是最容易混的地方，记一套“人物关系”就清晰了：
+
+### A. `[[Prototype]]`：对象的“上级部门”（内部槽）
+每个对象都有一个内部指针指向它的原型：`[[Prototype]]`  
+你不能直接写 `obj.[[Prototype]]`，它是规范层面的东西。
+
+### B. `__proto__`：访问 `[[Prototype]]` 的“老式门”
+多数环境提供 `obj.__proto__` 让你读写原型（历史遗留，不推荐生产代码依赖）。
+
+推荐用：
+- `Object.getPrototypeOf(obj)`
+- `Object.setPrototypeOf(obj, proto)`（谨慎使用，性能差）
+
+### C. `prototype`：函数的“公共方法仓库”（专给 `new` 用）
+只有**函数**才有 `prototype` 属性（箭头函数除外），它是给 `new` 出来的实例当“上级部门”的。
+
+一句话关系链：
+
+- `obj.__proto__ === Constructor.prototype`
+- `Object.getPrototypeOf(obj) === Constructor.prototype`
+
+---
+
+## 4. 原型链怎么工作：属性查找规则
+
+看代码，一眼理解“先自己、再上级、再上上级”：
+
+````js
+const parent = { skill: '盖章' }
+const child = Object.create(parent)
+
+child.name = '小王'
+
+console.log(child.name)  // 小王（自己有）
+console.log(child.skill) // 盖章（自己没有，去原型 parent 找到了）
+````
+
+### 覆盖（shadowing）：我自己有，就不找上级了
+````js
+const proto = { x: 1 }
+const obj = Object.create(proto)
+
+console.log(obj.x) // 1（来自原型）
+obj.x = 2
+console.log(obj.x) // 2（自己的 x 覆盖了原型的 x）
+````
+
+注意：**这不是“改了原型”**，而是给对象自己新增了一个同名属性。
+
+---
+
+## 5. `new` 到底干了什么？（原型链的“生成入口”）
+
+````js
+function Person(name) {
+  this.name = name
+}
+Person.prototype.say = function () {
+  console.log('I am', this.name)
+}
+
+const p = new Person('Alice')
+p.say()
+````
+
+`new Person('Alice')` 关键步骤可以理解为：
+
+1. 创建一个空对象 `{}`  
+2. 把这个对象的 `[[Prototype]]` 指向 `Person.prototype`  
+3. 用 `this` 调用 `Person`，初始化属性  
+4. 返回这个对象（除非构造函数显式返回一个对象）
+
+所以才会成立：
+
+````js
+console.log(Object.getPrototypeOf(p) === Person.prototype) // true
+````
+
+---
+
+## 6. `instanceof` 是怎么判断的？
+
+`a instanceof B` 本质是在问：
+
+> `B.prototype` 是否出现在 `a` 的原型链上？
+
+````js
+function A() {}
+const a = new A()
+
+console.log(a instanceof A)      // true
+console.log(a instanceof Object) // true（因为 A.prototype 的上面最终会到 Object.prototype）
+````
+
+---
+
+## 7. 两个常见坑：写代码时最容易被原型链坑到的地方
+
+### 坑 A：把“共享数据”放到原型上，所有实例一起变
+````js
+function Bag() {}
+Bag.prototype.items = [] // 共享同一个数组（危险）
+
+const b1 = new Bag()
+const b2 = new Bag()
+
+b1.items.push('apple')
+console.log(b2.items) // ['apple'] 也变了
+````
+
+修正：把实例数据放到构造函数里，原型只放方法。
+
+````js
+function Bag() {
+  this.items = []
+}
+Bag.prototype.add = function (x) {
+  this.items.push(x)
+}
+````
+
+---
+
+### 坑 B：忘了 `constructor` 或错误替换原型对象
+很多人这样写继承：
+
+````js
+function Parent() {}
+function Child() {}
+
+Child.prototype = new Parent()
+````
+
+这样会导致 `Child.prototype.constructor` 指向 `Parent`（不一定致命，但常常不符合预期）。
+
+常见修正：
+
+````js
+Child.prototype = Object.create(Parent.prototype)
+Child.prototype.constructor = Child
+````
+
+---
+
+## 8. class 只是语法糖：它的继承仍然靠原型链
+
+````js
+class Parent {
+  say() { console.log('parent') }
+}
+
+class Child extends Parent {
+  say() {
+    super.say()
+    console.log('child')
+  }
+}
+
+const c = new Child()
+c.say()
+````
+
+背后的事实仍是：
+
+- 实例的原型链：`c -> Child.prototype -> Parent.prototype -> Object.prototype -> null`
+- 方法查找仍然是沿链向上“找人盖章”
+
+---
+
+## 总结：原型链就是“向上查找的组织架构”
+
+记住这几个结论，你就真正掌握了原型链：
+
+- **对象找属性：先自己，再原型，再原型的原型……直到 `null`**
+- **`prototype` 是函数给实例准备的“公共方法区”**
+- **`__proto__`/`getPrototypeOf` 连接对象与原型**
+- **原型适合放方法，不适合放会变化的共享数据**
+- **class/extends 仍然是原型链在工作**
