@@ -1,0 +1,490 @@
+# Vue 响应式系统详解：从 Vue2 到 Vue3
+
+## 1. 响应式系统的作用
+
+**响应式系统**的目标是：当数据发生变化时，依赖这些数据的“副作用”（如组件渲染、计算属性、监听回调）能够**自动、精确、尽可能高效**地重新执行。
+
+它通常包含三部分能力：
+
+- **依赖收集（track）**：在“读取数据”时记录“谁用到了它”。
+- **派发更新（trigger）**：在“写入数据”时通知依赖方重新执行。
+- **调度优化（scheduler）**：合并多次变更、去重执行、延后到合适的时机（例如微任务）刷新，避免重复渲染。
+
+一个通用抽象是：
+
+- 读取时：把“当前正在执行的副作用函数 effect”加入依赖集合
+- 写入时：找到依赖集合里的 effect，重新运行（或交给调度器）
+
+---
+
+## 2. Vue2 与 Vue3 响应式实现对比
+
+### 2.1 Vue2：`Object.defineProperty`（getter/setter）
+
+Vue2 的基本策略是**“初始化时遍历对象的每个属性”**，把它们改造成带 getter/setter 的响应式属性：
+
+- getter：收集依赖（把 watcher 记到 dep 里）
+- setter：派发更新（通知 dep 里的 watcher）
+
+**主要局限：**
+
+1. **必须预先遍历/递归观测**  
+   初始化成本高，深层对象更明显。
+2. **无法原生拦截新增/删除属性**  
+   只能拦截“已有 key”的 get/set，因此 Vue2 需要 `Vue.set` / `Vue.delete`。
+3. **数组响应式要打补丁**  
+   `defineProperty` 很难完整覆盖索引与 length 的变化，Vue2 通过重写 `push/pop/splice...` 等方法来触发更新。
+
+简化理解版：
+
+````js
+let activeWatcher = null
+
+class Dep {
+  constructor() { this.subs = new Set() }
+  depend() { if (activeWatcher) this.subs.add(activeWatcher) }
+  notify() { this.subs.forEach(w => w()) }
+}
+
+function defineReactive(obj, key, val) {
+  const dep = new Dep()
+  Object.defineProperty(obj, key, {
+    get() {
+      dep.depend()
+      return val
+    },
+    set(newVal) {
+      if (newVal === val) return
+      val = newVal
+      dep.notify()
+    }
+  })
+}
+
+function observe(obj) {
+  Object.keys(obj).forEach(k => defineReactive(obj, k, obj[k]))
+  return obj
+}
+
+function watchEffect(fn) {
+  activeWatcher = fn
+  fn()
+  activeWatcher = null
+}
+
+const state = observe({ count: 0 })
+watchEffect(() => console.log('count:', state.count))
+state.count++
+````
+
+---
+
+### 2.2 Vue3：`Proxy` + `Reflect`（运行时拦截）
+
+Vue3 使用 `Proxy` 对对象操作做运行时拦截，核心优势是**拦截面更完整**：
+
+- `get/set`：读写属性
+- `deleteProperty`：删除属性
+- `has`：`key in obj`
+- `ownKeys`：`Object.keys` / `for...in` 等依赖
+- 数组索引与 `length` 变化也能统一纳入拦截体系
+
+#### 为什么 Vue3 要这么做？
+
+1. **新增/删除属性可拦截**  
+   不再需要 `Vue.set/delete`。
+2. **数组处理统一**  
+   push/splice/索引/length 本质都是属性读写，Proxy 更自然。
+3. **可做“懒代理”（按需深度）**  
+   读取到嵌套对象时再把它转为响应式，避免 Vue2 初始化深度递归成本。
+4. **更强的语言级能力**  
+   迭代（keys/for...in）也能形成依赖关系，更新更准确。
+
+---
+
+## 3. Vue3 响应式核心：一个更完整的教学实现
+
+下面实现一套“可运行的核心骨架”，包含：
+
+- `effect`（支持嵌套 effect 栈）
+- `cleanup`（分支切换时清理旧依赖）
+- `scheduler + jobQueue`（批处理/去重/微任务刷新）
+- `reactive`（Proxy + 懒代理 + 新增/删除 + 迭代依赖）
+- `ref`（原始值响应式）
+- `computed`（懒执行+缓存+脏标记）
+
+### 3.1 依赖结构：`WeakMap -> Map -> Set`
+
+- `targetMap: WeakMap<target, Map<key, Set<effect>>>`
+- WeakMap 不阻止垃圾回收，避免内存泄漏
+- Set 去重，保证同一 effect 不重复收集
+
+### 3.2 effect 栈 + cleanup：解决嵌套与“依赖残留”
+
+````js
+// ===== 依赖桶 =====
+const targetMap = new WeakMap()
+
+let activeEffect = null
+const effectStack = []
+
+function cleanup(effectFn) {
+  for (const dep of effectFn.deps) dep.delete(effectFn)
+  effectFn.deps.length = 0
+}
+
+function effect(fn, options = {}) {
+  const effectFn = () => {
+    cleanup(effectFn)
+    activeEffect = effectFn
+    effectStack.push(effectFn)
+    const res = fn()
+    effectStack.pop()
+    activeEffect = effectStack[effectStack.length - 1] || null
+    return res
+  }
+  effectFn.deps = []
+  effectFn.options = options
+
+  if (!options.lazy) effectFn()
+  return effectFn
+}
+
+function track(target, key) {
+  if (!activeEffect) return
+
+  let depsMap = targetMap.get(target)
+  if (!depsMap) {
+    depsMap = new Map()
+    targetMap.set(target, depsMap)
+  }
+
+  let dep = depsMap.get(key)
+  if (!dep) {
+    dep = new Set()
+    depsMap.set(key, dep)
+  }
+
+  if (!dep.has(activeEffect)) {
+    dep.add(activeEffect)
+    activeEffect.deps.push(dep)
+  }
+}
+
+function trigger(target, key) {
+  const depsMap = targetMap.get(target)
+  if (!depsMap) return
+  const dep = depsMap.get(key)
+  if (!dep) return
+
+  const effectsToRun = new Set(dep)
+  effectsToRun.forEach(effectFn => {
+    const scheduler = effectFn.options.scheduler
+    if (scheduler) scheduler(effectFn)
+    else effectFn()
+  })
+}
+````
+
+**cleanup 的意义（分支切换示例）**：
+
+````js
+// ok=true 时依赖 a；ok=false 时依赖 b
+// 没 cleanup 会导致切换后仍“残留依赖 a”
+````
+
+---
+
+### 3.3 调度器 scheduler：批处理与去重
+
+Vue3 常用微任务队列合并更新：
+
+````js
+const jobQueue = new Set()
+let isFlushing = false
+const resolvedPromise = Promise.resolve()
+
+function queueJob(job) {
+  jobQueue.add(job)
+  if (isFlushing) return
+  isFlushing = true
+  resolvedPromise.then(() => {
+    try {
+      jobQueue.forEach(job => job())
+    } finally {
+      jobQueue.clear()
+      isFlushing = false
+    }
+  })
+}
+````
+
+使用方式：
+
+````js
+const state = reactive({ count: 0 })
+
+effect(
+  () => console.log('render:', state.count),
+  { scheduler: queueJob }
+)
+
+state.count++
+state.count++
+state.count++
+// 同一轮事件循环里，render 通常只会被合并执行一次（最终值）
+````
+
+---
+
+## 4. 非原始值的响应式方案：`reactive()`（对象/数组为主）
+
+### 4.1 迭代依赖：`ownKeys` + `ITERATE_KEY`
+
+当你写：
+
+- `Object.keys(obj)`
+- `for (const k in obj) {}`
+
+依赖的不是某个具体属性，而是“键集合”。因此需要一个特殊 key 表示迭代依赖。
+
+````js
+const ITERATE_KEY = Symbol('iterate')
+
+const reactiveMap = new WeakMap()
+function isObject(v) { return v !== null && typeof v === 'object' }
+
+function reactive(target) {
+  if (!isObject(target)) return target
+
+  const cached = reactiveMap.get(target)
+  if (cached) return cached
+
+  const proxy = new Proxy(target, {
+    get(t, key, r) {
+      const res = Reflect.get(t, key, r)
+      track(t, key)
+      return isObject(res) ? reactive(res) : res // 懒代理
+    },
+    set(t, key, val, r) {
+      const hadKey = Object.prototype.hasOwnProperty.call(t, key)
+      const oldVal = t[key]
+      const result = Reflect.set(t, key, val, r)
+
+      if (!hadKey) {
+        trigger(t, key)
+        trigger(t, ITERATE_KEY) // 新增 key 影响遍历
+      } else if (oldVal !== val) {
+        trigger(t, key)
+      }
+      return result
+    },
+    deleteProperty(t, key) {
+      const hadKey = Object.prototype.hasOwnProperty.call(t, key)
+      const result = Reflect.deleteProperty(t, key)
+      if (hadKey && result) {
+        trigger(t, key)
+        trigger(t, ITERATE_KEY) // 删除 key 影响遍历
+      }
+      return result
+    },
+    ownKeys(t) {
+      track(t, ITERATE_KEY)
+      return Reflect.ownKeys(t)
+    }
+  })
+
+  reactiveMap.set(target, proxy)
+  return proxy
+}
+````
+
+验证：
+
+````js
+const obj = reactive({ a: 1 })
+
+effect(() => {
+  console.log('keys:', Object.keys(obj).join(','))
+})
+
+obj.b = 2     // 触发（keys 变化）
+delete obj.a  // 触发（keys 变化）
+````
+
+### 4.2 数组的 `length` 与索引（简化覆盖）
+
+数组常见的依赖点是 `length`，并且“写入更大索引”会改变 length。这里给一个教学版的简化处理：
+
+````js
+function isArrayIndex(key) {
+  const n = Number(key)
+  return Number.isInteger(n) && n >= 0 && String(n) === String(key)
+}
+
+function reactive(target) {
+  if (!isObject(target)) return target
+
+  const cached = reactiveMap.get(target)
+  if (cached) return cached
+
+  const proxy = new Proxy(target, {
+    get(t, key, r) {
+      const res = Reflect.get(t, key, r)
+      track(t, key)
+      return isObject(res) ? reactive(res) : res
+    },
+    set(t, key, val, r) {
+      const isArr = Array.isArray(t)
+      const oldLen = isArr ? t.length : 0
+
+      const hadKey = Object.prototype.hasOwnProperty.call(t, key)
+      const oldVal = t[key]
+      const result = Reflect.set(t, key, val, r)
+
+      if (!hadKey) {
+        trigger(t, key)
+        if (isArr && isArrayIndex(key) && Number(key) >= oldLen) {
+          trigger(t, 'length')
+        } else {
+          trigger(t, ITERATE_KEY)
+        }
+      } else if (oldVal !== val) {
+        trigger(t, key)
+      }
+
+      if (isArr && key === 'length') {
+        trigger(t, 'length')
+      }
+      return result
+    },
+    deleteProperty(t, key) {
+      const hadKey = Object.prototype.hasOwnProperty.call(t, key)
+      const result = Reflect.deleteProperty(t, key)
+      if (hadKey && result) {
+        trigger(t, key)
+        trigger(t, ITERATE_KEY)
+      }
+      return result
+    },
+    ownKeys(t) {
+      track(t, Array.isArray(t) ? 'length' : ITERATE_KEY)
+      return Reflect.ownKeys(t)
+    }
+  })
+
+  reactiveMap.set(target, proxy)
+  return proxy
+}
+````
+
+示例：
+
+````js
+const arr = reactive([1, 2])
+
+effect(() => console.log('len:', arr.length))
+arr.push(3)    // 触发 length
+arr[10] = 99   // 触发 length（length 变大）
+````
+
+> 说明：真实 Vue3 对数组触发范围更严谨（缩短 length 时还要触发被截断索引的依赖等）。本文实现用于理解“为什么要特殊处理 length”。
+
+---
+
+## 5. 原始值的响应式方案：`ref()`
+
+### 5.1 为什么需要 ref
+
+原始值（number/string/boolean/symbol/bigint 等）不能被 Proxy 代理，也没有属性可拦截。Vue3 的做法是用一个对象容器包裹它，通过 `.value` 读写以实现 track/trigger。
+
+### 5.2 ref 的实现（对象值自动转 reactive）
+
+````js
+function convert(val) {
+  return isObject(val) ? reactive(val) : val
+}
+
+function ref(raw) {
+  let value = convert(raw)
+  const r = {
+    get value() {
+      track(r, 'value')
+      return value
+    },
+    set value(newVal) {
+      newVal = convert(newVal)
+      if (newVal === value) return
+      value = newVal
+      trigger(r, 'value')
+    }
+  }
+  return r
+}
+````
+
+使用：
+
+````js
+const n = ref(0)
+effect(() => console.log('n:', n.value))
+n.value++
+````
+
+---
+
+## 6. computed：懒执行 + 缓存 + 脏标记
+
+computed 的关键点：
+
+- 第一次访问 `.value` 才计算（lazy）
+- 依赖不变则返回缓存
+- 依赖变了不立刻重算，而是标记 `dirty=true`，并触发依赖 `.value` 的外部 effect 更新
+
+````js
+function computed(getter) {
+  let value
+  let dirty = true
+
+  const runner = effect(getter, {
+    lazy: true,
+    scheduler() {
+      dirty = true
+      trigger(obj, 'value')
+    }
+  })
+
+  const obj = {
+    get value() {
+      track(obj, 'value')
+      if (dirty) {
+        value = runner()
+        dirty = false
+      }
+      return value
+    }
+  }
+  return obj
+}
+
+// demo
+const state = reactive({ a: 1, b: 2 })
+const sum = computed(() => state.a + state.b)
+
+effect(() => console.log('sum:', sum.value))
+state.a++
+````
+
+---
+
+## 7. 小结：Vue2 vs Vue3 的本质差异
+
+- **Vue2（defineProperty）**：  
+  以“属性改造”为中心，需要遍历与补丁；新增/删除不自然；数组处理复杂。
+- **Vue3（Proxy）**：  
+  以“操作拦截”为中心，覆盖面完整；支持新增/删除/数组/迭代；可做懒代理；配合 scheduler 更易实现批处理优化。
+- **非原始值**：优先 `reactive`（结构化数据，属性级追踪）
+- **原始值**：使用 `ref`（通过 `.value` 容器化）
+- **computed**：lazy + cache + dirty + scheduler，是响应式系统“派生数据”的关键形态
+
+---
