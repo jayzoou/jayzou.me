@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="520" viewBox="0 0 1100 520">
+  <defs>
+    <style>
+      .box { fill:#ffffff; stroke:#1f2937; stroke-width:2; rx:12; }
+      .title { font: 700 18px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial,sans-serif; fill:#111827; }
+      .titleWhite { font: 700 18px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial,sans-serif; fill:#ffffff; }
+      .text { font: 14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial,sans-serif; fill:#111827; }
+      .muted { fill:#6b7280; font: 12px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial,sans-serif; }
+      .mutedOnDark { fill:#cbd5e1; font: 12px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial,sans-serif; }
+      /* Arrows changed to white */
+      .arrow { stroke:#ffffff; stroke-width:2.2; fill:none; marker-end:url(#arrowheadWhite); }
+      .dashed { stroke-dasharray:7 6; }
+      .note { fill:#f9fafb; stroke:#9ca3af; stroke-width:1.6; rx:10; }
+      .accent1 { fill:#ecfeff; stroke:#0891b2; }
+      .accent2 { fill:#f0fdf4; stroke:#16a34a; }
+      .accent3 { fill:#eff6ff; stroke:#2563eb; }
+      .accent4 { fill:#fff7ed; stroke:#ea580c; }
+    </style>
+    <marker id="arrowheadWhite" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <polygon points="0,0 10,4 0,8" fill="#ffffff"></polygon>
+    </marker>
+  </defs>
+
+  <!-- Header bar (dark) -->
+  <rect x="0" y="0" width="1100" height="92" fill="#111827"/>
+  <text x="40" y="44" class="titleWhite">Vue 整体架构流程（从模板到 DOM / 组件更新闭环）</text>
+  <text x="40" y="70" class="mutedOnDark">说明：编译器通常在构建期运行；渲染器在运行时执行 patch（diff + 最小化更新）。</text>
+
+  <!-- Boxes -->
+  <!-- Top row -->
+  <rect x="40" y="118" width="210" height="92" class="box accent4"/>
+  <text x="60" y="153" class="title" font-size="16">Template</text>
+  <text x="60" y="180" class="text">.vue 的 &lt;template&gt;</text>
+
+  <rect x="290" y="118" width="230" height="92" class="box accent3"/>
+  <text x="310" y="153" class="title" font-size="16">Compiler（可选）</text>
+  <text x="310" y="180" class="text">模板 → render 函数</text>
+
+  <rect x="560" y="118" width="210" height="92" class="box accent2"/>
+  <text x="580" y="153" class="title" font-size="16">Render</text>
+  <text x="580" y="180" class="text">执行得到 VNode</text>
+
+  <rect x="810" y="118" width="210" height="92" class="box accent1"/>
+  <text x="830" y="153" class="title" font-size="16">Renderer</text>
+  <text x="830" y="180" class="text">patch（diff/更新）</text>
+
+  <!-- VNode note -->
+  <rect x="560" y="250" width="210" height="92" class="note"/>
+  <text x="580" y="280" class="title" font-size="16">VNode（描述 UI）</text>
+  <text x="580" y="308" class="text">元素 VNode / 组件 VNode</text>
+
+  <rect x="810" y="250" width="210" height="92" class="box"/>
+  <text x="830" y="285" class="title" font-size="16">Host Output</text>
+  <text x="830" y="312" class="text">DOM / SSR / Native</text>
+
+  <!-- Reactivity area -->
+  <rect x="40" y="262" width="480" height="200" class="box"/>
+  <text x="60" y="298" class="title" font-size="16">Reactivity（响应式系统）</text>
+  <text x="60" y="326" class="text">ref / reactive / computed</text>
+  <text x="60" y="352" class="text">依赖收集：render 读取状态 → track</text>
+  <text x="60" y="378" class="text">触发更新：状态变化 → trigger</text>
+
+  <rect x="290" y="382" width="210" height="68" class="note"/>
+  <text x="310" y="412" class="title" font-size="14">Scheduler（调度）</text>
+  <text x="310" y="434" class="muted">批量/去重，合并更新</text>
+
+  <!-- Runtime note -->
+  <rect x="560" y="372" width="460" height="90" class="note"/>
+  <text x="580" y="404" class="title" font-size="16">Runtime（运行时）</text>
+  <text x="580" y="430" class="text">组件实例/生命周期/渲染管线组织</text>
+  <text x="580" y="452" class="muted">render + renderer + reactivity 协同工作</text>
+
+  <!-- Arrows (white) -->
+  <path d="M250 164 L290 164" class="arrow"/>
+  <path d="M520 164 L560 164" class="arrow"/>
+  <path d="M770 164 L810 164" class="arrow"/>
+
+  <path d="M665 210 L665 250" class="arrow"/>
+  <path d="M770 296 L810 296" class="arrow"/>
+  <path d="M915 210 L915 250" class="arrow"/>
+
+  <path d="M560 146 C470 146, 430 210, 360 262" class="arrow dashed"/>
+  <text x="445" y="196" class="muted">读取状态（track）</text>
+
+  <path d="M210 396 L290 416" class="arrow dashed"/>
+  <text x="120" y="420" class="muted">trigger → 入队</text>
+
+  <path d="M500 416 L560 416" class="arrow"/>
+  <text x="505" y="406" class="muted">触发组件更新</text>
+
+  <path d="M1020 416 L1060 416 L1060 164 L770 164" class="arrow dashed"/>
+  <text x="980" y="406" class="muted">重新执行 render</text>
+</svg>

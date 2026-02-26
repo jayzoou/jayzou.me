@@ -37,7 +37,8 @@ const Layout = () => {
     location.pathname === '/posts/english/document'||
     location.pathname === '/posts/algorithm' ||
     location.pathname === '/posts/design_patterns' ||
-    location.pathname === '/posts/frontend'
+    location.pathname === '/posts/frontend' ||
+    location.pathname === '/posts/vue'
   
   const showToc = isPostPage && !isIndexPage
 

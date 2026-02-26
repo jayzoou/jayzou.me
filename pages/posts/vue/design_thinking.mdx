@@ -1,0 +1,188 @@
+import vueSvg from './assets/vue.svg'
+
+# Vue 的设计思路
+
+## 从声明式到“编译器 + 渲染器”的整体协作
+
+Vue 的核心设计可以概括为：**用声明式描述 UI**，再通过 **编译器（可选）** 与 **渲染器（必选）** 把描述变成真正运行的界面，并用响应式系统驱动更新。
+
+<div style={{margin: '1rem 0'}}>
+  <img src={vueSvg} alt="vueSvg" style={{maxWidth: '100%'}} />
+</div>
+
+---
+
+## 1）声明式：用“描述结果”代替“手写过程”
+
+**命令式（Imperative）**关注“怎么做”，你要自己写清楚每一步 DOM 操作。  
+**声明式（Declarative）**关注“要什么”，框架负责把状态映射成 UI，并在状态变化时更新 UI。
+
+### 简单对比
+
+**命令式（原生 DOM）**：
+````js
+const el = document.querySelector('#count')
+let count = 0
+
+function render() {
+  el.textContent = String(count)
+}
+
+document.querySelector('#btn').addEventListener('click', () => {
+  count++
+  render()
+})
+
+render()
+````
+
+**声明式（Vue）**：
+````vue
+<template>
+  <button @click="count++">+1</button>
+  <p>{{ count }}</p>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+const count = ref(0)
+</script>
+````
+
+这里你只**声明**“count 显示在哪里、如何变化”，至于什么时候更新 DOM、更新哪些节点，交给 Vue。
+
+---
+
+## 2）渲染器：既能渲染 DOM，也能渲染组件
+
+Vue 里**渲染器（renderer）**的任务是把“虚拟节点（VNode）”变成真实宿主环境的输出（浏览器 DOM、SSR 字符串、原生渲染等）。因此渲染器要处理两类东西：
+
+- **渲染元素（DOM 节点）**：如 `div / p / span`
+- **渲染组件（Component）**：组件本质是一个“产生 VNode 的函数/对象”，需要先执行组件逻辑得到子树，再继续渲染
+
+### VNode 的直观理解：`h()` 创建“描述”
+
+Vue 的渲染函数会创建 VNode（描述 UI 的对象结构），渲染器再把它变成 DOM。
+
+````js
+import { h } from 'vue'
+
+// 描述一个 DOM 树
+const vnode = h('div', { class: 'box' }, [
+  h('h1', 'Hello'),
+  h('p', 'world')
+])
+````
+
+### “渲染 DOM”和“渲染组件”的差别
+
+- **DOM VNode**：`type` 是字符串（如 `'div'`），渲染器直接创建元素、设置属性、挂载子节点。
+- **组件 VNode**：`type` 是组件对象/函数，渲染器要：
+  1. 创建组件实例（保存 props、状态等）
+  2. 运行组件的 `render()`（或模板编译后的 render）得到**子树 VNode**
+  3. 递归渲染子树
+  4. 后续更新时，比较新旧子树（diff）并最小化更新
+
+用渲染函数写一个组件（展示“组件也是生成 VNode 的东西”）：
+
+````js
+// Counter.vue 的等价“渲染函数”风格
+import { h, ref } from 'vue'
+
+export default {
+  setup() {
+    const count = ref(0)
+    return () =>
+      h('button', { onClick: () => count.value++ }, `count: ${count.value}`)
+  }
+}
+````
+
+---
+
+## 3）模板的工作原理和编译器：template 不是“魔法”，会被编译成 render
+
+Vue 支持写 `template`，但运行时真正执行的是 **render 函数**。  
+因此模板背后有一个关键步骤：**编译（compile）**。
+
+### 流程简化版
+
+1. **模板**（`<template>...</template>`）
+2. **编译器**把模板解析为 AST（抽象语法树）
+3. AST 经过转换与优化（例如提升静态节点、标记动态部分）
+4. 生成 **render 函数代码**
+5. 运行时：render 执行得到 VNode，交给渲染器 patch 到 DOM
+
+### 一个直观例子：模板大致会变成 render
+
+模板：
+````vue
+<template>
+  <div class="box">
+    <p>{{ msg }}</p>
+  </div>
+</template>
+````
+
+大致等价的 render（为了理解，非精确源码）：
+````js
+import { h } from 'vue'
+
+export function render(_ctx) {
+  return h('div', { class: 'box' }, [
+    h('p', _ctx.msg)
+  ])
+}
+````
+
+### 为什么需要编译器？
+
+- **性能**：编译阶段能做很多“提前工作”（静态提升、动态标记），减少运行时开销。
+- **开发体验**：模板更接近 HTML，易读易写。
+- **体积与形态可选**：Vue 可以选择只带运行时（runtime-only），把模板编译留给构建工具（Vite/Webpack），减少线上包体积。
+
+---
+
+## 4）Vue 框架的整体结合：响应式 + 编译器（可选）+ 渲染器（必选）
+
+把 Vue 拆成几个核心模块，更容易理解它的设计：
+
+1. **响应式系统（reactivity）**  
+   `ref/reactive/computed/effect` 等让“状态变化可被追踪”。
+
+2. **编译器（compiler，可选）**  
+   把模板编译成 render 函数；在构建时完成是主流方式。
+
+3. **运行时（runtime）**  
+   提供组件系统、生命周期、render 执行等。
+
+4. **渲染器（renderer）**  
+   接收 VNode，执行挂载与更新（diff/patch），最终落到宿主（DOM/SSR/Native）。
+
+### 一句话串起来
+
+- 你写：**状态 + 模板（或 render）**
+- 编译器（可选）把模板变成 **render**
+- render 读取响应式状态生成 **VNode**
+- 渲染器把 VNode 变成 **DOM**
+- 状态变化触发 render 重新运行，渲染器对比新旧 VNode，做**最小 DOM 更新**
+
+### 一个极简例子看“响应式驱动更新”
+
+````vue
+<template>
+  <p>double: {{ double }}</p>
+  <button @click="n++">n={{ n }}</button>
+</template>
+
+<script setup>
+import { ref, computed } from 'vue'
+
+const n = ref(1)
+const double = computed(() => n.value * 2)
+</script>
+````
+
+- `n` 变了 → `computed` 重新计算 → 组件 render 重新执行 → 生成新的 VNode → 渲染器 patch 更新文本节点。
+
+---
