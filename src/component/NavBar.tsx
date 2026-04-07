@@ -19,7 +19,7 @@ const NavBar = () => {
         <div className='flex gap-4 mr-4'>
           <NavLink to="/posts/js_core" className={() => matchLen('/posts/js_core') === maxMatch && maxMatch > 0 ? 'active' : ''}>Blog</NavLink>
           <NavLink to="/projects" className={() => matchLen('/projects') === maxMatch && maxMatch > 0 ? 'active' : ''}>Projects</NavLink>
-          <a href="https://ai.jayzou.me/" target='_blank' rel='noopener noreferrer'>AI Assistant</a>
+          <a href="https://asklol.com/" target='_blank' rel='noopener noreferrer'>英雄联盟问答</a>
           <a href="https://pageignore.github.io/letjs/" target='_blank' rel='noopener noreferrer'>letjs</a>
           <a href="https://github.com/jayzoou" target='_blank'>GitHub</a> 
         </div>
