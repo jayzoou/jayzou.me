@@ -1,6 +1,8 @@
 import PageList from '../../PageList'
 
 const algorithmListPages = [
+  { path: '/posts/algorithm/algorithm_analysis', title: '算法分析基础', desc: '如何评估算法的时间与空间效率' },
+  { path: '/posts/algorithm/frequency_count', title: '频率计数法', desc: '通过执行次数分析算法复杂度' },
   { path: '/posts/algorithm/array', title: '数组', desc: '数组相关的算法和操作' },
   { path: '/posts/algorithm/stack_base', title: '栈与队列(基础篇)', desc: '数据结构入门' },
   { path: '/posts/algorithm/stack_advanced', title: '栈与队列(进阶篇)', desc: '高级技巧与优化' },
