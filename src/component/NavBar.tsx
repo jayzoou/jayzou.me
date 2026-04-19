@@ -1,5 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 
+import InteractiveCat from './InteractiveCat'
+
 const NavBar = () => {
   const location = useLocation()
   const matchLen = (to: string) => {
@@ -13,7 +15,13 @@ const NavBar = () => {
   const maxMatch = Math.max(...links.map(matchLen))
   return (
     <header className="flex justify-between items-center text-white">
-      <a href="/" className="ml-10 !text-white cursor-pointer transition scale-150 hover:scale-200">🤔</a>
+      <a
+        href="/"
+        aria-label="Home"
+        className="ml-10 inline-flex items-center justify-center !text-white transition-transform duration-300 scale-125 hover:scale-150"
+      >
+        <InteractiveCat size={30} />
+      </a>
       <nav className='nav'>
         <div className='spacer'></div>
         <div className='flex gap-4 mr-4'>
