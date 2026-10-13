@@ -1,0 +1,879 @@
+# 堆与堆排序
+
+堆（Heap）是一种非常重要的数据结构，在算法和系统设计中有着广泛的应用。本文将详细介绍堆的相关概念，包括：
+
+- 二叉树的数组表示
+- 完全二叉树
+- 堆的定义（最大堆和最小堆）
+- 堆的插入和删除操作
+- 堆排序
+- 堆化（Heapify）
+- 优先队列
+
+## 二叉树的数组表示
+
+在理解堆之前，我们需要先了解如何用数组表示二叉树。
+
+### 存储规则
+
+对于一棵二叉树，如果要用数组存储，需要满足两个条件：
+1. 存储所有节点元素
+2. 保持节点之间的关系（父子关系）
+
+**存储方式**：按层序遍历存储节点
+
+**关系公式**（假设数组从索引 1 开始）：
+- 如果节点在索引 `i`，则：
+  - 左子节点在索引 `2 * i`
+  - 右子节点在索引 `2 * i + 1`
+  - 父节点在索引 `Math.floor(i / 2)`
+
+### 示例
+
+对于二叉树：
+```
+        A
+       / \
+      B   C
+     / \ / \
+    D  E F  G
+```
+
+用数组表示为：`[_, A, B, C, D, E, F, G]`（索引 0 留空）
+
+验证关系：
+- B（索引 2）：左子节点 D（索引 4 = 2×2），右子节点 E（索引 5 = 2×2+1），父节点 A（索引 1 = ⌊2/2⌋）
+- C（索引 3）：左子节点 F（索引 6 = 2×3），右子节点 G（索引 7 = 2×3+1），父节点 A（索引 1 = ⌊3/2⌋）
+
+**重要**：如果某些节点缺失，需要在数组中留空，以保持父子关系的正确性。
+
+## 完全二叉树
+
+### 满二叉树（Full Binary Tree）
+
+高度为 h 的二叉树，如果具有最大节点数（2^(h+1) - 1），则称为满二叉树。
+
+### 完全二叉树（Complete Binary Tree）
+
+完全二叉树有两种等价的定义：
+
+1. **数组表示角度**：如果用数组表示二叉树，从第一个元素到最后一个元素之间没有任何空隙。
+
+2. **层级角度**：高度为 h 的完全二叉树，在高度 h-1 时是满二叉树，最后一层的节点从左到右填充。
+
+**重要性质**：完全二叉树的高度始终是最小的，为 log(n)。
+
+**注意**：有些教材也称为"几乎完全二叉树"，但大多数教材称为"完全二叉树"。
+
+## 堆的定义
+
+堆是一种特殊的完全二叉树，分为两种类型：
+
+### 最大堆（Max Heap）
+
+- 是完全二叉树
+- 每个节点的值都**大于或等于**其所有后代节点的值
+- 根节点包含最大值
+
+### 最小堆（Min Heap）
+
+- 是完全二叉树
+- 每个节点的值都**小于或等于**其所有后代节点的值
+- 根节点包含最小值
+
+**示例**：
+```
+最大堆：
+        50
+       /  \
+      30   20
+     / \   / \
+    15 10 8  16
+
+数组表示：[_, 50, 30, 20, 15, 10, 8, 16]
+```
+
+## 堆的操作
+
+### 插入操作（Insertion）
+
+**步骤**：
+1. 将新元素插入到数组的最后一个位置（保持完全二叉树性质）
+2. 将新元素与其父节点比较，如果更大（最大堆），则交换
+3. 重复步骤 2，直到满足堆性质或到达根节点
+
+**时间复杂度**：
+- 最好情况：O(1)（不需要调整）
+- 最坏情况：O(log n)（需要调整到根节点）
+- 调整方向：从叶子向根（向上调整）
+
+**JavaScript 实现**：
+
+```javascript
+class MaxHeap {
+  constructor() {
+    this.heap = [];
+  }
+
+  // 获取父节点索引
+  getParentIndex(i) {
+    return Math.floor((i - 1) / 2);
+  }
+
+  // 获取左子节点索引
+  getLeftIndex(i) {
+    return 2 * i + 1;
+  }
+
+  // 获取右子节点索引
+  getRightIndex(i) {
+    return 2 * i + 2;
+  }
+
+  // 交换元素
+  swap(i, j) {
+    [this.heap[i], this.heap[j]] = [this.heap[j], this.heap[i]];
+  }
+
+  // 插入元素
+  insert(value) {
+    this.heap.push(value);
+    this.heapifyUp();
+  }
+
+  // 向上调整
+  heapifyUp() {
+    let index = this.heap.length - 1;
+
+    while (index > 0) {
+      const parentIndex = this.getParentIndex(index);
+
+      if (this.heap[index] > this.heap[parentIndex]) {
+        this.swap(index, parentIndex);
+        index = parentIndex;
+      } else {
+        break;
+      }
+    }
+  }
+}
+
+// 使用示例
+const heap = new MaxHeap();
+heap.insert(50);
+heap.insert(30);
+heap.insert(20);
+heap.insert(15);
+heap.insert(10);
+heap.insert(8);
+heap.insert(16);
+heap.insert(60); // 插入 60，会自动调整到根节点
+
+console.log(heap.heap); 
+// 输出：[60, 50, 20, 30, 15, 8, 16, 10]
+```
+
+**示例**：在最大堆中插入 60
+
+```
+初始堆：
+        50
+       /  \
+      30   20
+     / \   / \
+    15 10 8  16
+
+插入 60：
+        50
+       /  \
+      30   20
+     / \   / \
+    15 10 8  16
+           /
+          60
+
+调整过程：
+60 > 15，交换 → 60 > 30，交换 → 60 > 50，交换
+
+最终结果：
+        60
+       /  \
+      50   20
+     / \   / \
+    15 10 8  16
+```
+
+### 删除操作（Deletion）
+
+**重要**：堆只能删除根节点（最大堆删除最大值，最小堆删除最小值）
+
+**步骤**：
+1. 删除根节点
+2. 将最后一个元素移到根节点位置
+3. 将新根节点与其子节点比较，如果更小（最大堆），则与较大的子节点交换
+4. 重复步骤 3，直到满足堆性质
+
+**时间复杂度**：O(log n)
+**调整方向**：从根向叶子（向下调整）
+
+**JavaScript 实现**：
+
+```javascript
+class MaxHeap {
+  // ... 前面的代码 ...
+
+  // 删除堆顶元素（最大值）
+  deleteMax() {
+    if (this.heap.length === 0) {
+      return undefined;
+    }
+
+    if (this.heap.length === 1) {
+      return this.heap.pop();
+    }
+
+    // 保存最大值
+    const max = this.heap[0];
+    
+    // 将最后一个元素移到根节点
+    this.heap[0] = this.heap.pop();
+    
+    // 向下调整
+    this.heapifyDown();
+    
+    return max;
+  }
+
+  // 向下调整
+  heapifyDown() {
+    let index = 0;
+    const length = this.heap.length;
+
+    while (true) {
+      const leftIndex = this.getLeftIndex(index);
+      const rightIndex = this.getRightIndex(index);
+      let largest = index;
+
+      // 找出最大的节点
+      if (leftIndex < length && this.heap[leftIndex] > this.heap[largest]) {
+        largest = leftIndex;
+      }
+
+      if (rightIndex < length && this.heap[rightIndex] > this.heap[largest]) {
+        largest = rightIndex;
+      }
+
+      // 如果最大节点不是当前节点，则交换并继续调整
+      if (largest !== index) {
+        this.swap(index, largest);
+        index = largest;
+      } else {
+        break;
+      }
+    }
+  }
+}
+
+// 使用示例
+const heap = new MaxHeap();
+heap.insert(50);
+heap.insert(30);
+heap.insert(20);
+heap.insert(15);
+heap.insert(10);
+heap.insert(8);
+heap.insert(16);
+
+console.log('删除最大值:', heap.deleteMax()); // 输出：50
+console.log('当前堆:', heap.heap); 
+// 输出：[30, 20, 16, 15, 10, 8]
+
+console.log('删除最大值:', heap.deleteMax()); // 输出：30
+console.log('当前堆:', heap.heap); 
+// 输出：[20, 15, 16, 8, 10]
+```
+
+**示例**：删除最大堆的根节点
+
+```
+初始堆：
+        50
+       /  \
+      30   20
+     / \   / \
+    15 10 8  16
+
+删除 50，用 16 替换：
+        16
+       /  \
+      30   20
+     / \   / 
+    15 10 8  
+
+调整过程：
+16 < 30，与 30 交换 → 16 > 15 和 10，停止
+
+最终结果：
+        30
+       /  \
+      16   20
+     / \   / 
+    15 10 8  
+```
+
+## 堆排序（Heap Sort）
+
+堆排序是一种高效的排序算法，基于堆数据结构。
+
+### 算法步骤
+
+1. **构建堆**：将无序数组构建为最大堆
+2. **排序**：重复以下步骤直到堆为空：
+   - 删除堆顶元素（最大值）
+   - 将删除的元素放到数组的末尾
+   - 调整堆
+
+### JavaScript 实现
+
+```javascript
+class MaxHeap {
+  constructor(array) {
+    this.heap = array ? [...array] : [];
+    
+    // 如果传入数组，直接构建堆
+    if (array && array.length > 0) {
+      this.buildHeap();
+    }
+  }
+
+  getParentIndex(i) {
+    return Math.floor((i - 1) / 2);
+  }
+
+  getLeftIndex(i) {
+    return 2 * i + 1;
+  }
+
+  getRightIndex(i) {
+    return 2 * i + 2;
+  }
+
+  swap(i, j) {
+    [this.heap[i], this.heap[j]] = [this.heap[j], this.heap[i]];
+  }
+
+  // 堆化（向下调整）
+  heapifyDown(index = 0) {
+    let largest = index;
+    const length = this.heap.length;
+    const left = this.getLeftIndex(index);
+    const right = this.getRightIndex(index);
+
+    if (left < length && this.heap[left] > this.heap[largest]) {
+      largest = left;
+    }
+
+    if (right < length && this.heap[right] > this.heap[largest]) {
+      largest = right;
+    }
+
+    if (largest !== index) {
+      this.swap(index, largest);
+      this.heapifyDown(largest);
+    }
+  }
+
+  // 构建堆（使用堆化法）
+  buildHeap() {
+    // 从最后一个非叶子节点开始，自底向上构建堆
+    for (let i = Math.floor(this.heap.length / 2) - 1; i >= 0; i--) {
+      this.heapifyDown(i);
+    }
+  }
+
+  // 堆排序
+  sort() {
+    this.buildHeap();
+    const sorted = [];
+
+    // 依次删除堆顶元素
+    while (this.heap.length > 0) {
+      sorted.push(this.heap[0]);
+      this.heap[0] = this.heap.pop();
+      this.heapifyDown();
+    }
+
+    return sorted;
+  }
+}
+
+// 使用示例
+const arr = [10, 20, 15, 30, 40];
+console.log('原始数组:', arr);
+
+// 方法 1：使用 MaxHeap 类
+const heap = new MaxHeap(arr);
+const sorted = heap.sort();
+console.log('排序结果:', sorted); 
+// 输出：[10, 15, 20, 30, 40]
+
+// 方法 2：手动实现堆排序
+function heapSort(array) {
+  const n = array.length;
+  
+  // 构建最大堆
+  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
+    heapify(array, n, i);
+  }
+  
+  // 提取元素
+  for (let i = n - 1; i > 0; i--) {
+    // 交换堆顶和最后一个元素
+    [array[0], array[i]] = [array[i], array[0]];
+    
+    // 在缩小的堆上调用 heapify
+    heapify(array, i, 0);
+  }
+  
+  return array;
+}
+
+function heapify(arr, n, i) {
+  let largest = i;
+  const left = 2 * i + 1;
+  const right = 2 * i + 2;
+
+  if (left < n && arr[left] > arr[largest]) {
+    largest = left;
+  }
+
+  if (right < n && arr[right] > arr[largest]) {
+    largest = right;
+  }
+
+  if (largest !== i) {
+    [arr[i], arr[largest]] = [arr[largest], arr[i]];
+    heapify(arr, n, largest);
+  }
+}
+
+const arr2 = [10, 20, 15, 30, 40];
+console.log('排序结果:', heapSort(arr2)); 
+// 输出：[10, 15, 20, 30, 40]
+```
+
+### 示例
+
+对数组 `[10, 20, 15, 30, 40]` 进行排序：
+
+**步骤 1：构建最大堆**
+
+```
+初始：[10, 20, 15, 30, 40]
+
+插入 10：[10]
+插入 20：[20, 10]
+插入 15：[20, 10, 15]
+插入 30：[30, 20, 15, 10]
+插入 40：[40, 30, 15, 20, 10]
+
+最终最大堆：
+        40
+       /  \
+      30   15
+     / \
+    20  10
+```
+
+**步骤 2：删除元素并排序**
+
+```
+删除 40，数组：[40]
+删除 30，数组：[40, 30]
+删除 20，数组：[40, 30, 20]
+删除 15，数组：[40, 30, 20, 15]
+删除 10，数组：[40, 30, 20, 15, 10]
+
+最终排序结果：[10, 15, 20, 30, 40]（从小到大）
+```
+
+### 时间复杂度
+
+- 构建堆：O(n log n)
+- 删除所有元素：O(n log n)
+- **总时间复杂度**：O(n log n)
+
+## 堆化（Heapify）
+
+堆化是一种更高效的构建堆的方法。
+
+### 与插入法的区别
+
+**插入法**：
+- 从第一个元素开始，逐个插入
+- 每次插入后向上调整
+- 时间复杂度：O(n log n)
+
+**堆化法**：
+- 从最后一个非叶子节点开始，向下调整
+- 从右向左扫描
+- 时间复杂度：O(n)
+
+### JavaScript 实现
+
+```javascript
+// 堆化函数（向下调整）
+function heapify(arr, n, i) {
+  let largest = i;
+  const left = 2 * i + 1;
+  const right = 2 * i + 2;
+
+  // 找出左子节点
+  if (left < n && arr[left] > arr[largest]) {
+    largest = left;
+  }
+
+  // 找出右子节点
+  if (right < n && arr[right] > arr[largest]) {
+    largest = right;
+  }
+
+  // 如果最大节点不是当前节点，则交换并继续调整
+  if (largest !== i) {
+    [arr[i], arr[largest]] = [arr[largest], arr[i]];
+    heapify(arr, n, largest);
+  }
+}
+
+// 构建堆（堆化法）
+function buildHeap(arr) {
+  const n = arr.length;
+  
+  // 从最后一个非叶子节点开始
+  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
+    heapify(arr, n, i);
+  }
+  
+  return arr;
+}
+
+// 使用示例
+const arr = [10, 20, 15, 40, 25, 18];
+console.log('原始数组:', arr);
+
+const heap = buildHeap([...arr]);
+console.log('构建的最大堆:', heap); 
+// 输出：[40, 25, 18, 10, 20, 15]
+
+// 验证堆结构
+//        40
+//       /  \
+//      25   18
+//     / \   /
+//    10 20 15
+```
+
+### 堆化过程详解
+
+**示例**：对数组 `[10, 20, 15, 40, 25, 18]` 进行堆化
+
+```javascript
+const arr = [10, 20, 15, 40, 25, 18];
+// 索引：0   1   2   3   4   5
+
+// 最后一个非叶子节点索引：Math.floor(6/2) - 1 = 2
+// 从索引 2 开始，向左调整
+
+// 步骤 1：调整索引 2（值 15）
+// 15 没有子节点，已经是堆
+// 数组：[10, 20, 15, 40, 25, 18]
+
+// 步骤 2：调整索引 1（值 20）
+// 左子节点 40 > 20，交换
+// 数组：[10, 40, 15, 20, 25, 18]
+
+// 步骤 3：调整索引 0（值 10）
+// 左子节点 40 > 10，右子节点 15 < 40
+// 10 与 40 交换
+// 数组：[40, 10, 15, 20, 25, 18]
+// 继续调整索引 1（值 10）
+// 左子节点 20 > 10，交换
+// 数组：[40, 25, 15, 20, 10, 18]
+
+console.log('最终堆:', [40, 25, 15, 20, 10, 18]);
+```
+
+**时间复杂度**：O(n)
+
+## 优先队列（Priority Queue）
+
+### 概念
+
+优先队列是一种特殊的队列，每个元素都有优先级：
+- **FIFO 队列**：先进先出
+- **优先队列**：根据优先级删除元素
+
+### 优先级定义
+
+1. **小数字优先级高**：使用最小堆
+2. **大数字优先级高**：使用最大堆
+
+### JavaScript 实现
+
+```javascript
+// 最小堆实现（小数字优先级高）
+class MinHeap {
+  constructor() {
+    this.heap = [];
+  }
+
+  getParentIndex(i) {
+    return Math.floor((i - 1) / 2);
+  }
+
+  getLeftIndex(i) {
+    return 2 * i + 1;
+  }
+
+  getRightIndex(i) {
+    return 2 * i + 2;
+  }
+
+  swap(i, j) {
+    [this.heap[i], this.heap[j]] = [this.heap[j], this.heap[i]];
+  }
+
+  // 插入元素（带优先级）
+  enqueue(value, priority) {
+    this.heap.push({ value, priority });
+    this.heapifyUp();
+  }
+
+  // 向上调整（最小堆）
+  heapifyUp() {
+    let index = this.heap.length - 1;
+
+    while (index > 0) {
+      const parentIndex = this.getParentIndex(index);
+
+      if (this.heap[index].priority < this.heap[parentIndex].priority) {
+        this.swap(index, parentIndex);
+        index = parentIndex;
+      } else {
+        break;
+      }
+    }
+  }
+
+  // 删除优先级最高的元素（最小优先级）
+  dequeue() {
+    if (this.heap.length === 0) {
+      return undefined;
+    }
+
+    if (this.heap.length === 1) {
+      return this.heap.pop().value;
+    }
+
+    const min = this.heap[0];
+    this.heap[0] = this.heap.pop();
+    this.heapifyDown();
+    
+    return min.value;
+  }
+
+  // 向下调整（最小堆）
+  heapifyDown() {
+    let index = 0;
+    const length = this.heap.length;
+
+    while (true) {
+      const leftIndex = this.getLeftIndex(index);
+      const rightIndex = this.getRightIndex(index);
+      let smallest = index;
+
+      if (leftIndex < length && this.heap[leftIndex].priority < this.heap[smallest].priority) {
+        smallest = leftIndex;
+      }
+
+      if (rightIndex < length && this.heap[rightIndex].priority < this.heap[smallest].priority) {
+        smallest = rightIndex;
+      }
+
+      if (smallest !== index) {
+        this.swap(index, smallest);
+        index = smallest;
+      } else {
+        break;
+      }
+    }
+  }
+
+  // 查看优先级最高的元素
+  peek() {
+    return this.heap.length > 0 ? this.heap[0].value : undefined;
+  }
+
+  // 获取队列大小
+  size() {
+    return this.heap.length;
+  }
+}
+
+// 使用示例
+const priorityQueue = new MinHeap();
+
+// 插入任务（数字越小优先级越高）
+priorityQueue.enqueue('紧急任务', 1);
+priorityQueue.enqueue('普通任务', 5);
+priorityQueue.enqueue('低优先级任务', 10);
+priorityQueue.enqueue('中等任务', 3);
+
+console.log('当前最高优先级任务:', priorityQueue.peek()); // 输出：紧急任务
+console.log('删除任务:', priorityQueue.dequeue()); // 输出：紧急任务
+console.log('删除任务:', priorityQueue.dequeue()); // 输出：中等任务
+console.log('删除任务:', priorityQueue.dequeue()); // 输出：普通任务
+console.log('删除任务:', priorityQueue.dequeue()); // 输出：低优先级任务
+
+// 最大堆实现（大数字优先级高）
+class MaxHeapPriorityQueue {
+  constructor() {
+    this.heap = [];
+  }
+
+  getParentIndex(i) {
+    return Math.floor((i - 1) / 2);
+  }
+
+  getLeftIndex(i) {
+    return 2 * i + 1;
+  }
+
+  getRightIndex(i) {
+    return 2 * i + 2;
+  }
+
+  swap(i, j) {
+    [this.heap[i], this.heap[j]] = [this.heap[j], this.heap[i]];
+  }
+
+  enqueue(value, priority) {
+    this.heap.push({ value, priority });
+    this.heapifyUp();
+  }
+
+  heapifyUp() {
+    let index = this.heap.length - 1;
+
+    while (index > 0) {
+      const parentIndex = this.getParentIndex(index);
+
+      if (this.heap[index].priority > this.heap[parentIndex].priority) {
+        this.swap(index, parentIndex);
+        index = parentIndex;
+      } else {
+        break;
+      }
+    }
+  }
+
+  dequeue() {
+    if (this.heap.length === 0) {
+      return undefined;
+    }
+
+    if (this.heap.length === 1) {
+      return this.heap.pop().value;
+    }
+
+    const max = this.heap[0];
+    this.heap[0] = this.heap.pop();
+    this.heapifyDown();
+    
+    return max.value;
+  }
+
+  heapifyDown() {
+    let index = 0;
+    const length = this.heap.length;
+
+    while (true) {
+      const leftIndex = this.getLeftIndex(index);
+      const rightIndex = this.getRightIndex(index);
+      let largest = index;
+
+      if (leftIndex < length && this.heap[leftIndex].priority > this.heap[largest].priority) {
+        largest = leftIndex;
+      }
+
+      if (rightIndex < length && this.heap[rightIndex].priority > this.heap[largest].priority) {
+        largest = rightIndex;
+      }
+
+      if (largest !== index) {
+        this.swap(index, largest);
+        index = largest;
+      } else {
+        break;
+      }
+    }
+  }
+
+  peek() {
+    return this.heap.length > 0 ? this.heap[0].value : undefined;
+  }
+
+  size() {
+    return this.heap.length;
+  }
+}
+
+// 使用示例：大数字优先级高
+const maxPQ = new MaxHeapPriorityQueue();
+maxPQ.enqueue('任务 A', 10);
+maxPQ.enqueue('任务 B', 30);
+maxPQ.enqueue('任务 C', 20);
+
+console.log('最高优先级:', maxPQ.dequeue()); // 输出：任务 B（优先级 30）
+console.log('最高优先级:', maxPQ.dequeue()); // 输出：任务 C（优先级 20）
+```
+
+### 应用场景
+
+- **操作系统任务调度**：根据任务优先级执行
+- **图算法**：Dijkstra 最短路径、Prim 最小生成树
+- **事件驱动模拟**：按时间顺序处理事件
+- **数据流处理**：实时处理优先级数据
+
+### 性能对比
+
+| 实现方式 | 插入时间 | 删除时间 |
+|---------|---------|---------|
+| 数组（无序） | O(1) | O(n) |
+| 数组（有序） | O(n) | O(1) |
+| **堆** | **O(log n)** | **O(log n)** |
+
+**结论**：堆是实现优先队列的最佳数据结构！
+
+## 总结
+
+| 操作 | 时间复杂度 |
+|------|-----------|
+| 插入 | O(log n) |
+| 删除 | O(log n) |
+| 构建堆（插入法） | O(n log n) |
+| 构建堆（堆化法） | O(n) |
+| 堆排序 | O(n log n) |
+
+**关键要点**：
+1. 堆是完全二叉树
+2. 最大堆根节点最大，最小堆根节点最小
+3. 插入时向上调整，删除时向下调整
+4. 堆排序时间复杂度为 O(n log n)
+5. 堆是实现优先队列的最佳选择
+
+## 参考资料
+
+- 数据结构与算法相关教材
+- C++ 和数据结构课程（Udemy）
+- 算法导论（Introduction to Algorithms）

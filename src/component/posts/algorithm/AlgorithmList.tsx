@@ -11,8 +11,7 @@ const algorithmListPages = [
   { path: '/posts/algorithm/chain', title: '链表', desc: '链表相关的算法和操作' },
   { path: '/posts/algorithm/hash', title: '哈希表', desc: 'Map与Set的原理与实战' },
   { path: '/posts/algorithm/tree', title: '树结构基础', desc: '二叉树遍历与应用' },
-  { path: '/posts/algorithm/tree_binary', title: '二叉搜索树', desc: '高效查找与应用' },
-]
+  { path: '/posts/algorithm/tree_binary', title: '二叉搜索树', desc: '高效查找与应用' },  { path: '/posts/algorithm/heap', title: '堆与堆排序', desc: '堆数据结构、堆操作、堆排序和优先队列' },]
 
 const AlgorithmList = () => {
   return <PageList pages={algorithmListPages} className="algorithm-list" />

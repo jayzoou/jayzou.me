@@ -38,7 +38,9 @@ const Layout = () => {
     location.pathname === '/posts/algorithm' ||
     location.pathname === '/posts/design_patterns' ||
     location.pathname === '/posts/frontend' ||
-    location.pathname === '/posts/vue'
+    location.pathname === '/posts/vue' ||
+    location.pathname === '/posts/linear_algebra'
+
   
   const showToc = isPostPage && !isIndexPage
 
