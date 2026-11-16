@@ -1,0 +1,36 @@
+.prose { max-width: var(--article-width); font-size: 1rem; line-height: 1.75; }
+.prose > :first-child { margin-top: 0; }
+.prose h1 { color: white; font-size: 2.25rem; line-height: 1.2; font-weight: 800; margin-bottom: 1em; }
+.prose p { margin-block: 1.2rem; }
+.prose :is(h1, h2, h3) { scroll-margin-top: 1rem; }
+.prose img { height: auto; }
+.prose blockquote {
+  margin: var(--space-lg) 0;
+  padding: var(--space-md) var(--space-lg);
+  border-left: 4px solid var(--color-accent);
+  background: var(--color-surface);
+  color: var(--color-bright);
+  border-radius: 8px;
+  font-style: italic;
+}
+.prose blockquote p { margin: 0; white-space: pre-line; }
+.prose blockquote footer { margin-top: 0.6rem; font-size: 0.95rem; font-style: normal; color: var(--color-muted); }
+.prose table { width: 100%; border-collapse: collapse; margin-block: var(--space-lg); }
+.prose :is(th, td) { padding: 0.6rem var(--space-sm); border: 1px solid var(--color-border); text-align: left; vertical-align: top; font-size: 0.95rem; }
+.prose thead th { background: var(--color-surface); font-weight: 700; }
+.prose tbody tr:nth-child(odd) td { background: rgba(255, 255, 255, 0.02); }
+.prose table code { background: rgba(0, 0, 0, 0.25); padding: 0.08rem 0.28rem; border-radius: 4px; font-size: 0.9em; }
+.prose .katex { color: var(--color-accent); font-weight: 500; }
+.prose .katex :is(.mord, .base, .strut, .sizing) { color: inherit; }
+.prose :is(p, li) .katex { display: inline-block; margin-inline: 0.12em; }
+.prose .katex-display { display: block; overflow-x: auto; margin-block: var(--space-md); padding: 0.8rem var(--space-md); background: var(--color-surface); border-left: 3px solid rgba(100, 108, 255, 0.18); border-radius: 8px; }
+.obj-wrapper { display: inline-flex; flex-direction: column; align-items: center; gap: 0.08rem; }
+.obj-text { text-decoration: underline; text-underline-offset: 3px; }
+.obj-index { font-size: 0.65rem; line-height: 1; color: var(--color-muted); transform: translateY(-2px); }
+del.md-del { display: inline-block; position: relative; text-decoration: none; color: var(--color-danger); }
+del.md-del::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--color-danger); transform: translateY(-50%); pointer-events: none; }
+del.md-del, del.md-del * { color: var(--color-danger) !important; fill: var(--color-danger) !important; }
+@media (max-width: 640px) {
+  .prose table { display: block; overflow-x: auto; }
+  .prose :is(th, td) { padding: var(--space-xs) 0.6rem; }
+}

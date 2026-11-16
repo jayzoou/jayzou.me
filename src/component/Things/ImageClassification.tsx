@@ -1,141 +1,70 @@
-
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ClassificationResult, ImageClassifier } from 'ml5'
 import defaultImg from './img/cat.jpg'
 
 const ImageClassification = () => {
-	const imgRef = useRef<HTMLImageElement | null>(null)
-	const [preview, setPreview] = useState<string | null>(defaultImg)
-	const [results, setResults] = useState<ClassificationResult[] | null>(null)
-	const [loadingModel, setLoadingModel] = useState(false)
-	const [modelReady, setModelReady] = useState(false)
-	const classifierRef = useRef<ImageClassifier | null>(null)
+  const imgRef = useRef<HTMLImageElement>(null)
+  const [preview, setPreview] = useState(defaultImg)
+  const [filename, setFilename] = useState('')
+  const [requested, setRequested] = useState(false)
+  const [results, setResults] = useState<ClassificationResult[] | null>(null)
+  const [status, setStatus] = useState<'idle' | 'loading' | 'classifying' | 'ready' | 'error'>('idle')
+  const classifier = useRef<Promise<ImageClassifier> | null>(null)
+  const [retry, setRetry] = useState(0)
 
-	useEffect(() => {
-		let mounted = true
-		;(async () => {
-			setLoadingModel(true)
-			try {
-				const { createImageClassifier } = await import('../../lib/imageClassifier')
-				const classifier = await createImageClassifier()
-				if (!mounted) return
-				classifierRef.current = classifier
-				setModelReady(true)
-			} catch (err) {
-				// ignore: user will see no classification
-				console.error('ml5 load error', err)
-			} finally {
-				if (mounted) setLoadingModel(false)
-			}
-		})()
-		return () => {
-			mounted = false
-		}
-	}, [])
+  useEffect(() => () => { if (preview.startsWith('blob:')) URL.revokeObjectURL(preview) }, [preview])
 
-	// reusable classify function
-	const classifyImage = useCallback(async (img: HTMLImageElement) => {
-		if (!classifierRef.current) {
-			console.warn('classifier not ready')
-			return
-		}
-		setResults(null)
-		try {
-			console.log('classify: running on', img.src)
-			const res = await classifierRef.current.classify(img)
-			console.log('classify: result', res)
-			setResults(res)
-		} catch (err) {
-			console.error('classify error', err)
-			setResults(null)
-		}
-	}, [])
+  useEffect(() => {
+    if (!requested) return
+    let cancelled = false
+    const image = imgRef.current
+    if (!image) return
+    void (async () => {
+      setStatus('loading')
+      setResults(null)
+      classifier.current ??= import('../../lib/imageClassifier').then(module => module.createImageClassifier())
+      const model = await classifier.current
+      await image.decode()
+      if (cancelled) return
+      setStatus('classifying')
+      const next = await model.classify(image)
+      if (!cancelled) { setResults(next); setStatus('ready') }
+    })().catch(() => {
+      if (!cancelled) { classifier.current = null; setStatus('error') }
+    })
+    return () => { cancelled = true }
+  }, [requested, preview, retry])
 
-	// Run once when the preview or model readiness changes; onLoad covers new images.
-	useEffect(() => {
-		const img = imgRef.current
-		if (preview && modelReady && img?.complete && img.naturalWidth > 0) {
-			void classifyImage(img)
-		}
-	}, [preview, modelReady, classifyImage])
+  const selectFile = (file?: File) => {
+    if (!file) return
+    if (!file.type.startsWith('image/')) { setStatus('error'); return }
+    setFilename(file.name)
+    setPreview(URL.createObjectURL(file))
+    setRequested(true)
+  }
 
-	const handleFiles = (file?: File) => {
-		if (!file) return
-		const url = URL.createObjectURL(file)
-		setPreview((prev) => {
-			if (prev && prev.startsWith && prev.startsWith('blob:')) URL.revokeObjectURL(prev)
-			return url
-		})
-		setResults(null)
-	}
-
-	const onDrop: React.DragEventHandler = (e) => {
-		e.preventDefault()
-		const file = e.dataTransfer.files && e.dataTransfer.files[0]
-		if (file) handleFiles(file)
-	}
-
-	const onDragOver: React.DragEventHandler = (e) => {
-		e.preventDefault()
-	}
-
-	const onFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
-		const file = e.target.files && e.target.files[0]
-		if (file) {
-			handleFiles(file)
-			setSelectedFileName(file.name)
-		}
-	}
-
-	const [selectedFileName, setSelectedFileName] = useState<string | null>(null)
-
-	return (
-		<div>
-			<div
-				onDrop={onDrop}
-				onDragOver={onDragOver}
-				className="border-dashed border-2 border-slate-300 rounded p-4 text-center"
-				style={{ cursor: 'pointer' }}
-			>
-				<p>Drag the picture here, or click to select the picture for recognition.</p>
-						<div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-							<label htmlFor="image-input" className="inline-block px-4 py-2 rounded bg-gray-700 text-white cursor-pointer">Select the picture</label>
-							<input id="image-input" type="file" accept="image/*" onChange={onFileChange} style={{ display: 'none' }} />
-							<span className="text-sm text-gray-400">{selectedFileName ? selectedFileName : 'No picture selected'}</span>
-						</div>
-				<div style={{ marginTop: 12 }}>
-					{loadingModel ? <small>Loading model…</small> : <small>Model ready</small>}
-				</div>
-			</div>
-
-			{preview && (
-				<div className="mt-4">
-					<img
-						ref={imgRef}
-						src={preview}
-						alt="preview"
-						style={{ width: '50%', maxWidth: '100%', display: 'block', margin: '0 auto' }}
-						onLoad={() => imgRef.current && classifyImage(imgRef.current)}
-					/>
-					<div className="mt-2">
-						{results === null ? (
-							<div>Recognizing…</div>
-						) : results.length === 0 ? (
-							<div>No results detected</div>
-						) : (
-							<ul>
-								{results.map((r, i) => (
-									<li key={i}>
-										{r.label} — {(r.confidence * 100).toFixed(2)}%
-									</li>
-								))}
-							</ul>
-						)}
-					</div>
-				</div>
-			)}
-		</div>
-	)
+  const busy = status === 'loading' || status === 'classifying'
+  return <div>
+    <div className="image-picker" onDragOver={event => event.preventDefault()} onDrop={event => {
+      event.preventDefault()
+      selectFile(event.dataTransfer.files[0])
+    }}>
+      <p>Drag the picture here, or click to select the picture for recognition.</p>
+      <div className="image-controls">
+        <button type="button" disabled={busy} onClick={() => { setRequested(true); setRetry(value => value + 1) }}>
+          {status === 'error' ? '重试识别' : '开始识别'}
+        </button>
+        <label htmlFor="image-input">Select the picture</label>
+        <input className="sr-only" id="image-input" type="file" accept="image/*" onChange={event => selectFile(event.target.files?.[0])} />
+        <span>{filename || 'No picture selected'}</span>
+      </div>
+      <p role="status" className="image-message">{status === 'idle' ? '点击开始识别，或选择一张图片。'
+        : status === 'loading' ? 'Loading model…' : status === 'classifying' ? 'Recognizing…'
+        : status === 'error' ? '识别失败，请检查图片与网络后重试。' : 'Model ready'}</p>
+    </div>
+    <img ref={imgRef} src={preview} alt="preview" className="image-preview" />
+    {results && <ul>{results.map((result, index) => <li key={index}>{result.label} — {(result.confidence * 100).toFixed(2)}%</li>)}</ul>}
+  </div>
 }
 
 export default ImageClassification

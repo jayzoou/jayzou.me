@@ -5,17 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite-react-static build",
+    "build": "vite-react-static build && node scripts/enrich-html.mjs",
     "lint": "eslint . --max-warnings 0",
     "preview": "vite preview",
     "typecheck": "tsc -b --pretty false",
-    "check": "npm run check:env && npm run lint && npm run typecheck && npm run test:checks && npm run build && npm run check:content && npm run test:e2e",
+    "check": "npm run check:env && npm run lint && npm run typecheck && npm run test:checks && npm run build && npm run check:content && npm run check:performance && npm run test:e2e",
     "preinstall": "node scripts/check-env.mjs",
     "check:env": "node scripts/check-env.mjs",
     "check:content": "node scripts/check-content.mjs",
-    "test:checks": "node --test scripts/content.test.mjs",
+    "test:checks": "node --test scripts/*.test.mjs",
     "test:e2e": "playwright test",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "check:performance": "node scripts/check-performance.mjs"
   },
   "dependencies": {
     "mermaid": "^10.4.0",
@@ -25,14 +26,15 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.5.0",
-    "remark-gfm": "^4.0.1",
-    "shiki": "^3.21.0"
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "@mdx-js/react": "^2.3.0",
     "@mdx-js/rollup": "^3.1.0",
     "@playwright/test": "^1.65.1",
+    "@shikijs/rehype": "3.21.0",
+    "@types/hast": "^3.0.5",
     "@types/node": "^22.20.5",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
@@ -46,8 +48,10 @@
     "patch-package": "^8.0.1",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
+    "shiki": "3.21.0",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.24.1",
+    "unist-util-visit": "^5.2.0",
     "unocss": "^66.1.0-beta.11",
     "vite": "^6.2.0",
     "vite-react-static": "0.1.2"

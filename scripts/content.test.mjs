@@ -73,3 +73,19 @@ test('malformed URL escapes are diagnostics rather than crashes', t => {
   const root = fixture(t, { ...basic, 'dist/index.html': basic['dist/index.html'] + '<a href="/%ZZ">Invalid</a>' })
   assert.ok(auditContent({ root }).errors.some(error => error.includes('malformed URL encoding')))
 })
+
+test('static head metadata must agree with the catalog', t => {
+  const root = fixture(t, basic)
+  const errors = auditContent({ root, metadataForRoute: () => ({ title: 'Expected', description: 'Intro', canonical: 'https://jayzou.me/', noindex: true }) }).errors.join('\n')
+  assert.match(errors, /title differs from catalog/)
+  assert.match(errors, /description differs from catalog/)
+  assert.match(errors, /canonical differs from catalog/)
+  assert.match(errors, /robots differs from catalog status/)
+})
+
+test('canonical links resolve to pages without counting as article entry points', t => {
+  const root = fixture(t, { ...basic, 'dist/index.html': '<link rel="canonical" href="https://jayzou.me/posts/topic/"><main>Home</main>' })
+  const errors = auditContent({ root }).errors
+  assert.ok(errors.some(error => error.includes('article is not linked')))
+  assert.ok(!errors.some(error => error.includes('broken href')))
+})

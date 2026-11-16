@@ -23,7 +23,7 @@ function key(route) {
   return decodeURIComponent(route).replace(/\/index\.html$/, '').replace(/\/+$/, '') || '/'
 }
 
-export function auditContent({ root, reservedPages = {} }) {
+export function auditContent({ root, reservedPages = {}, metadataForRoute }) {
   const errors = []
   const dist = path.join(root, 'dist')
   const pages = walk(path.join(root, 'pages')).filter(file => file.endsWith('.mdx')).sort()
@@ -54,6 +54,18 @@ export function auditContent({ root, reservedPages = {} }) {
     }
     const ids = nodes.flatMap(node => (node.attrs || []).filter(attr => attr.name === 'id').map(attr => attr.value))
     if (new Set(ids).size !== ids.length) errors.push(`${source}: duplicate HTML id`)
+    if (metadataForRoute) {
+      const expected = metadataForRoute(route)
+      const attribute = (node, name) => node.attrs?.find(attr => attr.name === name)?.value
+      const title = nodes.find(node => node.tagName === 'title')
+      const description = nodes.find(node => node.tagName === 'meta' && attribute(node, 'name') === 'description')
+      const canonical = nodes.find(node => node.tagName === 'link' && attribute(node, 'rel') === 'canonical')
+      const robots = nodes.find(node => node.tagName === 'meta' && attribute(node, 'name') === 'robots')
+      if (!title || text(title) !== expected.title) errors.push(`${source}: title differs from catalog`)
+      if (attribute(description || {}, 'content') !== expected.description) errors.push(`${source}: description differs from catalog`)
+      if (attribute(canonical || {}, 'href') !== expected.canonical) errors.push(`${source}: canonical differs from catalog`)
+      if ((attribute(robots || {}, 'content') === 'noindex') !== expected.noindex) errors.push(`${source}: robots differs from catalog status`)
+    }
     documents.set(routeKey, { nodes, ids: new Set(ids) })
   }
 
@@ -82,8 +94,9 @@ export function auditContent({ root, reservedPages = {} }) {
         errors.push(`${source}: malformed URL encoding ${reference}`)
         continue
       }
-      if (node.tagName === 'a' && routes.has(target)) {
-        if (target !== routeKey) incoming.add(target)
+      const isPageLink = node.tagName === 'a' || (node.tagName === 'link' && node.attrs?.some(attr => attr.name === 'rel' && attr.value === 'canonical'))
+      if (isPageLink && routes.has(target)) {
+        if (node.tagName === 'a' && target !== routeKey) incoming.add(target)
         if (url.hash) {
           let fragment
           try { fragment = decodeURIComponent(url.hash.slice(1)) } catch { fragment = null }

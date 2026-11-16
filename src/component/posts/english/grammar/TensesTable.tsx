@@ -1,5 +1,4 @@
 
-import './TensesTable.css'
 
 const TensesTable = () => {
   return (

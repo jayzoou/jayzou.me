@@ -1,9 +1,11 @@
 import { fileURLToPath } from 'node:url'
 import { auditContent } from './lib/content.mjs'
-import { reservedPages } from './content-policy.mjs'
+import { reservedPages, categories, getPageMetadata } from '../src/content/catalog.ts'
+import { auditCatalog } from './lib/catalog.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
-const result = auditContent({ root, reservedPages })
+const result = auditContent({ root, reservedPages, metadataForRoute: getPageMetadata })
+result.errors.push(...auditCatalog({ root, categories }))
 if (result.errors.length) {
   console.error(`Content check failed (${result.errors.length} problems):\n${result.errors.map(error => `- ${error}`).join('\n')}`)
   process.exitCode = 1

@@ -1,27 +1,22 @@
 import { Link } from 'react-router-dom'
 
-type PageItem = {
-  path: string
-  title: string
-  desc: string
-  draft?: boolean
-}
+import type { Article } from '../content/catalog'
 
-const PageList = ({ pages, className }: { pages: PageItem[]; className?: string }) => {
+const PageList = ({ pages, className }: { pages: readonly Article[]; className?: string }) => {
   return (
     <div className={className ?? 'page-list'}>
-      <ul className="list-none p-0">
+      <ul >
         {pages.map((page) => (
-          <li key={page.path} className="my-8 border border-gray-200 rounded-lg hover:border-gray-400 transition-colors">
-            {page.draft ? (
+          <li key={page.path} >
+            {page.status !== 'published' ? (
               <div>
-                <h3 className="m-0 text-lg font-semibold">{page.title} <small className="text-gray-500">待发布</small></h3>
-                <div className="m-0 text-gray-500 text-sm">{page.desc}</div>
+                <h3 >{page.title} <small >待发布</small></h3>
+                <div className="page-description">{page.description}</div>
               </div>
             ) : (
               <Link to={page.path} className="no-underline">
-                <h3 className="m-0 text-lg font-semibold">{page.title}</h3>
-                <div className="m-0 text-gray-500 text-sm">{page.desc}</div>
+                <h3 >{page.title}</h3>
+                <div className="page-description">{page.description}</div>
               </Link>
             )}
           </li>

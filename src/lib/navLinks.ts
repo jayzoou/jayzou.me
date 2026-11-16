@@ -1,17 +1,15 @@
+import { categories, sections, getCategory } from '../content/catalog'
+
 export type LinkItem = { to: string; label: string }
 
-export const mainLinks: LinkItem[] = [
-  { to: '/posts/js_core', label: 'Blog' },
-  { to: '/posts/english/grammar', label: 'English' },
-]
+export const mainLinks: LinkItem[] = sections.map(section => ({
+  to: getCategory(section.defaultCategory).path,
+  label: section.label,
+}))
 
-export const postSmallLinks: LinkItem[] = [
-  { to: '/posts/js_core', label: 'JS核心' },
-  { to: '/posts/design_patterns', label: '设计模式' },
-  { to: '/posts/algorithm', label: '算法' },  { to: '/posts/linear_algebra', label: '线性代数' },  { to: '/posts/vue', label: 'Vue' },
-  { to: '/posts/frontend', label: '前端开发' },
-]
+const categoryLinks = (section: 'blog' | 'english'): LinkItem[] => categories
+  .filter(category => category.section === section && category.navigation)
+  .map(category => ({ to: category.path, label: category.label }))
 
-export const englishSmallLinks: LinkItem[] = [{ to: '/posts/english/grammar', label: '语法' }]
-
-export default mainLinks
+export const postSmallLinks = categoryLinks('blog')
+export const englishSmallLinks = categoryLinks('english')

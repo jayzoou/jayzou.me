@@ -6,6 +6,8 @@ import mdx from "@mdx-js/rollup";
 import remarkMath from 'remark-math'
 import remarkGfm from 'remark-gfm'
 import rehypeKatex from 'rehype-katex'
+import rehypeShiki from '@shikijs/rehype'
+import rehypeHeadings from './scripts/rehype-headings.ts'
 import UnoCSS from "unocss/vite";
 
 // vite-react-static reads this extension from the resolved Vite config.
@@ -15,7 +17,18 @@ interface StaticSiteConfig extends UserConfig {
 
 const config: StaticSiteConfig = {
   base: "/",
+  build: { target: 'es2022', manifest: true },
   plugins: [
+    {
+      name: 'page-modules',
+      resolveId(id) { if (id === 'virtual:pages') return '\0virtual:pages' },
+      load(id, options) {
+        if (id !== '\0virtual:pages') return
+        return options?.ssr
+          ? "export const eagerPages = import.meta.glob('/pages/**/*.mdx', { eager: true }); export const lazyPages = {}"
+          : "export const eagerPages = {}; export const lazyPages = import.meta.glob('/pages/**/*.mdx')"
+      },
+    },
     {
       name: 'static-directory-preview',
       configurePreviewServer(server) {
@@ -44,8 +57,9 @@ const config: StaticSiteConfig = {
     UnoCSS(),
     mdx({
       jsxImportSource: "react",
+      providerImportSource: "@mdx-js/react",
       remarkPlugins: [remarkGfm, remarkMath],
-      rehypePlugins: [rehypeKatex],
+      rehypePlugins: [rehypeKatex, [rehypeShiki, { theme: 'github-dark', fallbackLanguage: 'text' }], rehypeHeadings],
     }),
   ],
   server: {

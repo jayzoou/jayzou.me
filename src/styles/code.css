@@ -1,0 +1,27 @@
+.code-block { position: relative; margin-block: var(--space-lg); min-width: 0; }
+pre {
+  margin: 0;
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #464646 transparent;
+}
+pre code { display: block; font-family: var(--font-code); font-size: 0.95rem; line-height: 1.5; tab-size: 2; }
+.code-copy {
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-xs);
+  z-index: 1;
+  min-width: 2rem;
+  min-height: 2rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: #343434;
+  color: var(--color-bright);
+  font-size: 0.75rem;
+  opacity: 0;
+}
+.code-block:hover .code-copy, .code-copy:focus-visible { opacity: 1; }
+@media (hover: none) { .code-copy { opacity: 1; } }
