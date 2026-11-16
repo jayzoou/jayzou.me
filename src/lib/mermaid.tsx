@@ -6,7 +6,7 @@ export function MermaidInit() {
     try {
       mermaid.initialize({ startOnLoad: false })
       mermaid.init(undefined, document.querySelectorAll('.mermaid'))
-    } catch (e) {
+    } catch {
       // silently fail if mermaid cannot render
     }
   }, [])

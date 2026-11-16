@@ -1,30 +1,25 @@
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { ClassificationResult, ImageClassifier } from 'ml5'
 import defaultImg from './img/cat.jpg'
-
-type Result = {
-	label: string
-	confidence: number
-}
-
 
 const ImageClassification = () => {
 	const imgRef = useRef<HTMLImageElement | null>(null)
 	const [preview, setPreview] = useState<string | null>(defaultImg)
-	const [results, setResults] = useState<Result[] | null>(null)
+	const [results, setResults] = useState<ClassificationResult[] | null>(null)
 	const [loadingModel, setLoadingModel] = useState(false)
 	const [modelReady, setModelReady] = useState(false)
-	const classifierRef = useRef<any>(null)
+	const classifierRef = useRef<ImageClassifier | null>(null)
 
 	useEffect(() => {
 		let mounted = true
 		;(async () => {
 			setLoadingModel(true)
 			try {
-				const ml5Module = await import('ml5')
-				const ml5 = (ml5Module as any).default || ml5Module
+				const { default: ml5 } = await import('ml5')
 				// load MobileNet classifier
-				const classifier = await ml5.imageClassifier('MobileNet')
+				const classifier = ml5.imageClassifier('MobileNet')
+				await classifier.ready
 				if (!mounted) return
 				classifierRef.current = classifier
 				setModelReady(true)
@@ -32,7 +27,7 @@ const ImageClassification = () => {
 				// ignore: user will see no classification
 				console.error('ml5 load error', err)
 			} finally {
-				setLoadingModel(false)
+				if (mounted) setLoadingModel(false)
 			}
 		})()
 		return () => {
@@ -40,13 +35,8 @@ const ImageClassification = () => {
 		}
 	}, [])
 
-	useEffect(() => {
-		// handled by separate effects and onLoad handler
-		return
-	}, [preview, modelReady])
-
 	// reusable classify function
-	const classifyImage = async (img: HTMLImageElement) => {
+	const classifyImage = useCallback(async (img: HTMLImageElement) => {
 		if (!classifierRef.current) {
 			console.warn('classifier not ready')
 			return
@@ -56,36 +46,20 @@ const ImageClassification = () => {
 			console.log('classify: running on', img.src)
 			const res = await classifierRef.current.classify(img)
 			console.log('classify: result', res)
-			const parsed: Result[] = (res || []).map((r: any) => ({
-				label: r.label,
-				confidence: r.confidence,
-			}))
-			setResults(parsed)
+			setResults(res)
 		} catch (err) {
 			console.error('classify error', err)
 			setResults(null)
 		}
-	}
+	}, [])
 
-	// when preview changes: if image already loaded + model ready, classify; otherwise rely on img onLoad
+	// Run once when the preview or model readiness changes; onLoad covers new images.
 	useEffect(() => {
-		if (!preview) return
 		const img = imgRef.current
-		if (!img) return
-		if (modelReady && img.complete && img.naturalWidth > 0) {
-			classifyImage(img)
+		if (preview && modelReady && img?.complete && img.naturalWidth > 0) {
+			void classifyImage(img)
 		}
-	}, [preview])
-
-	// when model becomes ready, if preview image already loaded classify it
-	useEffect(() => {
-		if (!modelReady) return
-		const img = imgRef.current
-		if (!img) return
-		if (preview && img.complete && img.naturalWidth > 0) {
-			classifyImage(img)
-		}
-	}, [modelReady])
+	}, [preview, modelReady, classifyImage])
 
 	const handleFiles = (file?: File) => {
 		if (!file) return

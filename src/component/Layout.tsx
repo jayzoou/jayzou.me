@@ -8,19 +8,19 @@ import highlightAllCodeBlocks from './shikiClient'
 
 // MDX often renders code blocks as <pre><code className="language-...">...</code></pre>
 // Provide a Pre wrapper that delegates the inner <code> to ShikiCode so language/className are preserved.
-const Pre: React.FC<any> = (props) => {
-  const children = React.Children.toArray(props.children) as any[]
+type CodeProps = React.ComponentProps<'code'> & { mdxType?: string }
 
-  // Find a child that represents code: mdxType === 'code' or has a language- className
-  const codeChild = children.find((c) => {
-    if (!c || !c.props) return false
-    const cls = c.props.className || ''
-    return c.props.mdxType === 'code' || /language-/.test(cls) || /lang-/.test(cls)
-  })
+const Pre = (props: React.ComponentProps<'pre'>) => {
+  const codeChild = React.Children.toArray(props.children).find(
+    (child): child is React.ReactElement<CodeProps> => {
+      if (!React.isValidElement<CodeProps>(child)) return false
+      const cls = child.props.className || ''
+      return child.type === 'code' || child.props.mdxType === 'code' || /(?:language|lang)-/.test(cls)
+    },
+  )
 
   if (codeChild) {
-    // delegating to ShikiCode
-    return <ShikiCode {...codeChild.props}>{codeChild.props.children}</ShikiCode>
+    return <ShikiCode className={codeChild.props.className}>{codeChild.props.children}</ShikiCode>
   }
 
   return <pre {...props} />

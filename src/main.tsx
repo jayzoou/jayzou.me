@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react'
 import { viteReactStatic } from 'vite-react-static'
 import Layout from './component/Layout.tsx'
 import 'virtual:uno.css'
@@ -5,7 +6,7 @@ import './index.css'
 import './App.css'
 import 'katex/dist/katex.min.css'
 
-const modules = import.meta.glob(
+const modules = import.meta.glob<{ default: ComponentType }>(
   [
     '../pages/**/*.mdx',
   ], 
@@ -19,7 +20,6 @@ const routes = Object.keys(modules)
       .replace(/^\//g,'')
       .replace(/\.(mdx|tsx)$/, '')
       .replace('Index', '')
-    //@ts-ignore
     const Component = modules[filename].default
     return { path: `/${path}`, element: <Component /> }
   })

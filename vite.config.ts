@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, type UserConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import mdx from "@mdx-js/rollup";
 import remarkMath from 'remark-math'
@@ -6,8 +6,12 @@ import remarkGfm from 'remark-gfm'
 import rehypeKatex from 'rehype-katex'
 import UnoCSS from "unocss/vite";
 
-// https://vite.dev/config/
-export default defineConfig({
+// vite-react-static reads this extension from the resolved Vite config.
+interface StaticSiteConfig extends UserConfig {
+  staticOptions: { script: 'defer' | 'async' }
+}
+
+const config: StaticSiteConfig = {
   base: "/",
   plugins: [
     react(),
@@ -32,8 +36,9 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 5000,
   },
-  // @ts-ignore
   staticOptions: {
     script: "defer",
   },
-});
+};
+
+export default defineConfig(config);

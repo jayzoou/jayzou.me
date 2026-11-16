@@ -6,8 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite-react-static build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "lint": "eslint . --max-warnings 0",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --pretty false",
+    "check": "npm run check:env && npm run lint && npm run typecheck && npm run build",
+    "preinstall": "node scripts/check-env.mjs",
+    "check:env": "node scripts/check-env.mjs"
   },
   "dependencies": {
     "mermaid": "^10.4.0",
@@ -33,12 +37,17 @@
     "globals": "^15.15.0",
     "katex": "^0.16.8",
     "patch-package": "^8.0.1",
-    "rehype-katex": "^6.0.2",
+    "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.24.1",
     "unocss": "^66.1.0-beta.11",
     "vite": "^6.2.0",
     "vite-react-static": "0.1.2"
-  }
+  },
+  "engines": {
+    "node": ">=22.22.2 <23",
+    "npm": ">=10.9.7 <11"
+  },
+  "packageManager": "npm@10.9.7"
 }
