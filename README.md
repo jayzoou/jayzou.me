@@ -8,7 +8,8 @@
 - npm：10.9.7 为验证基线，支持不低于该版本的 npm 10；统一使用 npm 与 `package-lock.json`。
 - `.npmrc` 保持 lockfile v2；安装前置脚本与 `check:env` 检查项目环境。
 - ml5 元数据声明 yarn/Node 20，因此不全局启用 `engine-strict`。安装时可能出现其 engine/peer dependency 警告，本站使用其浏览器 API。
-- 常规开发无需环境变量。图片分类仅在用户开始识别或选择图片后，才联网加载模型。
+- 首页为数字助手，调用同级独立仓库 `jayzou-api` 提供的 Mock SSE 接口。Vite 默认代理 `/api` 到 `http://127.0.0.1:8787`，配置示例见 `.env.example`。
+- 原图片分类组件、模型适配器和资源保留在源码中，首页不再导入或展示。
 
 ```sh
 nvm install
@@ -17,7 +18,7 @@ npm ci
 npm run dev
 ```
 
-未使用 nvm 时，安装上述版本后从 `npm ci` 开始。开发地址为 `http://localhost:5000`。当前监听 `0.0.0.0`，HMR 使用端口 5000，保留 Replit 兼容性。
+未使用 nvm 时，安装上述版本后从 `npm ci` 开始。开发端口首选 5000，占用时 Vite 自动选择可用端口（例如 5002），以终端打印的 Local 地址为准。当前监听 `0.0.0.0`，HMR 跟随实际端口，保留 Replit 兼容性。
 
 ## 常用命令
 
@@ -42,7 +43,7 @@ npm run dev
 
 ## 技术栈与目录
 
-React 19、TypeScript strict、Vite 6、React Router 7、MDX、UnoCSS。文章支持 GFM、KaTeX、Mermaid 和编译期 Shiki 高亮；交互动画使用 React/CSS，图片分类使用 ml5。浏览器构建目标为 ES2022。
+React 19、TypeScript strict、Vite 6、React Router 7、MDX、UnoCSS。文章支持 GFM、KaTeX、Mermaid 和编译期 Shiki 高亮；AI 交互使用 Vercel AI SDK、Zod 与 react-markdown，代码 Demo 按需加载 Sandpack。浏览器构建目标为 ES2022。React 与 React DOM 统一固定为 19.1.2，以满足 AI SDK React 适配器的 peer 要求，避免版本不匹配；Shiki 版本保持不变。
 
 ```text
 pages/                     MDX 正文与文章资源，路径决定 URL
@@ -54,6 +55,10 @@ src/lib/                   共享逻辑、路由映射与派生导航
 src/styles/                tokens、基础、布局、正文与代码块样式
 src/types/                 必要的第三方和虚拟模块类型
 scripts/                   标题插件、静态元数据、内容与性能校验
+src/component/chat/        首页对话、工具卡片和模拟联系表单
+src/component/ai/          文章导读与受控脑图
+src/component/artifact/    按需加载的代码面板与 Sandpack
+src/lib/ai/                API 客户端及从后端生成的接口契约
 vite.config.ts             页面模块策略、MDX 编译、服务与构建配置
 tests/e2e/                 浏览器冒烟与图片模型替身
 .github/workflows/check.yml  PR、main 推送与手动触发的 CI
@@ -81,7 +86,31 @@ dist/                      构建产物，不提交、不手工修改
 
 性能检查计算共享入口及静态依赖的 gzip 字节，预算为 JS 150 KiB、CSS 20 KiB、单个 MDX chunk 250 KiB。当前页面的按需 chunk 不计入共享入口，因此该数字不等同于首屏总传输量或加载耗时。模型、Mermaid 和大型文章仍可能触发大 chunk 提示，其成本由使用时承担。
 
-浏览器测试覆盖导航、深层 URL 刷新、静态高亮与复制、目录、公式、Mermaid、手机布局及按需资源加载。图片分类适配器使用测试替身，验证交互流程，不能证明真实模型、下载或推理正确。截图/trace 位于 `test-results/`，HTML 报告位于 `playwright-report/`，均不提交。
+AI 知识快照完整正文首次实测为 139.5 KiB gzip，因此单独设置 160 KiB gzip 的初始预算，约保留 15% 增长空间；该快照只用于后端导入，不增加浏览器首屏传输，原有共享 JS/CSS 与单页预算保持不变。内容检查同时核对其文章集合、元数据、内容版本和章节引用。沙盒按需 chunk 及外部编译资源需另外测量，不能用共享入口预算代替。
+
+浏览器测试覆盖导航、深层 URL 刷新、静态高亮与复制、目录、公式、Mermaid、手机布局及按需资源加载，并检查简历卡片、恢复/新对话、文章来源、模拟联系、导读和 Demo 面板。默认使用接口契约替身；`E2E_REAL_API=1` 时直接连接独立后端。原图片识别不再有首页交互入口，未验证真实推理。截图/trace 位于 `test-results/`，HTML 报告位于 `playwright-report/`，均不提交。
+
+## 前后端联调
+
+先在本仓库运行 `npm run build`，生成静态站点和 `dist/ai/knowledge.json`。知识文件只包含已发布文章，从统一目录和静态正文生成，不会把其他文章 React 模块导入首页。
+
+在同级后端仓库运行：
+
+```sh
+cd ../jayzou-api
+npm ci
+npm run build
+npm run import:knowledge -- ../jayzou.me/dist/ai/knowledge.json
+npm run dev
+```
+
+另一个终端在本仓库运行 `npm run dev`。正文更新后重新构建、导入并重启后端。公开简历维护在后端 `data/profile.json`；初始工作、教育与技能经历为空，页面明确显示尚未配置。
+
+默认使用同源代理，因此浏览器 Network 显示的是前端端口 `/api/chat`（例如 `http://localhost:5002/api/chat`），实际由 Vite 转发到 8787。后端 development 模式允许本机回环地址使用不同端口；production/test 仍仅接受精确来源白名单。不要仅根据浏览器显示前端 URL 判断代理未生效。可在响应中检查 `X-Request-Id`、SSE Content-Type 或 `ORIGIN_DENIED` 错误。
+
+后端启动后，可以运行 `E2E_REAL_API=1 PLAYWRIGHT_CHANNEL=chrome npm run check` 进行实际 HTTP 联调检查。Playwright 自动管理前端预览，后端由启动它的终端管理。纯静态部署须设置 `VITE_API_BASE_URL` 为后端地址，并在后端允许该站点来源。
+
+当前回复、导读和工具选择均为 Mock；正文检索实际读取文章，Demo 使用预设源码，联系表单不发送通知。Sandpack 编辑器仅在点击运行后下载，依赖外部编译资源，其真实编译需要可访问相关网络。流式 AI 代码使用纯文本和复制，静态文章保留编译期高亮。
 
 GitHub Actions 在 PR、main 推送及手动触发时执行同一 `npm run check`，保存诊断产物 7 天。工作流变更须推送后才会在远程运行；将检查设为合并必需项需配置仓库规则。
 

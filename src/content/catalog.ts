@@ -437,7 +437,7 @@ export const reservedPages = Object.fromEntries(articles
 
 export const siteMetadata = { name: 'Jay Zou', url: 'https://jayzou.me', description: '个人学习笔记与交互演示' }
 const standalonePages: Record<string, { title: string; description: string }> = {
-  '/': { title: 'Jay Zou', description: siteMetadata.description },
+  '/': { title: 'Jay Zou', description: '与 Jay 的数字助手对话，了解公开简历、查询博客正文与体验交互 Demo。' },
   '/posts': { title: 'Blog', description: '前端、算法与计算机基础学习笔记' },
   '/projects': { title: 'Projects', description: 'Jay Zou 的项目与工具' },
 }

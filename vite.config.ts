@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import path from 'node:path'
-import { defineConfig, type UserConfig } from "vite";
+import { defineConfig, loadEnv, type UserConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import mdx from "@mdx-js/rollup";
 import remarkMath from 'remark-math'
@@ -15,6 +15,9 @@ interface StaticSiteConfig extends UserConfig {
   staticOptions: { script: 'defer' | 'async' }
 }
 
+export default defineConfig(({ mode }) => {
+const env = loadEnv(mode, process.cwd(), '')
+const proxy = { '/api': { target: env.AI_PROXY_TARGET || 'http://127.0.0.1:8787', changeOrigin: true } }
 const config: StaticSiteConfig = {
   base: "/",
   build: { target: 'es2022', manifest: true },
@@ -63,16 +66,17 @@ const config: StaticSiteConfig = {
     }),
   ],
   server: {
+    proxy,
     host: "0.0.0.0",
     port: 5000,
-    // Use ws protocol and local dev port for HMR to avoid wss://localhost:443 failures
+    // Let Vite use the actual listening port if 5000 is occupied.
     hmr: {
       protocol: 'ws',
-      clientPort: 5000,
     },
     allowedHosts: true,
   },
   preview: {
+    proxy,
     host: "0.0.0.0",
     port: 5000,
   },
@@ -81,4 +85,5 @@ const config: StaticSiteConfig = {
   },
 };
 
-export default defineConfig(config);
+return config
+});

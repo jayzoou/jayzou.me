@@ -5,28 +5,33 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite-react-static build && node scripts/enrich-html.mjs",
+    "build": "vite-react-static build && node scripts/enrich-html.mjs && node scripts/export-knowledge.mjs",
     "lint": "eslint . --max-warnings 0",
     "preview": "vite preview",
     "typecheck": "tsc -b --pretty false",
     "check": "npm run check:env && npm run lint && npm run typecheck && npm run test:checks && npm run build && npm run check:content && npm run check:performance && npm run test:e2e",
     "preinstall": "node scripts/check-env.mjs",
     "check:env": "node scripts/check-env.mjs",
-    "check:content": "node scripts/check-content.mjs",
+    "check:content": "node scripts/check-content.mjs && node scripts/check-knowledge.mjs",
     "test:checks": "node --test scripts/*.test.mjs",
     "test:e2e": "playwright test",
     "test:e2e:report": "playwright show-report",
     "check:performance": "node scripts/check-performance.mjs"
   },
   "dependencies": {
+    "@ai-sdk/react": "4.0.177",
+    "@codesandbox/sandpack-react": "2.20.0",
+    "ai": "7.0.173",
     "mermaid": "^10.4.0",
     "ml5": "^1.3.1",
     "motion": "^12.15.0",
     "postcss": "^8.5.3",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "19.1.2",
+    "react-dom": "19.1.2",
+    "react-markdown": "10.1.0",
     "react-router-dom": "^7.5.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

@@ -1,4 +1,3 @@
-import path from 'node:path'
 import { readFileSync } from 'node:fs'
 import type { Page } from '@playwright/test'
 import { test, expect } from './fixtures'
@@ -10,16 +9,13 @@ async function openPage(page: Page, url: string) {
 }
 
 
-test('home loads, model UI accepts an image, and primary navigation works', async ({ page }) => {
+test('home shows the assistant without image recognition and primary navigation works', async ({ page }) => {
   await openPage(page, '/')
-  await expect(page.getByRole('heading', { name: 'Jay Zou', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: /^Jay Zou/ })).toBeVisible()
   expect(await page.evaluate(() => performance.getEntriesByType('resource').some(entry => /imageClassifier|ml5/.test(entry.name)))).toBe(false)
-  await page.getByRole('button', { name: '开始识别', exact: true }).click()
-  await expect(page.getByText('Smoke test cat — 99.00%')).toBeVisible()
+  await expect(page.getByRole('button', { name: '开始识别', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '介绍一下你的技术背景' })).toBeVisible()
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1)
-  await page.getByLabel('Select the picture').setInputFiles(path.resolve('src/component/Things/img/cat.jpg'))
-  await expect(page.getByText('cat.jpg', { exact: true })).toBeVisible()
-  await expect(page.getByText('Smoke test cat — 99.00%')).toBeVisible()
   await page.locator('header').getByRole('link', { name: 'Blog', exact: true }).click()
   await expect(page).toHaveURL(/\/posts\/js_core\/?$/)
   await expect(page.getByRole('heading', { name: '闭包', exact: true })).toBeVisible()

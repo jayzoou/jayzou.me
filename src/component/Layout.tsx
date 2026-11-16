@@ -5,6 +5,7 @@ import { getArticle, getPageMetadata } from '../content/catalog'
 import NavBar from './NavBar'
 import TableOfContents from './TableOfContents'
 import CodeBlock from './CodeBlock'
+import ArticleAssistant from './ai/ArticleAssistant'
 
 const mdxComponents = { pre: CodeBlock }
 
@@ -34,6 +35,7 @@ const Layout = () => {
     <div className={isArticle ? 'content-with-toc' : 'content-container'}>
       {isArticle && <TableOfContents key={pathname} />}
       <main className={isPostPage ? 'prose page-content' : 'page-content'}>
+        {isArticle && <ArticleAssistant key={article.path} articlePath={article.path} />}
         <MDXProvider components={mdxComponents}><Outlet /></MDXProvider>
       </main>
     </div>
