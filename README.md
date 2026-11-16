@@ -8,7 +8,7 @@
 - npm：10.9.7 为验证基线，支持不低于该版本的 npm 10；统一使用 npm 与 `package-lock.json`。
 - `.npmrc` 保持 lockfile v2；安装前置脚本与 `check:env` 检查项目环境。
 - ml5 元数据声明 yarn/Node 20，因此不全局启用 `engine-strict`。安装时可能出现其 engine/peer dependency 警告，本站使用其浏览器 API。
-- 首页为数字助手，调用同级独立仓库 `jayzou-api` 提供的 Mock SSE 接口。Vite 默认代理 `/api` 到 `http://127.0.0.1:8787`，配置示例见 `.env.example`。
+- 首页为数字助手，调用同级独立仓库 `jayzou-api` 提供的 SSE 接口（支持 Mock 与百炼真实模型）。Vite 默认代理 `/api` 到 `http://127.0.0.1:8787`，配置示例见 `.env.example`。
 - 原图片分类组件、模型适配器和资源保留在源码中，首页不再导入或展示。
 
 ```sh
@@ -110,7 +110,7 @@ npm run dev
 
 后端启动后，可以运行 `E2E_REAL_API=1 PLAYWRIGHT_CHANNEL=chrome npm run check` 进行实际 HTTP 联调检查。Playwright 自动管理前端预览，后端由启动它的终端管理。纯静态部署须设置 `VITE_API_BASE_URL` 为后端地址，并在后端允许该站点来源。
 
-当前回复、导读和工具选择均为 Mock；正文检索实际读取文章，Demo 使用预设源码，联系表单不发送通知。Sandpack 编辑器仅在点击运行后下载，依赖外部编译资源，其真实编译需要可访问相关网络。流式 AI 代码使用纯文本和复制，静态文章保留编译期高亮。
+后端可通过 AI_MODE=live 接入百炼真实模型，详见 jayzou-api 的 README；默认 Mock 可用于离线联调。正文检索实际读取文章，Demo 使用预设源码，联系表单不发送通知。Sandpack 编辑器仅在点击运行后下载，依赖外部编译资源，其真实编译需要可访问相关网络。流式 AI 代码使用纯文本和复制，静态文章保留编译期高亮。
 
 GitHub Actions 在 PR、main 推送及手动触发时执行同一 `npm run check`，保存诊断产物 7 天。工作流变更须推送后才会在远程运行；将检查设为合并必需项需配置仓库规则。
 

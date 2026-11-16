@@ -35,7 +35,7 @@ export const insightSchema = z.object({
   points: z.tuple([text, text, text]),
   nodes: z.array(z.object({ id: z.string().regex(/^n\d+$/), label: z.string().max(120), parentId: z.string().regex(/^n\d+$/).nullable() })).min(1).max(12),
   sources: z.array(sourceSchema).max(5),
-  simulated: z.literal(true),
+  simulated: z.boolean(),
 }).superRefine((value, context) => {
   const parents = new Map(value.nodes.map(node => [node.id, node.parentId]))
   if (parents.size !== value.nodes.length || value.nodes.filter(node => node.parentId === null).length !== 1) {
@@ -60,8 +60,8 @@ export const contactSchema = z.object({
   name: z.string().trim().min(1).max(80), email: z.email().max(254),
   message: z.string().trim().min(5).max(2000),
 })
-export const resumeResultSchema = z.object({ section: sectionSchema, profile: profileSchema, simulated: z.literal(true) })
-export const recommendationsSchema = z.object({ articles: z.array(sourceSchema).max(5), simulated: z.literal(true) })
+export const resumeResultSchema = z.object({ section: sectionSchema, profile: profileSchema, simulated: z.boolean() })
+export const recommendationsSchema = z.object({ articles: z.array(sourceSchema).max(5), simulated: z.boolean() })
 export const contactFormSchema = z.object({ title: text, simulated: z.literal(true) })
 
 export type Source = z.infer<typeof sourceSchema>

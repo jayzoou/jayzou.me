@@ -62,7 +62,7 @@ MDX 编译通过 `providerImportSource` 使用 `MDXProvider`；其唯一的 `pre
 
 ## 独立 AI 后端与内容快照
 
-同级 `jayzou-api` 是独立 Git/npm 项目。开发与预览代理 `/api` 到其 8787 端口，静态部署通过 `VITE_API_BASE_URL` 指定地址。公开简历与模型/通知配置属于后端，浏览器不保存服务端密钥。服务首期仅为 Hono + Zod + AI SDK 的 Mock 实现。
+同级 `jayzou-api` 是独立 Git/npm 项目。开发与预览代理 `/api` 到其 8787 端口，静态部署通过 `VITE_API_BASE_URL` 指定地址。公开简历与模型/通知配置属于后端，浏览器不保存服务端密钥。服务使用 Hono + Zod + AI SDK，支持离线 Mock 与百炼真实模型。真实回复、简历/文章工具和导读使用 simulated=false，前端生成契约同时接受两种模式；Demo 与联系投递仍为模拟。
 
 代理使用同源相对 URL，浏览器看到前端端口是预期行为；后端接收原始 Origin。development 允许精确回环主机的任意端口，production/test 只接受配置白名单。Vite HMR 使用实际监听端口，不固定为 5000，避免端口占用后出现 API 来源拒绝或热更新连接错误。
 

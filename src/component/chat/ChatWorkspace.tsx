@@ -59,7 +59,7 @@ const ChatWorkspace = () => {
     void sendMessage({ text: text.trim() })
   }
   return <section className="chat-workspace" aria-label="Jay 的数字助手">
-    <div className="chat-toolbar"><span className="chat-mode"><span />演示模式 · 基于公开资料</span><button type="button" disabled={!ready || resetting} onClick={() => {
+    <div className="chat-toolbar"><span className="chat-mode"><span />数字助手 · 基于公开资料</span><button type="button" disabled={!ready || resetting} onClick={() => {
       setResetting(true)
       void stop().then(() => { setMessages([]); clearError(); setArtifact(null); setNotice('新对话已开始'); setInput('') }).finally(() => setResetting(false))
     }}>新对话</button></div>
@@ -84,7 +84,7 @@ const ChatWorkspace = () => {
       }} />
       <div className="chat-composer-footer"><small>{input.length}/2000 · Shift + Enter 换行</small>{busy ? <button type="button" onClick={() => { void stop(); setNotice('已停止回复，可继续提问。') }}>停止生成</button> : <button type="submit" disabled={!ready || resetting || !input.trim()}>发送 <span aria-hidden="true">↑</span></button>}</div>
     </form>
-    <p className="chat-disclaimer">当前为模拟回复与关键词检索。履历以已公开资料为准，联系表单不会实际投递。</p>
+    <p className="chat-disclaimer">回复请结合原文核对，履历以已公开资料为准，联系表单不会实际投递。</p>
     <span className="sr-only" role="status">{notice}</span>
     {artifact && <Suspense fallback={<p role="status">正在打开 Demo…</p>}><ArtifactPanel artifact={artifact} onClose={() => setArtifact(null)} /></Suspense>}
   </section>

@@ -14,7 +14,7 @@ const ArticleInsight = ({ articlePath }: { articlePath: string }) => {
   const insight = parsed?.success ? parsed.data : null
   const busy = status === 'submitted' || status === 'streaming'
   return <div className="article-insight">
-    <p className="chat-muted">从原文章节提取的模拟导读，尚未接入模型生成。</p>
+    <p className="chat-muted">根据文章内容整理的阅读导读，请结合原文核对。</p>
     {busy && <p role="status">正在提取要点与章节结构… <button type="button" onClick={() => { void stop() }}>停止导读</button></p>}
     {error && <p role="alert">导读暂时不可用，请确认 API 服务和知识库已准备好。</p>}
     {!busy && !insight && <button type="button" onClick={() => { clearError(); setMessages([]); void sendMessage({ text: '重新生成文章导读' }) }}>重试导读</button>}
