@@ -280,7 +280,7 @@ pre.shiki-wrapper:hover .shiki-copy-btn {
 /* Code block visual improvements */
 .shiki-wrapper {
   margin: 0;
-  min-width: fit-content;
+  min-width: 0;
 }
 
 .shiki-wrapper pre {
@@ -392,4 +392,42 @@ pre {
 pre code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Segoe UI Mono', 'Courier New', monospace;
   font-size: 0.95rem;
+}
+
+/* Keep article content and copy controls reachable on narrow touch screens. */
+@media (max-width: 640px) {
+  .content-with-toc main {
+    width: 100%;
+    margin-left: 0;
+    overflow-wrap: anywhere;
+  }
+
+  header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  header .nav {
+    display: block;
+    padding: 0.5rem 0;
+  }
+
+  header .nav > div,
+  .nav-sub,
+  .nav-small {
+    flex-wrap: wrap;
+    margin-right: 0;
+  }
+}
+
+.shiki-copy-btn:focus-visible,
+pre.shiki-wrapper .shiki-copy-btn:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .shiki-copy-btn,
+  pre.shiki-wrapper .shiki-copy-btn {
+    opacity: 1;
+  }
 }

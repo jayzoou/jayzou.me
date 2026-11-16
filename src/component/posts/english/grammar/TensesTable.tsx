@@ -4,10 +4,11 @@ import './TensesTable.css'
 const TensesTable = () => {
   return (
     <table className="tenses-table m-auto my-4">
+      <tbody>
       <tr className="font-bold">
         <td className="w-20">状态/时间</td>
         <td className="">过去</td>
-        <td className="">现在</td> 
+        <td className="">现在</td>
         <td className="">将来</td>
         <td className="">过去将来</td>
       </tr>
@@ -39,6 +40,7 @@ const TensesTable = () => {
         <td className="">will have been doing</td>
         <td className="">would have been doing</td>
       </tr>
+      </tbody>
     </table>
   )
 }

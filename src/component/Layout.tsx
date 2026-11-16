@@ -28,21 +28,26 @@ const Pre = (props: React.ComponentProps<'pre'>) => {
 
 const Layout = () => {
   const location = useLocation()
-  const isPostPage = location.pathname.startsWith('/posts')
-  const isIndexPage = location.pathname.endsWith('/') || 
-    location.pathname === '/posts' || 
-    location.pathname === '/posts/js_core' || 
-    location.pathname === '/posts/english' ||
-    location.pathname === '/posts/english/grammar' ||
-    location.pathname === '/posts/english/document'||
-    location.pathname === '/posts/algorithm' ||
-    location.pathname === '/posts/design_patterns' ||
-    location.pathname === '/posts/frontend' ||
-    location.pathname === '/posts/vue' ||
-    location.pathname === '/posts/linear_algebra'
+  const pathname = location.pathname.replace(/\/+$/, '') || '/'
+  const isPostPage = pathname.startsWith('/posts')
+  const isIndexPage = pathname === '/posts' ||
+    pathname === '/posts/js_core' ||
+    pathname === '/posts/english' ||
+    pathname === '/posts/english/grammar' ||
+    pathname === '/posts/english/document'||
+    pathname === '/posts/algorithm' ||
+    pathname === '/posts/design_patterns' ||
+    pathname === '/posts/frontend' ||
+    pathname === '/posts/vue' ||
+    pathname === '/posts/linear_algebra'
 
-  
+
   const showToc = isPostPage && !isIndexPage
+
+  // Expose client readiness for production smoke tests and diagnostics.
+  React.useEffect(() => {
+    document.getElementById('root')?.setAttribute('data-hydrated', 'true')
+  }, [])
 
   // Run client-side highlighter after content renders/hydrates
   React.useEffect(() => {

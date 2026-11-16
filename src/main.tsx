@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react'
 import { viteReactStatic } from 'vite-react-static'
 import Layout from './component/Layout.tsx'
+import { pagePathToRoute } from './lib/pageRoutes.ts'
 import 'virtual:uno.css'
 import './index.css'
 import './App.css'
@@ -15,13 +16,8 @@ const modules = import.meta.glob<{ default: ComponentType }>(
 
 const routes = Object.keys(modules)
   .map((filename: string) => {
-    const path = filename
-      .replace (/\..\/(pages)/, '')
-      .replace(/^\//g,'')
-      .replace(/\.(mdx|tsx)$/, '')
-      .replace('Index', '')
     const Component = modules[filename].default
-    return { path: `/${path}`, element: <Component /> }
+    return { path: pagePathToRoute(filename), element: <Component /> }
   })
 
 export const createRoot = viteReactStatic({

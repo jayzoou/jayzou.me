@@ -16,10 +16,8 @@ const ImageClassification = () => {
 		;(async () => {
 			setLoadingModel(true)
 			try {
-				const { default: ml5 } = await import('ml5')
-				// load MobileNet classifier
-				const classifier = ml5.imageClassifier('MobileNet')
-				await classifier.ready
+				const { createImageClassifier } = await import('../../lib/imageClassifier')
+				const classifier = await createImageClassifier()
 				if (!mounted) return
 				classifierRef.current = classifier
 				setModelReady(true)
