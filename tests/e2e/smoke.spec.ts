@@ -11,7 +11,7 @@ async function openPage(page: Page, url: string) {
 
 test('home shows the assistant without image recognition and primary navigation works', async ({ page }) => {
   await openPage(page, '/')
-  await expect(page.getByRole('heading', { level: 1, name: /^Jay Zou/ })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Jay 的数字助手' })).toBeVisible()
   expect(await page.evaluate(() => performance.getEntriesByType('resource').some(entry => /imageClassifier|ml5/.test(entry.name)))).toBe(false)
   await expect(page.getByRole('button', { name: '开始识别', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: '介绍一下你的技术背景' })).toBeVisible()

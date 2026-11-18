@@ -85,7 +85,6 @@ const ChatWorkspace = () => {
   }
   return <section className={`chat-workspace${messages.length ? ' is-conversation' : ''}`} aria-label="Jay 的数字助手">
     <div className="chat-toolbar">
-      <div className="chat-identity"><h1>Jay Zou <span>数字助手</span></h1><span className="chat-mode"><span />基于公开资料</span></div>
       <button className="chat-new" type="button" disabled={!ready || resetting} onClick={() => {
         focusAfterReset.current = true
         setResetting(true)
@@ -93,7 +92,7 @@ const ChatWorkspace = () => {
       }}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M12 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-7M16 3l5 5M10 14l1-5 7-7 5 5-7 7z" /></svg>新对话</button>
     </div>
     <div className="chat-body">
-      {!messages.length && <div className="chat-welcome"><p className="chat-eyebrow">JAY’S DIGITAL SPACE</p><h2>从一个问题，认识 Jay。</h2><p>聊聊技术、翻翻笔记，或者一起做点有趣的东西。</p></div>}
+      {!messages.length && <div className="chat-welcome"><p className="chat-eyebrow">JAY’S DIGITAL SPACE</p></div>}
       <div className={`chat-log${messages.length ? ' has-messages' : ''}`} ref={log} role="log" aria-label="对话记录" aria-live="off" onScroll={() => {
         const element = log.current
         if (element) {
@@ -120,7 +119,6 @@ const ChatWorkspace = () => {
         <div className="chat-composer-footer"><small id="chat-input-hint">{input.length > 0 ? `${input.length}/2000 · ` : ''}Enter 发送 · Shift + Enter 换行</small>{busy ? <button className="chat-send" type="button" aria-label="停止生成" title="停止生成" onClick={() => { void stop(); setNotice('已停止回复，可继续提问。') }}><span className="chat-stop-icon" aria-hidden="true" /></button> : <button className="chat-send" type="submit" aria-label="发送" title="发送" disabled={!ready || resetting || !input.trim()}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M12 20V4m-7 7 7-7 7 7" /></svg></button>}</div>
       </form>
       {!messages.length && <div className="chat-prompts">{prompts.map((prompt, index) => <button type="button" disabled={!ready || busy} key={prompt} onClick={() => submit(prompt)}><span aria-hidden="true">{['◈', '⌕', '⌘', '↗'][index]}</span>{prompt}</button>)}</div>}
-      <p className="chat-disclaimer">回复请结合原文核对，履历以已公开资料为准，联系表单不会实际投递。</p>
     </div>
     <span className="sr-only" role="status">{notice}</span>
     {artifact && <Suspense fallback={<p role="status">正在打开 Demo…</p>}><ArtifactPanel artifact={artifact} onClose={() => setArtifact(null)} /></Suspense>}

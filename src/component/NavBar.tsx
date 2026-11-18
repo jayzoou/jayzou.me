@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 
 import InteractiveCat from './InteractiveCat'
+import HandwrittenName from './HandwrittenName'
 import { mainLinks } from '../lib/navLinks'
 
 const NavBar = () => {
@@ -10,9 +11,11 @@ const NavBar = () => {
       <a
         href="/"
         aria-label="Home"
-        className="inline-flex items-center justify-center !text-white transition-transform duration-300 scale-125 hover:scale-150"
+        className="site-brand"
       >
-        <InteractiveCat size={30} />
+        <InteractiveCat size={30} className="site-brand-cat" />
+        <span className="sr-only">Jay Zou</span>
+        <HandwrittenName />
       </a>
       <nav className='site-nav' aria-label='主导航'>
         <div className='site-nav-links'>
