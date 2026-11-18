@@ -87,3 +87,55 @@ test('stop discards a late response and the next conversation remains clean', as
   await expect(page.getByRole('link', { name: /^闭包/ }).first()).toBeVisible()
   await expect(page.getByText('迟到的回复')).toHaveCount(0)
 })
+
+test('composer grows for multiline input, sends with Enter and resets focus', async ({ page }, testInfo) => {
+  await home(page)
+  const input = page.getByLabel('向 Jay 的助手提问')
+  await expect(page.getByRole('button', { name: '发送', exact: true })).toBeDisabled()
+  const initialHeight = await input.evaluate(element => element.getBoundingClientRect().height)
+  await input.fill('介绍一下你的技术背景')
+  for (let line = 0; line < 8; line++) await input.press('Shift+Enter')
+  await expect.poll(() => input.evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThan(initialHeight)
+  const welcome = await page.getByRole('heading', { name: '从一个问题，认识 Jay。' }).boundingBox()
+  const composer = await input.boundingBox()
+  expect(welcome).not.toBeNull()
+  expect(composer).not.toBeNull()
+  expect(welcome!.y + welcome!.height).toBeLessThan(composer!.y)
+  await page.screenshot({ path: testInfo.outputPath('home-composer.png'), fullPage: true })
+  await input.press('Enter')
+  await expect(page.getByRole('article', { name: '你的消息' })).toHaveText('你介绍一下你的技术背景')
+  await expect(page.getByRole('region', { name: '公开简介' })).toBeVisible()
+  await expect(input).toHaveValue('')
+  await page.getByRole('button', { name: '新对话', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '从一个问题，认识 Jay。' })).toBeVisible()
+  await expect(input).toBeFocused()
+  await expect(input).toHaveValue('')
+  await page.screenshot({ path: testInfo.outputPath('home-empty.png'), fullPage: true })
+})
+
+test('long replies scroll independently and allow returning to the latest message', async ({ page }) => {
+  await page.route('**/api/chat', async route => {
+    const events = [
+      { type: 'start', messageId: 'long-answer' },
+      { type: 'text-start', id: 'long-text' },
+      { type: 'text-delta', id: 'long-text', delta: Array.from({ length: 50 }, (_, index) => `第 ${index + 1} 段：这是一段可以滚动阅读的技术笔记。`).join('\n\n') },
+      { type: 'text-end', id: 'long-text' },
+      { type: 'finish' },
+    ]
+    await route.fulfill({ headers: { 'x-vercel-ai-ui-message-stream': 'v1' }, contentType: 'text/event-stream', body: events.map(event => `data: ${JSON.stringify(event)}\n\n`).join('') + 'data: [DONE]\n\n' })
+  })
+  await home(page)
+  await page.getByLabel('向 Jay 的助手提问').fill('阅读长笔记')
+  await page.getByRole('button', { name: '发送', exact: true }).click()
+  await expect(page.getByRole('button', { name: '复制回复', exact: true })).toBeVisible()
+  const log = page.getByRole('log', { name: '对话记录' })
+  await log.evaluate(element => { element.scrollTop = 0 })
+  const latest = page.getByRole('button', { name: '回到最新消息' })
+  await expect(latest).toBeVisible()
+  const send = await page.getByRole('button', { name: '发送', exact: true }).boundingBox()
+  expect(send).not.toBeNull()
+  expect(send!.y + send!.height).toBeLessThanOrEqual(page.viewportSize()!.height)
+  await latest.click()
+  await expect(latest).toBeHidden()
+  await expect.poll(() => log.evaluate(element => element.scrollHeight - element.scrollTop - element.clientHeight)).toBeLessThan(2)
+})

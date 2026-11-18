@@ -22,7 +22,10 @@ const ChatWorkspace = () => {
   const [notice, setNotice] = useState('')
   const [resetting, setResetting] = useState(false)
   const log = useRef<HTMLDivElement>(null)
+  const textarea = useRef<HTMLTextAreaElement>(null)
+  const [showLatest, setShowLatest] = useState(false)
   const follow = useRef(true)
+  const focusAfterReset = useRef(false)
   const busy = status === 'submitted' || status === 'streaming'
 
   useEffect(() => {
@@ -50,41 +53,75 @@ const ChatWorkspace = () => {
     if (follow.current && log.current) log.current.scrollTop = log.current.scrollHeight
   }, [messages, status])
 
+  useEffect(() => {
+    const element = textarea.current
+    if (!element) return
+    element.style.height = 'auto'
+    element.style.height = `${Math.min(element.scrollHeight, 200)}px`
+  }, [input])
+
+  useEffect(() => {
+    if (!resetting && focusAfterReset.current) {
+      focusAfterReset.current = false
+      textarea.current?.focus()
+    }
+  }, [resetting, messages])
+
+  const scrollToLatest = () => {
+    follow.current = true
+    setShowLatest(false)
+    if (log.current) log.current.scrollTop = log.current.scrollHeight
+  }
+
   const submit = (text: string) => {
     if (!ready || busy || resetting || !text.trim()) return
     follow.current = true
+    setShowLatest(false)
+    textarea.current?.focus()
     setNotice('')
     clearError()
     setInput('')
     void sendMessage({ text: text.trim() })
   }
-  return <section className="chat-workspace" aria-label="Jay 的数字助手">
-    <div className="chat-toolbar"><span className="chat-mode"><span />数字助手 · 基于公开资料</span><button type="button" disabled={!ready || resetting} onClick={() => {
-      setResetting(true)
-      void stop().then(() => { setMessages([]); clearError(); setArtifact(null); setNotice('新对话已开始'); setInput('') }).finally(() => setResetting(false))
-    }}>新对话</button></div>
-    {!messages.length && <div className="chat-welcome"><span className="chat-orbit" aria-hidden="true">✦</span><h2>从一个问题，认识 Jay。</h2><p>了解公开简历，查找博客中的知识，或者运行一个小 Demo。</p></div>}
-    <div className={`chat-log${messages.length ? ' has-messages' : ''}`} ref={log} role="log" aria-label="对话记录" aria-live="off" onScroll={() => {
-      const element = log.current
-      if (element) follow.current = element.scrollHeight - element.scrollTop - element.clientHeight < 80
-    }}>
-      {messages.map(message => <article key={message.id} className={`chat-message chat-message-${message.role}`} aria-label={message.role === 'user' ? '你的消息' : '助手回复'}>
-        <span className="chat-speaker">{message.role === 'user' ? '你' : 'Jay 的助手'}</span>
-        {message.parts.map((part, index) => part.type === 'text' ? <Suspense key={index} fallback={<p>{part.text}</p>}><StreamingMarkdown text={part.text} /></Suspense> : <ToolCard key={index} part={part} onArtifact={setArtifact} />)}
-        {message.role === 'assistant' && !busy && <CopyReply text={message.parts.filter(part => part.type === 'text').map(part => part.text).join('\n')} />}
-      </article>)}
-      {busy && <p role="status" className="chat-muted">{status === 'submitted' ? '正在连接助手…' : '正在回复…'}</p>}
+  return <section className={`chat-workspace${messages.length ? ' is-conversation' : ''}`} aria-label="Jay 的数字助手">
+    <div className="chat-toolbar">
+      <div className="chat-identity"><h1>Jay Zou <span>数字助手</span></h1><span className="chat-mode"><span />基于公开资料</span></div>
+      <button className="chat-new" type="button" disabled={!ready || resetting} onClick={() => {
+        focusAfterReset.current = true
+        setResetting(true)
+        void stop().then(() => { setMessages([]); clearError(); setArtifact(null); setNotice('新对话已开始'); setInput(''); scrollToLatest() }).finally(() => setResetting(false))
+      }}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M12 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-7M16 3l5 5M10 14l1-5 7-7 5 5-7 7z" /></svg>新对话</button>
     </div>
-    {!messages.length && <div className="chat-prompts">{prompts.map(prompt => <button type="button" disabled={!ready || busy} key={prompt} onClick={() => submit(prompt)}>{prompt} <span aria-hidden="true">↗</span></button>)}</div>}
-    {error && <div className="chat-error" role="alert">连接失败或回复中断，请确认 API 服务已启动。<button type="button" disabled={busy} onClick={() => { clearError(); void regenerate() }}>重试回复</button></div>}
-    <form className="chat-composer" onSubmit={event => { event.preventDefault(); submit(input) }}>
-      <label className="sr-only" htmlFor="chat-input">向 Jay 的助手提问</label>
-      <textarea id="chat-input" value={input} onChange={event => setInput(event.target.value)} placeholder="问问我的经历，或搜索一篇博客…" rows={2} maxLength={2000} disabled={!ready || resetting} onKeyDown={event => {
-        if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing && event.keyCode !== 229) { event.preventDefault(); submit(input) }
-      }} />
-      <div className="chat-composer-footer"><small>{input.length}/2000 · Shift + Enter 换行</small>{busy ? <button type="button" onClick={() => { void stop(); setNotice('已停止回复，可继续提问。') }}>停止生成</button> : <button type="submit" disabled={!ready || resetting || !input.trim()}>发送 <span aria-hidden="true">↑</span></button>}</div>
-    </form>
-    <p className="chat-disclaimer">回复请结合原文核对，履历以已公开资料为准，联系表单不会实际投递。</p>
+    <div className="chat-body">
+      {!messages.length && <div className="chat-welcome"><p className="chat-eyebrow">JAY’S DIGITAL SPACE</p><h2>从一个问题，认识 Jay。</h2><p>聊聊技术、翻翻笔记，或者一起做点有趣的东西。</p></div>}
+      <div className={`chat-log${messages.length ? ' has-messages' : ''}`} ref={log} role="log" aria-label="对话记录" aria-live="off" onScroll={() => {
+        const element = log.current
+        if (element) {
+          follow.current = element.scrollHeight - element.scrollTop - element.clientHeight < 80
+          setShowLatest(!follow.current)
+        }
+      }}>
+        {messages.map(message => <article key={message.id} className={`chat-message chat-message-${message.role}`} aria-label={message.role === 'user' ? '你的消息' : '助手回复'}>
+          <span className="sr-only">{message.role === 'user' ? '你' : 'Jay 的助手'}</span>
+          {message.parts.map((part, index) => part.type === 'text' ? message.role === 'user' ? <p className="chat-user-text" key={index}>{part.text}</p> : <Suspense key={index} fallback={<p>{part.text}</p>}><StreamingMarkdown text={part.text} /></Suspense> : <ToolCard key={index} part={part} onArtifact={setArtifact} />)}
+          {message.role === 'assistant' && !busy && <CopyReply text={message.parts.filter(part => part.type === 'text').map(part => part.text).join('\n')} />}
+        </article>)}
+        {busy && <p role="status" className="chat-muted"><span className="chat-thinking" aria-hidden="true" />{status === 'submitted' ? '正在连接助手…' : '正在回复…'}</p>}
+      </div>
+      {showLatest && <button className="chat-latest" type="button" aria-label="回到最新消息" onClick={scrollToLatest}>↓</button>}
+    </div>
+    <div className="chat-input-area">
+      {error && <div className="chat-error" role="alert">连接失败或回复中断，请稍后重试。<button type="button" disabled={busy} onClick={() => { clearError(); void regenerate() }}>重试回复</button></div>}
+      <form className="chat-composer" onSubmit={event => { event.preventDefault(); submit(input) }}>
+        <label className="sr-only" htmlFor="chat-input">向 Jay 的助手提问</label>
+        <textarea ref={textarea} id="chat-input" value={input} onChange={event => setInput(event.target.value)} placeholder="有什么想了解的？" rows={1} maxLength={2000} disabled={!ready || resetting} aria-describedby="chat-input-hint" onKeyDown={event => {
+          if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing && event.keyCode !== 229) { event.preventDefault(); submit(input) }
+        }} />
+        <div className="chat-composer-footer"><small id="chat-input-hint">{input.length > 0 ? `${input.length}/2000 · ` : ''}Enter 发送 · Shift + Enter 换行</small>{busy ? <button className="chat-send" type="button" aria-label="停止生成" title="停止生成" onClick={() => { void stop(); setNotice('已停止回复，可继续提问。') }}><span className="chat-stop-icon" aria-hidden="true" /></button> : <button className="chat-send" type="submit" aria-label="发送" title="发送" disabled={!ready || resetting || !input.trim()}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M12 20V4m-7 7 7-7 7 7" /></svg></button>}</div>
+      </form>
+      {!messages.length && <div className="chat-prompts">{prompts.map((prompt, index) => <button type="button" disabled={!ready || busy} key={prompt} onClick={() => submit(prompt)}><span aria-hidden="true">{['◈', '⌕', '⌘', '↗'][index]}</span>{prompt}</button>)}</div>}
+      <p className="chat-disclaimer">回复请结合原文核对，履历以已公开资料为准，联系表单不会实际投递。</p>
+    </div>
     <span className="sr-only" role="status">{notice}</span>
     {artifact && <Suspense fallback={<p role="status">正在打开 Demo…</p>}><ArtifactPanel artifact={artifact} onClose={() => setArtifact(null)} /></Suspense>}
   </section>

@@ -30,7 +30,7 @@ const Layout = () => {
     } else robots?.remove()
   }, [pathname])
 
-  return <div className="site-layout">
+  return <div className={`site-layout${pathname === '/' ? ' site-layout-home' : ''}`}>
     <NavBar />
     <div className={isArticle ? 'content-with-toc' : 'content-container'}>
       {isArticle && <TableOfContents key={pathname} />}

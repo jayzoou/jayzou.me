@@ -8,6 +8,7 @@
 - npm：10.9.7 为验证基线，支持不低于该版本的 npm 10；统一使用 npm 与 `package-lock.json`。
 - `.npmrc` 保持 lockfile v2；安装前置脚本与 `check:env` 检查项目环境。
 - ml5 元数据声明 yarn/Node 20，因此不全局启用 `engine-strict`。安装时可能出现其 engine/peer dependency 警告，本站使用其浏览器 API。
+- 首页采用居中欢迎页与底部输入框的对话布局，支持输入框自动增高、Enter 发送、Shift + Enter 换行、停止生成和回到最新消息；新对话后焦点回到输入框。会话只在当前标签页恢复。
 - 首页为数字助手，调用同级独立仓库 `jayzou-api` 提供的 SSE 接口（支持 Mock 与百炼真实模型）。Vite 默认代理 `/api` 到 `http://127.0.0.1:8787`，配置示例见 `.env.example`。
 - 原图片分类组件、模型适配器和资源保留在源码中，首页不再导入或展示。
 

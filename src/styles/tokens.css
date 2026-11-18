@@ -9,6 +9,8 @@
   --color-accent: #646cff;
   --color-border: rgba(255, 255, 255, 0.12);
   --color-surface: rgba(255, 255, 255, 0.04);
+  --color-chat-composer: #303030;
+  --color-chat-bubble: #363636;
   --color-danger: #ff4d4f;
   --space-xs: 0.5rem;
   --space-sm: 0.75rem;
